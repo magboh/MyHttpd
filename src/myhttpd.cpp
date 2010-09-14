@@ -5,6 +5,7 @@
  *      Author: magnus
  */
 
+#include <iostream>
 #include "myhttpd.h"
 
 MyHttpd::MyHttpd() {
@@ -14,4 +15,9 @@ MyHttpd::MyHttpd() {
 
 MyHttpd::~MyHttpd() {
 	// TODO Auto-generated destructor stub
+}
+
+void MyHttpd::Start()
+{
+	std::cout << __FUNCTION__ ;
 }

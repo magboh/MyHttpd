@@ -5,7 +5,16 @@
  *      Author: magnus
  */
 
+#include "myhttpd.h"
+
 int main(int argc, char** argv)
 {
+
+	MyHttpd* myHttpd = new MyHttpd();
+
+	if (myHttpd)
+	{
+		myHttpd->Start();
+	}
 	return 0;
 }

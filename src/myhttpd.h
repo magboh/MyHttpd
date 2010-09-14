@@ -12,6 +12,8 @@ class MyHttpd {
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
+
+	void Start();
 };
 
 #endif /* MYHTTPD_H_ */
