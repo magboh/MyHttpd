@@ -13,7 +13,7 @@ public:
 	MyHttpd();
 	virtual ~MyHttpd();
 
-	void Start();
+	int Start();
 };
 
 #endif /* MYHTTPD_H_ */
