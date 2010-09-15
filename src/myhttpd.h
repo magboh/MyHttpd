@@ -7,13 +7,16 @@
 
 #ifndef MYHTTPD_H_
 #define MYHTTPD_H_
-
+class VirtualServer;
 class MyHttpd {
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
 
 	int Start();
+
+private:
+	VirtualServer *mServer;
 };
 
 #endif /* MYHTTPD_H_ */
