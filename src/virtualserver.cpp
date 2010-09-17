@@ -11,8 +11,8 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
-
-
+#include <cassert>
+#include <iostream>
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
@@ -43,6 +43,9 @@ bool VirtualServer::Start()
     my_addr.sin_addr.s_addr = INADDR_ANY;
     my_addr.sin_port = htons(8080);
 
+    int on = 1;
+    setsockopt( mSocket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) );
+
     if (bind(mSocket, (struct sockaddr *) &my_addr, sizeof(struct sockaddr_in)) == -1)
     {
     	perror("bind failed");
@@ -67,10 +70,56 @@ void VirtualServer::WaitForIncomming()
 	{
 		socklen_t len = sizeof(addr);
 
-		int newsockfd = accept(mSocket, (struct sockaddr *) &addr, &len);
-		if (newsockfd==-1)
+		int clientSock = accept(mSocket, (struct sockaddr *) &addr, &len);
+
+		if (clientSock!=-1)
+		{
+			HandleIncomming(clientSock);
+		}
+		else
+		{
 			perror("accept failed:");
+		}
+
 	};
+
+}
+
+
+void VirtualServer::HandleIncomming(int socket)
+{
+	assert(socket!=-1);
+	const size_t size = 16384;
+	static unsigned char buf[size];
+
+	memset(buf,0x00,size);
+
+	/*Read*/
+	int len = 0 ;
+	int readBytes=0;
+
+	while( (len = read(socket,&buf+readBytes,size-readBytes) ) > 0)
+	{
+		readBytes+= len ;
+		std::cout << "\nread:" << buf ;
+
+		if (strcmp("\n\r\n\r",(char*)buf-4)) {
+			break;
+		}
+	}
+	std::cout << "\nTotal bytes:" << readBytes <<"\n";
+	close(socket);
+	// Read 0 bytes, means socket is closes on other side
+	if (len==0)
+	{
+		close(socket);
+	}
+	else if (len<0)
+	{
+		perror("read error:");
+	}
+
+
 
 }
 

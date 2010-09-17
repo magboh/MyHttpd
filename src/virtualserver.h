@@ -16,6 +16,7 @@ public:
 	bool Start();
 private:
 	void WaitForIncomming();
+	void HandleIncomming(int socket);
 private:
 	int mSocket;
 

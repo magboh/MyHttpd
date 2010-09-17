@@ -10,10 +10,21 @@
 class VirtualServer;
 class MyHttpd {
 public:
+/**
+ *
+ * @return
+ */
 	MyHttpd();
+/**
+ *
+ * @return
+ */
 	virtual ~MyHttpd();
-
-	int Start();
+/**
+ *
+ * @return
+ */
+int Start();
 
 private:
 	VirtualServer *mServer;
