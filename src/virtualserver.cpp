@@ -5,7 +5,6 @@
  *      Author: magnus
  */
 
-#include "virtualserver.h"
 #include <sys/types.h>          /* See NOTES */
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -13,6 +12,10 @@
 #include <string.h>
 #include <cassert>
 #include <iostream>
+
+#include "virtualserver.h"
+#include "request.h"
+
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
@@ -101,16 +104,17 @@ void VirtualServer::HandleIncomming(int socket)
 	while( (len = read(socket,&buf+readBytes,size-readBytes) ) > 0)
 	{
 		readBytes+= len ;
-		std::cout << "\nread:" << buf ;
-
 		if (strcmp("\n\r\n\r",(char*)buf-4)) {
 			break;
 		}
 	}
-	std::cout << "\nTotal bytes:" << readBytes <<"\n";
-	close(socket);
+
 	// Read 0 bytes, means socket is closes on other side
-	if (len==0)
+	if (len>0)
+	{
+		Request* req = Request::ParseRequest(buf,readBytes);
+	}
+	else if (len==0)
 	{
 		close(socket);
 	}
