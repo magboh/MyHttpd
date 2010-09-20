@@ -44,7 +44,7 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 
 		if (strncmp(line,"GET",3)==0)
 		{
-
+			request->mType = Request::HTTP_GET;
 		}
 
 	}
