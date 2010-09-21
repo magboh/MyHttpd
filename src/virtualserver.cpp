@@ -12,13 +12,16 @@
 #include <string.h>
 #include <cassert>
 #include <iostream>
+#include <poll.h>
 
+#include "connectionmanager.h"
 #include "virtualserver.h"
 #include "request.h"
 
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
+	mConnectionManager = new ConnectionManager(10);
 }
 
 VirtualServer::~VirtualServer() {
@@ -68,7 +71,7 @@ bool VirtualServer::Start()
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
-
+	mConnectionManager->StartHandleConnections();
 	while(1)
 	{
 		socklen_t len = sizeof(addr);
@@ -77,7 +80,10 @@ void VirtualServer::WaitForIncomming()
 
 		if (clientSock!=-1)
 		{
-			HandleIncomming(clientSock);
+			std::cout << "VirtualServer::WaitForIncomming: socket " << clientSock << "\n";
+			mConnectionManager->CreateConnection(clientSock);
+
+
 		}
 		else
 		{
@@ -85,45 +91,6 @@ void VirtualServer::WaitForIncomming()
 		}
 
 	};
-
 }
 
-
-void VirtualServer::HandleIncomming(int socket)
-{
-	assert(socket!=-1);
-	const size_t size = 16384;
-	static unsigned char buf[size];
-
-	memset(buf,0x00,size);
-
-	/*Read*/
-	int len = 0 ;
-	int readBytes=0;
-
-	while( (len = read(socket,&buf+readBytes,size-readBytes) ) > 0)
-	{
-		readBytes+= len ;
-		if (strcmp("\n\r\n\r",(char*)buf-4)) {
-			break;
-		}
-	}
-
-	// Read 0 bytes, means socket is closes on other side
-	if (len>0)
-	{
-		Request* req = Request::ParseRequest(buf,readBytes);
-	}
-	else if (len==0)
-	{
-		close(socket);
-	}
-	else if (len<0)
-	{
-		perror("read error:");
-	}
-
-
-
-}
 

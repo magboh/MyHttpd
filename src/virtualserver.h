@@ -7,6 +7,7 @@
 
 #ifndef VIRTUALSERVER_H_
 #define VIRTUALSERVER_H_
+class ConnectionManager;
 
 class VirtualServer {
 public:
@@ -16,10 +17,9 @@ public:
 	bool Start();
 private:
 	void WaitForIncomming();
-	void HandleIncomming(int socket);
 private:
 	int mSocket;
-
+	ConnectionManager* mConnectionManager;
 };
 
 #endif /* VIRTUALSERVER_H_ */
