@@ -46,6 +46,11 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 		{
 			request->mType = Request::HTTP_GET;
 		}
+		if (strncmp(line,"POST",4)==0)
+		{
+			request->mType = Request::HTTP_POST;
+		}
+
 
 	}
 	return request;

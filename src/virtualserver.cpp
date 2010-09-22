@@ -78,12 +78,10 @@ void VirtualServer::WaitForIncomming()
 
 		int clientSock = accept(mSocket, (struct sockaddr *) &addr, &len);
 
-		if (clientSock!=-1)
+		if (clientSock > 0)
 		{
 			std::cout << "VirtualServer::WaitForIncomming: socket " << clientSock << "\n";
 			mConnectionManager->CreateConnection(clientSock);
-
-
 		}
 		else
 		{
