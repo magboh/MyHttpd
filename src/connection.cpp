@@ -53,6 +53,9 @@ void Connection::Read()
 	if (len>0)
 	{
 		Request* req = Request::ParseRequest(mBuffer,readBytes);
+		if (req)
+			std::cout << "Request:" << req->ToString();
+
 	}
 	else
 	{

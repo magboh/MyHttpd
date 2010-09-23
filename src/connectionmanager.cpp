@@ -60,7 +60,7 @@ void ConnectionManager::DeleteConnection(int socket)
 
 	for (index=0 ; index<mMaxConnections ; index++)
 	{
-		if (mConnections[index]!=NULL && mConnections[index].GetSocket() == socket)
+		if (mConnections[index]!=NULL && mConnections[index]->GetSocket() == socket)
 		{
 			delete mConnections[index] ;
 			mFds[index].fd = 0;
