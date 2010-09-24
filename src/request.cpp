@@ -102,10 +102,25 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 	return request;
 }
 
-std::string Request::ToString()
+const std::string & Request::ToString() const
 {
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
 	str+= (mVersion == HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
 	return str;
+}
+
+const std::string & Request::GetUri() const
+{
+	return mUri;
+}
+
+Request::RequestVersion Request::GetHttpVersion() const
+{
+	return mVersion;
+}
+
+Request::RequestType Request::GetHttpType() const
+{
+	return mType;
 }
