@@ -14,9 +14,9 @@ Request::Request() {
 	// TODO Auto-generated constructor stub
 	mHost="";
 	mUri="";
-	mVersion="";
+	mVersion = HTTP_VERSION_1_1;
+	mType= HTTP_GET;
 	mKeepAlive=false;
-
 }
 
 Request::~Request() {
@@ -35,23 +35,92 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 	char *ptr;
 	char *line;
 	int l=0;
+	int status=0;
 	line=strtok_r((char*)data,"\n",&ptr);
 
-	while( line != NULL )
+	if (line != NULL)
+	{
+		char *lptr;
+		char *cmd;
+		std::cout << "row " << line;
+		// GET / POST
+		cmd = strtok_r((char*)line," ",&lptr);
+		if (cmd)
+		{
+			if (strcmp(cmd,"GET")==0)
+			{
+				request->mType = Request::HTTP_GET;
+				status++;
+			}
+			else if (strcmp(cmd,"POST")==0)
+			{
+				request->mType = Request::HTTP_POST;
+				status++;
+			}
+		}
+
+		//URI
+		cmd = strtok_r(NULL," ",&lptr);
+
+		if (cmd && strlen(cmd)<=MAX_URI_LENGTH)
+		{
+			request->mUri = cmd;
+			status++;
+		}
+
+
+		// HTTP Version
+		cmd = strtok_r(NULL," ",&lptr);
+
+		if (cmd)
+		{
+			if(strcmp(cmd,"HTTP/1.1\r")==0)
+			{
+				request->mVersion = HTTP_VERSION_1_1;
+				status++;
+			}
+			else if(strcmp(cmd,"HTTP/1.0\r")==0)
+			{
+				request->mVersion = HTTP_VERSION_1_0;
+				status++;
+			}
+		}
+	}
+
+	while( (line=strtok_r(NULL,"\n",&ptr)) )
 	{
 		std::cout << "row " << l++ <<" =" << line <<"\n";
-		line=strtok_r(NULL,"\n",&ptr);
-
-		if (strncmp(line,"GET",3)==0)
-		{
-			request->mType = Request::HTTP_GET;
-		}
-		if (strncmp(line,"POST",4)==0)
-		{
-			request->mType = Request::HTTP_POST;
-		}
-
-
 	}
+
+	// IF not enough info retrieved
+	if (status < 3 )
+	{
+		delete request;
+		request = NULL;
+	}
+
 	return request;
+}
+
+const std::string & Request::ToString() const
+{
+	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
+	str+= " " + mUri +" ";
+	str+= (mVersion == HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
+	return str;
+}
+
+const std::string & Request::GetUri() const
+{
+	return mUri;
+}
+
+Request::RequestVersion Request::GetHttpVersion() const
+{
+	return mVersion;
+}
+
+Request::RequestType Request::GetHttpType() const
+{
+	return mType;
 }
