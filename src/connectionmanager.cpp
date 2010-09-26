@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <cassert>
-#include <iostream>
 #include <poll.h>
 #include <pthread.h>
 
@@ -49,7 +48,6 @@ void ConnectionManager::CreateConnection(int socket)
 		{
 			mConnections[index] = new Connection(socket);
 			mFds[index].fd = socket;
-			std::cout <<"ConnectionManager::CreateConnection: socket" << socket << "at index=" << index << "\n";
 			break;
 		}
 	}
@@ -65,7 +63,6 @@ void ConnectionManager::DeleteConnection(int socket)
 		{
 			delete mConnections[index] ;
 			mFds[index].fd = 0;
-			std::cout <<"ConnectionManager::DeleteConnection: socket" << socket << "at index=" << index << "\n";
 			break;
 		}
 	}
@@ -87,7 +84,6 @@ void ConnectionManager::HandleConnections()
 		{
 			perror("poll failed");
 		}
-		std::cout << "\n ret=" << ret << "\n";
 		if (ret>0)
 		{
 			for (int index=0;index<mMaxConnections;index++)

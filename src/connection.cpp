@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <cassert>
-#include <iostream>
 #include <poll.h>
 #include <pthread.h>
 
@@ -39,7 +38,6 @@ void Connection::Read()
 {
 	int len;
 	size_t readBytes=0;
-	std::cout <<"Connection::Read()\n";
 	while( (len = read(mSocket,mBuffer+readBytes,mBufferSize-readBytes) ) > 0)
 	{
 		readBytes+= len ;
@@ -54,7 +52,6 @@ void Connection::Read()
 		Request* req = Request::ParseRequest(mBuffer,readBytes);
 		if (req)
 		{
-			std::cout << "\nConnection::Read Request:" << req->ToString() <<"\n";
 			sleep(2);
 			RequestQueue::GetInstance()->AddRequest(req);
 		}

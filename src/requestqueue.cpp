@@ -6,7 +6,6 @@
  */
 
 #include <pthread.h>
-#include <iostream>
 #include <cassert>
 
 #include "request.h"
@@ -15,7 +14,6 @@
 
 RequestQueue::RequestQueue()
 {
-	std::cout << "RequestQueue::RequestQueue\n";
 	mMutex = new pthread_mutex_t;
 	*mMutex = PTHREAD_MUTEX_INITIALIZER ;
 }
@@ -27,11 +25,7 @@ RequestQueue::~RequestQueue()
 
 const Request* RequestQueue::GetNextRequest()
 {
-	std::cout << "\nRequestQueue::GetNextRequest\n";
-	if (!mMutex)
-	{
-		std::cout << "ASSÅ\n\n";
-	}
+	assert(mMutex);
 
 	const Request *request = NULL;
 
@@ -47,7 +41,6 @@ const Request* RequestQueue::GetNextRequest()
 
 void RequestQueue::AddRequest(const Request* request)
 {
-	std::cout <<"RequestQueue::AddRequest()\n";
 	assert(pthread_mutex_lock(mMutex)==0);
 	mReqQueue.push(request);
 	assert(pthread_mutex_unlock(mMutex)==0);
@@ -55,7 +48,6 @@ void RequestQueue::AddRequest(const Request* request)
 
 bool RequestQueue::CreateQueueWorker()
 {
-	std::cout << "RequestQueue::CreateQueueWorker\n";
 	RequestQueueWorker* rqw = new RequestQueueWorker(this);
 
 	if (rqw->Start()) // worker started

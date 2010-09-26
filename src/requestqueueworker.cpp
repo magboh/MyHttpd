@@ -7,14 +7,12 @@
 
 #include "pthread.h"
 #include <iostream>
-
 #include "request.h"
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
-	std::cout << "RequestQueueWorker::RequestQueueWorker\n";
 	mThread = new pthread_t;
 	mKeepRunning = true;
 	mRequestQueue = requestQueue;
@@ -45,17 +43,13 @@ void RequestQueueWorker::HandleRequests()
 
 void* RequestQueueWorker::ThreadCallBack(void* arg)
 {
-	std::cout << "RequestQueueWorker::ThreadCallBack()\n";
 	((RequestQueueWorker*)arg)->HandleRequests();
 	return (NULL);
 }
 
 bool RequestQueueWorker::Start()
 {
-	std::cout << "RequestQueueWorker::Start()\n";
 	bool ok = (pthread_create(mThread,NULL, RequestQueueWorker::ThreadCallBack,(void*)this)==0);
-	std::cout << "RequestQueueWorker::Start ok="<< ok << "\n";
-
 	return ok ;
 }
 

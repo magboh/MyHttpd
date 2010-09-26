@@ -42,7 +42,6 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 	{
 		char *lptr;
 		char *cmd;
-		std::cout << "row " << line;
 		// GET / POST
 		cmd = strtok_r((char*)line," ",&lptr);
 		if (cmd)
@@ -89,7 +88,6 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 
 	while( (line=strtok_r(NULL,"\n",&ptr)) )
 	{
-		std::cout << "row " << l++ <<" =" << line <<"\n";
 	}
 
 	// IF not enough info retrieved
@@ -98,15 +96,10 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 		delete request;
 		request = NULL;
 	}
-	else
-	{
-		std::cout << "ParseRequest:" << request->ToString() <<"\n";
-	}
-
 	return request;
 }
 
-const std::string & Request::ToString() const
+const std::string Request::ToString() const
 {
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
