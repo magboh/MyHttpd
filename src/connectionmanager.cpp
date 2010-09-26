@@ -16,6 +16,7 @@
 
 #include "connection.h"
 #include "connectionmanager.h"
+#include "requestqueue.h"
 
 ConnectionManager::ConnectionManager(int maxConnections)
 {
@@ -111,6 +112,7 @@ void ConnectionManager::StartHandleConnections()
 	{
 		perror("pthread_create");
 	}
+
 }
 
 

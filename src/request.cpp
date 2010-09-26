@@ -98,6 +98,10 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 		delete request;
 		request = NULL;
 	}
+	else
+	{
+		std::cout << "ParseRequest:" << request->ToString() <<"\n";
+	}
 
 	return request;
 }
@@ -107,6 +111,7 @@ const std::string & Request::ToString() const
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
 	str+= (mVersion == HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
+	std::cout << "\nRequest::ToString=" << str << "\n";
 	return str;
 }
 

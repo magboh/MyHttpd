@@ -17,6 +17,7 @@
 #include "connectionmanager.h"
 #include "virtualserver.h"
 #include "request.h"
+#include "requestqueue.h"
 
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
@@ -63,6 +64,9 @@ bool VirtualServer::Start()
     	perror("Listen failed:");
     }
 
+	mConnectionManager->StartHandleConnections();
+	RequestQueue::GetInstance()->CreateQueueWorker();
+
     WaitForIncomming();
     return retval;
 
@@ -71,7 +75,7 @@ bool VirtualServer::Start()
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
-	mConnectionManager->StartHandleConnections();
+
 	while(1)
 	{
 		socklen_t len = sizeof(addr);

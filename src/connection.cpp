@@ -18,6 +18,7 @@
 
 #include "request.h"
 #include "connection.h"
+#include "requestqueue.h"
 
 Connection::Connection(int socket) {
 	mSocket = socket;
@@ -38,23 +39,25 @@ void Connection::Read()
 {
 	int len;
 	size_t readBytes=0;
-	std::cout << "Connection::Read socket=" << mSocket << "\n";
+	std::cout <<"Connection::Read()\n";
 	while( (len = read(mSocket,mBuffer+readBytes,mBufferSize-readBytes) ) > 0)
 	{
 		readBytes+= len ;
 		if (strcmp("\n\r\n\r",(char*)mBuffer-4)) {
 			break;
 		}
-
-		std::cout << "\n\nRead:" << mBuffer << "\n";
 	}
-
+	//std::cout << "mBuffer=" << mBuffer << "\n";
 	// Read 0 bytes, means socket is closes on other side
-	if (len>0)
+	if (readBytes>0)
 	{
 		Request* req = Request::ParseRequest(mBuffer,readBytes);
 		if (req)
-			std::cout << "Request:" << req->ToString();
+		{
+			std::cout << "\nConnection::Read Request:" << req->ToString() <<"\n";
+			sleep(2);
+			RequestQueue::GetInstance()->AddRequest(req);
+		}
 
 	}
 	else
