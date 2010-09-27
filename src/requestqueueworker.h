@@ -9,6 +9,9 @@
 #define REQUESTQUEUEWORKER_H_
 
 class RequestQueue;
+
+// Worker is responsible to DELETE the request gotten from queue
+
 class RequestQueueWorker
 {
 public:

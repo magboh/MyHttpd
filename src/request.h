@@ -7,7 +7,9 @@
 
 #ifndef REQUEST_H_
 #define REQUEST_H_
+
 #include <string>
+#include "http.h"
 
 class Request {
 public:
@@ -16,17 +18,17 @@ public:
 
 	static Request* ParseRequest(unsigned char* data, size_t size);
 	enum RequestType {HTTP_GET,HTTP_POST};
-	enum RequestVersion {HTTP_VERSION_1_0,HTTP_VERSION_1_1};
+
 	const std::string ToString() const;
 	const std::string & GetUri() const;
-	RequestVersion GetHttpVersion() const;
+	Http::Version GetHttpVersion() const;
 	RequestType GetHttpType() const;
 
 private:
 	enum {MAX_URI_LENGTH=2048};
 	std::string mHost;
 	std::string mUri;
-	RequestVersion mVersion;
+	Http::Version mVersion;
 
 	bool mKeepAlive;
 	RequestType mType;

@@ -8,13 +8,15 @@
 #include <string>
 #include <string.h>
 #include <iostream>
+
 #include "request.h"
+#include "http.h"
 
 Request::Request() {
 	// TODO Auto-generated constructor stub
 	mHost="";
 	mUri="";
-	mVersion = HTTP_VERSION_1_1;
+	mVersion = Http::HTTP_VERSION_1_1;
 	mType= HTTP_GET;
 	mKeepAlive=false;
 }
@@ -75,12 +77,12 @@ Request* Request::ParseRequest(unsigned char* data, size_t size)
 		{
 			if(strcmp(cmd,"HTTP/1.1\r")==0)
 			{
-				request->mVersion = HTTP_VERSION_1_1;
+				request->mVersion = Http::HTTP_VERSION_1_1;
 				status++;
 			}
 			else if(strcmp(cmd,"HTTP/1.0\r")==0)
 			{
-				request->mVersion = HTTP_VERSION_1_0;
+				request->mVersion = Http::HTTP_VERSION_1_0;
 				status++;
 			}
 		}
@@ -103,7 +105,7 @@ const std::string Request::ToString() const
 {
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
-	str+= (mVersion == HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
+	str+= (mVersion == Http::HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
 	std::cout << "\nRequest::ToString=" << str << "\n";
 	return str;
 }
@@ -113,7 +115,7 @@ const std::string & Request::GetUri() const
 	return mUri;
 }
 
-Request::RequestVersion Request::GetHttpVersion() const
+Http::Version Request::GetHttpVersion() const
 {
 	return mVersion;
 }

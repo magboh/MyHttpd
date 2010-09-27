@@ -19,14 +19,14 @@ public:
 	static Response* CreateResponse(const Request* request);
 	virtual ~Response();
 
-	StatusType getStatus() const;
-    void setStatus(StatusType mStatus);
+	StatusType GetStatus() const;
+    void SetStatus(StatusType mStatus);
 
-    Http::Version getVersion() const;
-    void setVersion(Http::Version mVersion);
+    Http::Version GetHttpVersion() const;
+    void SetHttpVersion(Http::Version mVersion);
 
-    void setContentLength(unsigned int mContentLength);
-    unsigned int getContentLength() const;
+    void SetContentLength(unsigned int length);
+    unsigned int GetContentLength() const;
     const unsigned char* ToBuffer();
 
     int GetFile();
