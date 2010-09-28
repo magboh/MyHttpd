@@ -88,9 +88,15 @@ void ConnectionManager::HandleConnections()
 		{
 			for (int index=0;index<mMaxConnections;index++)
 			{
-				if (mFds[index].revents == POLLIN)
+
+				if (mFds[index].revents & POLLIN)
 				{
 					mConnections[index]->Read();
+				}
+
+				if (mFds[index].revents & POLLOUT)
+				{
+					mConnections[index]->Write();
 				}
 
 			}

@@ -8,6 +8,7 @@
 #ifndef CONNECTION_H_
 #define CONNECTION_H_
 
+class Response;
 class Connection {
 public:
 	Connection(int socket);
@@ -16,11 +17,18 @@ public:
 	 * Read reads what is on the socket..
 	 */
 	void Read();
+	void Write(Response* response);
+	void Write();
 	int GetSocket() const;
 private:
 	int mSocket;
-	unsigned char *mBuffer;
-	unsigned int mBufferSize;
+
+	unsigned char *mReadBuffer;
+	unsigned int mReadBufferSize;
+
+	unsigned char *mWriteBuffer;
+	unsigned int mWriteBufferSize;
+	unsigned mToWrite;
 };
 
 #endif /* CONNECTION_H_ */

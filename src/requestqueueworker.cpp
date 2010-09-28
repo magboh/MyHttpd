@@ -17,6 +17,7 @@
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 #include "response.h"
+#include "connection.h"
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
@@ -44,6 +45,7 @@ void RequestQueueWorker::HandleRequests()
 			HandleRequest(request);
 			delete request ;
 		}
+		sleep(1);
 	}
 
 }
@@ -92,4 +94,5 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 		}
 
 	}
+	request->GetConnection()->Write(response);
 }

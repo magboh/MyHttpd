@@ -11,14 +11,16 @@
 
 #include "request.h"
 #include "http.h"
+#include "connection.h"
 
-Request::Request() {
+Request::Request(Connection* connection) {
 	// TODO Auto-generated constructor stub
 	mHost="";
 	mUri="";
 	mVersion = Http::HTTP_VERSION_1_1;
 	mType= HTTP_GET;
 	mKeepAlive=false;
+	mConnection = connection;
 }
 
 Request::~Request() {
@@ -31,9 +33,9 @@ Request::~Request() {
  * @param size
  * @return
  */
-Request* Request::ParseRequest(unsigned char* data, size_t size)
+Request* Request::ParseRequest(unsigned char* data, size_t size,Connection* connection)
 {
-	Request* request = new Request();
+	Request* request = new Request(connection);
 	char *ptr;
 	char *line;
 	int l=0;
@@ -124,3 +126,15 @@ Request::RequestType Request::GetHttpType() const
 {
 	return mType;
 }
+
+Connection *Request::GetConnection() const
+{
+    return mConnection;
+}
+
+void Request::SetConnection(Connection *mConnection)
+{
+    mConnection = mConnection;
+}
+
+

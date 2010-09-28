@@ -11,6 +11,7 @@
 #include "http.h"
 
 class Request;
+class Connection;
 
 class Response
 {
@@ -31,12 +32,14 @@ public:
 
     int GetFile();
     void SetFile(int fd);
+    int ToBuffer(unsigned char* buffer, int length);
 private:
 	Response();
 	StatusType mStatus ;
 	unsigned int mContentLength;
 	Http::Version mVersion;
 	int mFile;
+	Connection* mConnection;
 };
 
 #endif /* RESPONSE_H_ */

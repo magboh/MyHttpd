@@ -7,10 +7,12 @@
 
 #include "pthread.h"
 #include <iostream>
+#include <sstream>
+#include "string.h"
+
 #include "request.h"
 #include "response.h"
 #include "requestqueueworker.h"
-
 
 Response *Response::CreateResponse(const Request *request)
 {
@@ -21,11 +23,17 @@ Response *Response::CreateResponse(const Request *request)
 
 Response::~Response()
 {
+	if (mFile!=-1)
+	{
+		close(mFile);
+		mFile = -1;
+	}
 }
 
 Response::Response()
 {
 	mFile = -1 ;
+
 }
 
 
@@ -72,4 +80,29 @@ Http::Version Response::GetHttpVersion() const
 void Response::SetContentLength(unsigned int length)
 {
 	mContentLength = length;
+}
+
+int Response::ToBuffer(unsigned char* buffer, int length)
+{
+	std::stringstream ss;
+
+	int len=0;
+	ss << Http::GetVersionString(mVersion) << " " << mStatus << " TRALLA LA LA <<\n\r";
+
+//	if ( mFile =! -1)
+	//{
+		ss << "Content-Length:" << mContentLength << "\n\r";
+	//}
+	ss << "\n\r";
+//	ss <<"APA GNU LEJON";
+	len = ss.str().size();
+
+	if (len>length)
+		len=length;
+
+	memcpy(buffer,ss.str().c_str(),len);
+	std::cout <<" \n" << ss.str() <<"\n";
+	std::cout <<"buff \n" << buffer <<"\n";
+
+	return len;
 }
