@@ -36,6 +36,7 @@ private:
 	std::queue <const Request*> mReqQueue;
 	std::vector <RequestQueueWorker*> mWorkerVector;
 	pthread_mutex_t* mMutex;
+	pthread_cond_t* mCondThread;
 };
 
 #endif /* REQUESTQUEUE_H_ */

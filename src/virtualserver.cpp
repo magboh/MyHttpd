@@ -64,7 +64,10 @@ bool VirtualServer::Start()
     	perror("Listen failed:");
     }
 
+    RequestQueue::GetInstance();
+
 	mConnectionManager->StartHandleConnections();
+	RequestQueue::GetInstance()->CreateQueueWorker();
 	RequestQueue::GetInstance()->CreateQueueWorker();
 
     WaitForIncomming();
@@ -84,7 +87,6 @@ void VirtualServer::WaitForIncomming()
 
 		if (clientSock > 0)
 		{
-			std::cout << "VirtualServer::WaitForIncomming: socket " << clientSock << "\n";
 			mConnectionManager->CreateConnection(clientSock);
 		}
 		else

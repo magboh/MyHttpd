@@ -28,6 +28,7 @@ public:
 
 	Connection *GetConnection() const;
     void SetConnection(Connection *mConnection);
+    bool GetKeepAlive() const;
 
 private:
 	enum {MAX_URI_LENGTH=2048};

@@ -91,7 +91,13 @@ void ConnectionManager::HandleConnections()
 
 				if (mFds[index].revents & POLLIN)
 				{
-					mConnections[index]->Read();
+					if (mConnections[index]->Read()<=0)
+					{
+						delete mConnections[index];
+						mFds[index].fd = 0;
+						mConnections[index]= NULL;
+						continue;
+					}
 				}
 
 				if (mFds[index].revents & POLLOUT)
@@ -102,9 +108,6 @@ void ConnectionManager::HandleConnections()
 			}
 		}
 	}
-
-
-
 }
 
 void ConnectionManager::StartHandleConnections()

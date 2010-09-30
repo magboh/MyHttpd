@@ -16,7 +16,7 @@ public:
 	/**
 	 * Read reads what is on the socket..
 	 */
-	void Read();
+	int Read();
 	void Write(Response* response);
 	void Write();
 	int GetSocket() const;

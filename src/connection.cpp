@@ -5,7 +5,7 @@
  *      Author: magnus
  */
 
-#include <sys/types.h>          /* See NOTES */
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -14,6 +14,7 @@
 #include <poll.h>
 #include <pthread.h>
 #include <sys/sendfile.h>
+#include <iostream>
 
 #include "request.h"
 #include "response.h"
@@ -45,16 +46,19 @@ Connection::~Connection()
 		mWriteBuffer = 0;
 	}
 
+	puts("Closing Connection\n");
+
 }
 
-void Connection::Read()
+int Connection::Read()
 {
 	int len;
 	size_t readBytes=0;
 	while( (len = read(mSocket,mReadBuffer+readBytes,mReadBufferSize-readBytes) ) > 0)
 	{
 		readBytes+= len ;
-		if (strcmp("\n\r\n\r",(char*)mReadBuffer-4)) {
+		if (strcmp("\n\r\n\r",(char*)mReadBuffer-4))
+		{
 			break;
 		}
 	}
@@ -65,15 +69,19 @@ void Connection::Read()
 		Request* req = Request::ParseRequest(mReadBuffer,readBytes,this);
 		if (req)
 		{
-			sleep(2);
 			RequestQueue::GetInstance()->AddRequest(req);
 		}
 
+	}
+	else if (readBytes == 0)
+	{
+		close(mSocket);
 	}
 	else
 	{
 		perror("read error:");
 	}
+	return readBytes;
 }
 
 int Connection::GetSocket() const
@@ -91,7 +99,6 @@ void Connection::Write(Response* response)
 	mToWrite = response->GetContentLength();
 
 	sendfile(mSocket,response->GetFile(),0,mToWrite);
-
 }
 
 void Connection::Write()

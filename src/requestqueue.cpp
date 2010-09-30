@@ -7,6 +7,9 @@
 
 #include <pthread.h>
 #include <cassert>
+#include <iostream>
+#include <errno.h>
+#include <stdio.h>
 
 #include "request.h"
 #include "requestqueue.h"
@@ -15,7 +18,11 @@
 RequestQueue::RequestQueue()
 {
 	mMutex = new pthread_mutex_t;
-	*mMutex = PTHREAD_MUTEX_INITIALIZER ;
+	mCondThread = new pthread_cond_t;
+	pthread_mutex_init(mMutex, NULL);
+	pthread_cond_init (mCondThread, NULL);
+
+
 }
 
 RequestQueue::~RequestQueue()
@@ -29,19 +36,28 @@ const Request* RequestQueue::GetNextRequest()
 
 	const Request *request = NULL;
 
-	pthread_mutex_lock(mMutex);
-	if (!mReqQueue.empty())
+	assert(pthread_mutex_lock(mMutex)==0);
+
+	if (mReqQueue.empty())
+	{
+		assert(pthread_cond_wait(mCondThread,mMutex)==0);
+	}
+	else
 	{
 		request = mReqQueue.front();
 		mReqQueue.pop();
+		std::cout << "threadid=" << pthread_self()<<  " handling " << request->ToString() << "\n";
 	}
-	pthread_mutex_unlock(mMutex);
+
+
+	assert(pthread_mutex_unlock(mMutex)==0);
 	return request;
 }
 
 void RequestQueue::AddRequest(const Request* request)
 {
 	assert(pthread_mutex_lock(mMutex)==0);
+	pthread_cond_broadcast(mCondThread);
 	mReqQueue.push(request);
 	assert(pthread_mutex_unlock(mMutex)==0);
 }

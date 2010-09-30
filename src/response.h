@@ -16,30 +16,34 @@ class Connection;
 class Response
 {
 public:
-	enum StatusType {HTTP_OK=200,HTTP_NO_ACCESS=403, HTTP_NOT_FOUND=404, HTTP_INTERNAL_SERVER_ERROR=500};
 	static Response* CreateResponse(const Request* request);
 	virtual ~Response();
 
-	StatusType GetStatus() const;
-    void SetStatus(StatusType mStatus);
+	Http::Status GetStatus() const;
+    void SetStatus(Http::Status mStatus);
 
     Http::Version GetHttpVersion() const;
     void SetHttpVersion(Http::Version mVersion);
 
     void SetContentLength(unsigned int length);
     unsigned int GetContentLength() const;
+
     const unsigned char* ToBuffer();
 
     int GetFile();
     void SetFile(int fd);
+
+    bool GetKeepAlive() const;
+
     int ToBuffer(unsigned char* buffer, int length);
 private:
 	Response();
-	StatusType mStatus ;
+	Http::Status mStatus ;
 	unsigned int mContentLength;
 	Http::Version mVersion;
 	int mFile;
 	Connection* mConnection;
+	bool mKeepAlive;
 };
 
 #endif /* RESPONSE_H_ */

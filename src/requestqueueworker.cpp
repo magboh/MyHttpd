@@ -35,7 +35,6 @@ RequestQueueWorker::~RequestQueueWorker()
 void RequestQueueWorker::HandleRequests()
 {
 	const Request* request;
-	sleep(6);
 	while(mKeepRunning)
 	{
 		request = mRequestQueue->GetNextRequest();
@@ -43,9 +42,7 @@ void RequestQueueWorker::HandleRequests()
 		if (request != NULL)
 		{
 			HandleRequest(request);
-			delete request ;
 		}
-		sleep(1);
 	}
 
 }
@@ -70,29 +67,32 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 
 	int fd = open(filename.c_str(),0);
 	int error = errno;
+
 	if (fd != -1)
 	{
 		response->SetFile(fd);
 		struct stat fileStat;
 		fstat(fd,&fileStat);
 		response->SetContentLength(fileStat.st_size);
-		response->SetStatus(Response::HTTP_OK);
+		response->SetStatus(Http::HTTP_OK);
 	}
 	else /* Set fail */
 	{
 		switch (error)
 		{
 		case EACCES:
-			response->SetStatus(Response::HTTP_NO_ACCESS);
+			response->SetStatus(Http::HTTP_NO_ACCESS);
 			break;
 		case ENOENT:
-			response->SetStatus(Response::HTTP_NOT_FOUND);
+			response->SetStatus(Http::HTTP_NOT_FOUND);
 			break;
 		default:
-			response->SetStatus(Response::HTTP_INTERNAL_SERVER_ERROR);
+			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
 			break;
 		}
 
 	}
 	request->GetConnection()->Write(response);
+	delete response;
+	delete request ;
 }

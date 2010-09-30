@@ -18,6 +18,7 @@ Response *Response::CreateResponse(const Request *request)
 {
 	Response* response = new Response();
 	response->SetHttpVersion( request->GetHttpVersion() );
+	response->mKeepAlive = request->GetKeepAlive();
 	return response;
 }
 
@@ -33,7 +34,7 @@ Response::~Response()
 Response::Response()
 {
 	mFile = -1 ;
-
+	mContentLength = 0 ;
 }
 
 
@@ -52,12 +53,12 @@ void Response::SetFile(int fd)
 }
 
 
-void Response::SetStatus(StatusType status)
+void Response::SetStatus(Http::Status status)
 {
 	mStatus = status;
 }
 
-Response::StatusType Response::GetStatus() const
+Http::Status Response::GetStatus() const
 {
 	return mStatus;
 }
@@ -85,15 +86,38 @@ void Response::SetContentLength(unsigned int length)
 int Response::ToBuffer(unsigned char* buffer, int length)
 {
 	std::stringstream ss;
-
+	std::string str="";
 	int len=0;
-	ss << Http::GetVersionString(mVersion) << " " << mStatus << " TRALLA LA LA <<\n\r";
 
-//	if ( mFile =! -1)
-	//{
-		ss << "Content-Length:" << mContentLength << "\n\r";
+	if (mStatus != Http::HTTP_OK)
+	{
+		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
+	}
+
+	ss << Http::GetVersionString(mVersion) << " " << mStatus << " " << Http::GetStatusString(mStatus) <<" \r\n";
+
+	if (mStatus != Http::HTTP_OK)
+	{
+		mContentLength = str.length();
+	}
+/*	if ( mFile =! -1)
+	{*/
+		ss << "Content-Length:" << mContentLength << " \r\n";
+		ss << "Content-Type: text/html \r\n";
 	//}
-	ss << "\n\r";
+
+	if (!mKeepAlive)
+	{
+		ss << "Connection:Close";
+	}
+
+	ss << "\r\n";
+
+	if (mStatus != Http::HTTP_OK)
+	{
+		ss << str;
+	}
+
 //	ss <<"APA GNU LEJON";
 	len = ss.str().size();
 
@@ -101,8 +125,9 @@ int Response::ToBuffer(unsigned char* buffer, int length)
 		len=length;
 
 	memcpy(buffer,ss.str().c_str(),len);
-	std::cout <<" \n" << ss.str() <<"\n";
-	std::cout <<"buff \n" << buffer <<"\n";
+//	std::cout <<" \n" << ss.str() <<"\n";
+//	std::cout <<"buff \n" << buffer <<"\n";
 
 	return len;
 }
+

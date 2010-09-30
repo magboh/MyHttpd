@@ -138,3 +138,8 @@ void Request::SetConnection(Connection *mConnection)
 }
 
 
+
+bool Request::GetKeepAlive() const
+{
+	return mKeepAlive;
+}
