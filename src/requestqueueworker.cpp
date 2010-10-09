@@ -28,7 +28,7 @@ RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 
 RequestQueueWorker::~RequestQueueWorker()
 {
-	// TODO Auto-generated destructor stub
+	delete mThread;
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
@@ -65,7 +65,7 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 
 	std::string filename = std::string("/home/magnus/") + request->GetUri();
 
-	int fd = open(filename.c_str(),0);
+	int fd = open(filename.c_str(),O_RDONLY);
 	int error = errno;
 
 	if (fd != -1)
@@ -78,6 +78,7 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 	}
 	else /* Set fail */
 	{
+		*((char*)0)=1;
 		switch (error)
 		{
 		case EACCES:

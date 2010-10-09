@@ -12,13 +12,21 @@
 #include "http.h"
 
 class Connection;
+class ByteBuffer;
 
 class Request {
 public:
 	Request(Connection* connection);
 	virtual ~Request();
-
-	static Request* ParseRequest(unsigned char* data, size_t size, Connection* connection);
+	enum ParseReturn {
+		REQUEST_OK,
+		REQUEST_BAD,
+		REQUEST_UNFINISHED,
+		REQUEST_HTPP_VERSION_NOT_SUPPORTED,
+		REQUEST_TO_LARGE,
+		REQUEST_URI_TO_LONG,
+		};
+	static Request::ParseReturn ParseRequest(Request* request,ByteBuffer* buffer);
 	enum RequestType {HTTP_GET,HTTP_POST};
 
 	const std::string ToString() const;
@@ -39,6 +47,7 @@ private:
 	bool mKeepAlive;
 	RequestType mType;
 	Connection* mConnection;
+	int mParseState;
 };
 
 #endif /* REQUEST_H_ */

@@ -13,12 +13,14 @@
 #include "request.h"
 #include "response.h"
 #include "requestqueueworker.h"
+#include "bytebuffer.h"
 
 Response *Response::CreateResponse(const Request *request)
 {
 	Response* response = new Response();
 	response->SetHttpVersion( request->GetHttpVersion() );
 	response->mKeepAlive = request->GetKeepAlive();
+	response->mKeepAlive = false;
 	return response;
 }
 
@@ -35,17 +37,15 @@ Response::Response()
 {
 	mFile = -1 ;
 	mContentLength = 0 ;
+	mKeepAlive = true;
 }
 
 
-int Response::GetFile()
+int Response::GetFile() const
 {
 	return mFile;
 }
 
-const unsigned char *Response::ToBuffer()
-{
-}
 
 void Response::SetFile(int fd)
 {
@@ -83,51 +83,47 @@ void Response::SetContentLength(unsigned int length)
 	mContentLength = length;
 }
 
-int Response::ToBuffer(unsigned char* buffer, int length)
+bool Response::GetKeepAlive() const
+{
+	return mKeepAlive;
+}
+
+int Response::ToBuffer(ByteBuffer* buffer) const
 {
 	std::stringstream ss;
 	std::string str="";
-	int len=0;
-
-	if (mStatus != Http::HTTP_OK)
-	{
-		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
-	}
+	size_t len=0;
 
 	ss << Http::GetVersionString(mVersion) << " " << mStatus << " " << Http::GetStatusString(mStatus) <<" \r\n";
 
-	if (mStatus != Http::HTTP_OK)
-	{
-		mContentLength = str.length();
-	}
-/*	if ( mFile =! -1)
-	{*/
-		ss << "Content-Length:" << mContentLength << " \r\n";
-		ss << "Content-Type: text/html \r\n";
+//	if (!mKeepAlive)
+	//{
+		ss << "Connection: close \r\n";
 	//}
 
-	if (!mKeepAlive)
+
+	if (mStatus == Http::HTTP_OK)
 	{
-		ss << "Connection:Close";
+		ss << "Content-Length:" << mContentLength << " \r\n";
+		ss << "Content-Type: text/html \r\n";
+		ss << "\r\n";
 	}
-
-	ss << "\r\n";
-
-	if (mStatus != Http::HTTP_OK)
+	else
 	{
+//		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
+	//	mContentLength = str.length();
+		ss << "Content-Length:" << mContentLength << " \r\n";
+		ss << "Content-Type: text/html \r\n";
+		ss << "\r\n";
 		ss << str;
 	}
 
-//	ss <<"APA GNU LEJON";
 	len = ss.str().size();
 
-	if (len>length)
-		len=length;
+	if (len>buffer->GetSpaceLeft())
+		len=buffer->GetSpaceLeft();
 
-	memcpy(buffer,ss.str().c_str(),len);
-//	std::cout <<" \n" << ss.str() <<"\n";
-//	std::cout <<"buff \n" << buffer <<"\n";
-
+	buffer->Add( ss.str().c_str() , len);
 	return len;
 }
 

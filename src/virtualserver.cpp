@@ -7,6 +7,7 @@
 
 #include <sys/types.h>          /* See NOTES */
 #include <sys/socket.h>
+#include <sys/fcntl.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +23,7 @@
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
-	mConnectionManager = new ConnectionManager(10);
+	mConnectionManager = new ConnectionManager(500);
 }
 
 VirtualServer::~VirtualServer() {
@@ -59,7 +60,7 @@ bool VirtualServer::Start()
     }
 
 
-    if (listen(mSocket,10)==-1)
+    if (listen(mSocket,60)==-1)
     {
     	perror("Listen failed:");
     }
@@ -67,14 +68,17 @@ bool VirtualServer::Start()
     RequestQueue::GetInstance();
 
 	mConnectionManager->StartHandleConnections();
+/*
 	RequestQueue::GetInstance()->CreateQueueWorker();
 	RequestQueue::GetInstance()->CreateQueueWorker();
-
+	RequestQueue::GetInstance()->CreateQueueWorker();
+*/
     WaitForIncomming();
     return retval;
 
 }
 
+static int a=0;
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
@@ -87,6 +91,13 @@ void VirtualServer::WaitForIncomming()
 
 		if (clientSock > 0)
 		{
+			if (++a > 1000)
+			{
+				return;
+			}
+
+			/* set to non blocking*/
+			assert(fcntl(clientSock,O_NONBLOCK)==0);
 			mConnectionManager->CreateConnection(clientSock);
 		}
 		else

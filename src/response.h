@@ -12,7 +12,7 @@
 
 class Request;
 class Connection;
-
+class ByteBuffer;
 class Response
 {
 public:
@@ -28,14 +28,12 @@ public:
     void SetContentLength(unsigned int length);
     unsigned int GetContentLength() const;
 
-    const unsigned char* ToBuffer();
-
-    int GetFile();
+    int GetFile() const;
     void SetFile(int fd);
 
     bool GetKeepAlive() const;
 
-    int ToBuffer(unsigned char* buffer, int length);
+    int ToBuffer(ByteBuffer* buffer) const;
 private:
 	Response();
 	Http::Status mStatus ;

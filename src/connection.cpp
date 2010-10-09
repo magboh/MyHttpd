@@ -15,73 +15,120 @@
 #include <pthread.h>
 #include <sys/sendfile.h>
 #include <iostream>
+#include <poll.h>
 
 #include "request.h"
 #include "response.h"
 #include "connection.h"
+#include "connectionmanager.h"
 #include "requestqueue.h"
+#include "bytebuffer.h"
 
-Connection::Connection(int socket) {
+Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mSocket = socket;
 
-	mReadBufferSize= 4096 ;
-	mReadBuffer= new unsigned char[mReadBufferSize];
+	mReadBuffer = new ByteBuffer(4096);
+	mWriteBuffer = new ByteBuffer(4096);
 
-	mWriteBufferSize= 4096 ;
-	mWriteBuffer= new unsigned char[mWriteBufferSize];
-	mToWrite=0;
+	mConnectionManager =  conectionMgr;
+	mWantToRead = true;
+	mRequest = NULL;
 }
 
 Connection::~Connection()
 {
-	if (!mReadBuffer)
+	if (mReadBuffer)
 	{
 		delete [] mReadBuffer;
 		mReadBuffer = 0;
 	}
 
-	if (!mWriteBuffer)
+	if (mWriteBuffer)
 	{
 		delete [] mWriteBuffer;
 		mWriteBuffer = 0;
 	}
 
-	puts("Closing Connection\n");
+	if (mRequest)
+		delete mRequest;
 
+//	printf("\nClosing Connection socket=%d\n",mSocket);
 }
 
-int Connection::Read()
+int Connection::Read(size_t size)
 {
 	int len;
-	size_t readBytes=0;
-	while( (len = read(mSocket,mReadBuffer+readBytes,mReadBufferSize-readBytes) ) > 0)
+	size_t toRead = size;
+
+	if (toRead > mReadBuffer->GetSpaceLeft())
 	{
-		readBytes+= len ;
-		if (strcmp("\n\r\n\r",(char*)mReadBuffer-4))
-		{
-			break;
-		}
+		toRead = mReadBuffer->GetSpaceLeft();
 	}
-	//std::cout << "mBuffer=" << mBuffer << "\n";
-	// Read 0 bytes, means socket is closes on other side
-	if (readBytes>0)
+
+	unsigned char* tbuff = new unsigned char[toRead];
+
+	len = read(mSocket, tbuff , toRead);
+
+
+	if (len > 0)
 	{
-		Request* req = Request::ParseRequest(mReadBuffer,readBytes,this);
+		mReadBuffer->Add(tbuff,len);
+
+		if (mRequest==NULL)
+			mRequest = new Request(this);
+
+		Request::ParseReturn parseReturn = Request::ParseRequest(mRequest,mReadBuffer);
+
+		switch (parseReturn)
+		{
+			case Request::REQUEST_OK:
+			{
+				RequestQueue::GetInstance()->AddRequest(mRequest);
+				break;
+			}
+			case Request::REQUEST_HTPP_VERSION_NOT_SUPPORTED:
+			{
+				assert(false); // TODO implement sending of HTTP Version Not Supported
+				break;
+			}
+			case Request::REQUEST_BAD:
+			{
+				assert(false); // TODO implement sending of 400 Bad Request
+				break;
+			}
+
+			case Request::REQUEST_TO_LARGE:
+			{
+				assert(false); // TODO implement sending of 413 Request Entity Too Large
+				break;
+			}
+			case Request::REQUEST_URI_TO_LONG:
+			{
+				assert(false); // TODO implement sending of 	414 Request-URI Too Long
+				break;
+			}
+
+			case Request::REQUEST_UNFINISHED: /* This means we got ot read more data*/
+			{
+
+				break;
+			}
+		}
+
+
+	}
+
+	if (strcmp("\n\r\n\r",(char*)mReadBuffer-4))
+	{
+		Request* req = Request::ParseRequest(mReadBuffer,this);
 		if (req)
 		{
 			RequestQueue::GetInstance()->AddRequest(req);
 		}
+	}
 
-	}
-	else if (readBytes == 0)
-	{
-		close(mSocket);
-	}
-	else
-	{
-		perror("read error:");
-	}
-	return readBytes;
+	delete [] tbuff;
+	return len;
 }
 
 int Connection::GetSocket() const
@@ -91,24 +138,38 @@ int Connection::GetSocket() const
 
 
 
-void Connection::Write(Response* response)
+void Connection::Write(const Response* response)
 {
 
-	mToWrite =  response->ToBuffer(mWriteBuffer,mWriteBufferSize);
-	Write();
-	mToWrite = response->GetContentLength();
+	int mToWrite =  response->ToBuffer(mWriteBuffer);
+	Write(mToWrite);
 
-	sendfile(mSocket,response->GetFile(),0,mToWrite);
-}
-
-void Connection::Write()
-{
-	int len;
-	size_t writtenBytes=0;
-
-	while( (len = write(mSocket,mWriteBuffer+writtenBytes,mToWrite-writtenBytes) ) > 0  )
+	if (response->GetFile()!=-1)
 	{
-		writtenBytes+= len ;
+		mToWrite = response->GetContentLength();
+	//	std::cout << "\nSenfile toWrite:" << mToWrite;
+		int len=0;
+		int chunk=4096;
+		off_t offset = 0;
+		while( (len=sendfile(mSocket,response->GetFile(),&offset,chunk))>0)
+		{
+//			std::cout << "\nSenfile written:" << offset << "/" << mToWrite;
+
+		}
 	}
 
+	if (!response->GetKeepAlive())
+	{
+	}
+}
+
+void Connection::Write(size_t size)
+{
+	size_t writtenBytes=0;
+	size_t toWrite = size;
+	if ( size > mWriteBuffer->GetSize() )
+		toWrite = mWriteBuffer->GetSize();
+
+	unsigned char* buffer = mWriteBuffer->GetBuffer();
+	write(mSocket, buffer, toWrite);
 }

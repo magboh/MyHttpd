@@ -12,6 +12,7 @@
 #include "request.h"
 #include "http.h"
 #include "connection.h"
+#include "bytebuffer.h"
 
 Request::Request(Connection* connection) {
 	// TODO Auto-generated constructor stub
@@ -19,8 +20,9 @@ Request::Request(Connection* connection) {
 	mUri="";
 	mVersion = Http::HTTP_VERSION_1_1;
 	mType= HTTP_GET;
-	mKeepAlive=false;
+	mKeepAlive=true;
 	mConnection = connection;
+	mParseState = 0 ;
 }
 
 Request::~Request() {
@@ -33,50 +35,15 @@ Request::~Request() {
  * @param size
  * @return
  */
-Request* Request::ParseRequest(unsigned char* data, size_t size,Connection* connection)
+Request::ParseReturn Request::ParseRequest(Request* request,ByteBuffer* buffer)
 {
-	Request* request = new Request(connection);
+	ParseReturn = REQUEST_UNFINISHED;
+
 	char *ptr;
 	char *line;
-	int l=0;
 	int status=0;
-	line=strtok_r((char*)data,"\n",&ptr);
+	unsigned char* data = buffer->GetBuffer();
 
-	if (line != NULL)
-	{
-		char *lptr;
-		char *cmd;
-		// GET / POST
-		cmd = strtok_r((char*)line," ",&lptr);
-		if (cmd)
-		{
-			if (strcmp(cmd,"GET")==0)
-			{
-				request->mType = Request::HTTP_GET;
-				status++;
-			}
-			else if (strcmp(cmd,"POST")==0)
-			{
-				request->mType = Request::HTTP_POST;
-				status++;
-			}
-		}
-
-		//URI
-		cmd = strtok_r(NULL," ",&lptr);
-
-		if (cmd && strlen(cmd)<=MAX_URI_LENGTH)
-		{
-			request->mUri = cmd;
-			status++;
-		}
-
-
-		// HTTP Version
-		cmd = strtok_r(NULL," ",&lptr);
-
-		if (cmd)
-		{
 			if(strcmp(cmd,"HTTP/1.1\r")==0)
 			{
 				request->mVersion = Http::HTTP_VERSION_1_1;
@@ -90,24 +57,15 @@ Request* Request::ParseRequest(unsigned char* data, size_t size,Connection* conn
 		}
 	}
 
-	while( (line=strtok_r(NULL,"\n",&ptr)) )
-	{
-	}
 
-	// IF not enough info retrieved
-	if (status < 3 )
-	{
-		delete request;
-		request = NULL;
-	}
-	return request;
+	return ;
 }
 
 const std::string Request::ToString() const
 {
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
-	str+= (mVersion == Http::HTTP_VERSION_1_1) ? "HTTP/1.1" : "HTTP/1.0";
+	str+= Http::GetVersionString(mVersion);
 	std::cout << "\nRequest::ToString=" << str << "\n";
 	return str;
 }

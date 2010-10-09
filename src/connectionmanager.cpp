@@ -12,24 +12,54 @@
 #include <cassert>
 #include <poll.h>
 #include <pthread.h>
+#include <unistd.h>
+#include <iostream>
+#include <list>
 
 #include "connection.h"
 #include "connectionmanager.h"
 #include "requestqueue.h"
+#include "connectionqueueworker.h"
 
 ConnectionManager::ConnectionManager(int maxConnections)
 {
+	mNrWorkers = 1 ;
+
+
+	mMutex = new pthread_mutex_t;
+	pthread_mutex_init(mMutex, NULL);
+
+	mReadMutex = new pthread_mutex_t;
+	pthread_mutex_init(mReadMutex, NULL);
+
+	mWriteMutex = new pthread_mutex_t;
+	pthread_mutex_init(mWriteMutex, NULL);
+
+	mCondReadThread = new pthread_cond_t;
+	pthread_cond_init (mCondReadThread , NULL);
+
+	mCondWriteThread = new pthread_cond_t;
+	pthread_cond_init (mCondWriteThread , NULL);
 
 	mMaxConnections = maxConnections;
 	mNumConnections = 0;
-	mConnections = new Connection *[mMaxConnections];
-	mFds = new pollfd[mMaxConnections];
-	for (int i=0;i<mMaxConnections;i++)
+	mCurrentThread = 0 ;
+
+	typedef  std::list <Connection*> conque;
+
+	mReadList = new conque*[mNrWorkers];
+	mWriteList= new conque*[mNrWorkers];
+
+	for(int i=0; i<mNrWorkers;i++)
 	{
-		mConnections[i]=NULL;
-		mFds[i].events = POLLIN;
-		mFds[i].fd = 0 ;
+		mReadList[i] = new conque;
+		mWriteList[i] = new conque;
+
+		ConnectionQueueWorker* worker1 = new ConnectionQueueWorker(this, mReadList[i],  ConnectionQueueWorker::Reader);
+		ConnectionQueueWorker* worker2 = new ConnectionQueueWorker(this, mWriteList[i], ConnectionQueueWorker::Writer);
 	}
+
+
 }
 
 ConnectionManager::~ConnectionManager()
@@ -40,45 +70,18 @@ ConnectionManager::~ConnectionManager()
 
 void ConnectionManager::CreateConnection(int socket)
 {
-	int index=0;
 
-	for (index=0 ; index<mMaxConnections ; index++)
-	{
-		if (mConnections[index]==NULL)
-		{
-			mConnections[index] = new Connection(socket);
-			mFds[index].fd = socket;
-			break;
-		}
-	}
-}
-
-void ConnectionManager::DeleteConnection(int socket)
-{
-	int index=0;
-
-	for (index=0 ; index<mMaxConnections ; index++)
-	{
-		if (mConnections[index]!=NULL && mConnections[index]->GetSocket() == socket)
-		{
-			delete mConnections[index] ;
-			mFds[index].fd = 0;
-			break;
-		}
-	}
+	Connection* con= new Connection(socket,this);
+	mReadList[mCurrentThread++ % mNrWorkers]->push_back(con);
 }
 
 
-
-/**
- * Run from ThreadCb
- */
 void ConnectionManager::HandleConnections()
 {
-	nfds_t nfds = mMaxConnections ;
+/*	nfds_t nfds = mMaxConnections ;
 	while(1)
 	{
-		int ret = poll(mFds,nfds,1000);
+		int ret = poll(mFds,nfds,100);
 
 		if (ret<0)
 		{
@@ -86,28 +89,38 @@ void ConnectionManager::HandleConnections()
 		}
 		if (ret>0)
 		{
-			for (int index=0;index<mMaxConnections;index++)
+			int handled=0;
+			for (int index=0 ; (index<mMaxConnections) && (handled < ret) ; index++, handled++)
 			{
 
-				if (mFds[index].revents & POLLIN)
+				pollfd* fds = &mFds[index];
+				Connection* con = mConnections[index];
+				if (con == NULL || fds == NULL)
+					continue;
+				if (fds->revents  & (POLLERR | POLLNVAL | POLLHUP))
 				{
-					if (mConnections[index]->Read()<=0)
+*/					// Some kind of error occured, or connection closed
+//					printf("Connection closing from Poll() socket=%d",fds->fd);
+
+/*					continue;
+				}
+
+				if (fds->revents & POLLIN)
+				{
+					if (con->Read()<=0)
 					{
-						delete mConnections[index];
-						mFds[index].fd = 0;
-						mConnections[index]= NULL;
 						continue;
 					}
 				}
-
-				if (mFds[index].revents & POLLOUT)
+*/
+			/*	if (fds->revents & POLLOUT)
 				{
-					mConnections[index]->Write();
+					con->Write();
 				}
-
-			}
+*/
+/*			}
 		}
-	}
+	}*/
 }
 
 void ConnectionManager::StartHandleConnections()
@@ -125,4 +138,5 @@ void* ConnectionManager::ThreadCallBack(void* arg)
 {
 	ConnectionManager* connectionManager = (ConnectionManager*) arg;
 	connectionManager->HandleConnections();
+	return NULL;
 }

@@ -15,19 +15,22 @@
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 
+
 RequestQueue::RequestQueue()
 {
 	mMutex = new pthread_mutex_t;
-	mCondThread = new pthread_cond_t;
 	pthread_mutex_init(mMutex, NULL);
+
+	mCondThread = new pthread_cond_t;
 	pthread_cond_init (mCondThread, NULL);
-
-
 }
 
 RequestQueue::~RequestQueue()
 {
-	// TODO Auto-generated destructor stub
+	delete mMutex;
+	delete mCondThread;
+	mMutex = NULL;
+	mCondThread = NULL;
 }
 
 const Request* RequestQueue::GetNextRequest()
@@ -46,7 +49,7 @@ const Request* RequestQueue::GetNextRequest()
 	{
 		request = mReqQueue.front();
 		mReqQueue.pop();
-		std::cout << "threadid=" << pthread_self()<<  " handling " << request->ToString() << "\n";
+//		std::cout << "\n" << pthread_self() <<  " : " << mReqQueue.size()<<  ":" << request->ToString() << "\n";
 	}
 
 
@@ -68,7 +71,6 @@ bool RequestQueue::CreateQueueWorker()
 
 	if (rqw->Start()) // worker started
 	{
-		//mWorkerVector. push(rqw);
 		mWorkerVector.push_back(rqw);
 	}
 	else
