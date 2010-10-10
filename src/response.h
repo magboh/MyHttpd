@@ -42,6 +42,7 @@ private:
 	int mFile;
 	Connection* mConnection;
 	bool mKeepAlive;
+
 };
 
 #endif /* RESPONSE_H_ */

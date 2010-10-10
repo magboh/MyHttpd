@@ -68,9 +68,9 @@ bool VirtualServer::Start()
     RequestQueue::GetInstance();
 
 	mConnectionManager->StartHandleConnections();
-/*
+
 	RequestQueue::GetInstance()->CreateQueueWorker();
-	RequestQueue::GetInstance()->CreateQueueWorker();
+/*	RequestQueue::GetInstance()->CreateQueueWorker();
 	RequestQueue::GetInstance()->CreateQueueWorker();
 */
     WaitForIncomming();
@@ -97,7 +97,10 @@ void VirtualServer::WaitForIncomming()
 			}
 
 			/* set to non blocking*/
-			assert(fcntl(clientSock,O_NONBLOCK)==0);
+			//fcntl(clientSock,O_NONBLOCK);
+
+			int flags = fcntl(clientSock, F_GETFL, 0);
+			fcntl(clientSock, F_SETFL, flags | O_NONBLOCK);
 			mConnectionManager->CreateConnection(clientSock);
 		}
 		else

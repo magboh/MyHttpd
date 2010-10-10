@@ -21,6 +21,7 @@ Response *Response::CreateResponse(const Request *request)
 	response->SetHttpVersion( request->GetHttpVersion() );
 	response->mKeepAlive = request->GetKeepAlive();
 	response->mKeepAlive = false;
+
 	return response;
 }
 
@@ -122,8 +123,9 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
-
+//	std::cout << "ToBuffer= size=" << len <<"\n";
 	buffer->Add( ss.str().c_str() , len);
 	return len;
 }
+
 

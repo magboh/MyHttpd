@@ -61,17 +61,18 @@ void ConnectionQueueWorker::HandleRead()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
-	int readThrougput = 1024L*1024L/8 ;
+	int readThrougput = 512000;
 
 	while (1)
 	{
 		std::list<Connection*>::iterator it;
 		int count = mList->size();
 
-		for(it = mList->begin() ; it != mList->end() ; it++)
+		for(it = mList->begin() ; count >0 &&   it != mList->end() ; it++)
 		{
 			Connection* con = *it;
 			con->Read(readThrougput / count);
+			usleep(100);
 		}
 
 	}
@@ -80,6 +81,27 @@ void ConnectionQueueWorker::HandleRead()
 
 void ConnectionQueueWorker::HandleWrite()
 {
+
+	// Max per iteration of data to send.. Should be ca 100kb.. this
+		// This should be TrafficShaped to be throughput per second
+		int writeThrougput = 512000;
+
+		while (1)
+		{
+			std::list<Connection*>::iterator it;
+			int count = mList->size();
+
+			for(it = mList->begin() ; it != mList->end() ; it++)
+			{
+				Connection* con = *it;
+				if (con->HasData())
+					con->Write(writeThrougput / count);
+
+				usleep(100);
+			}
+
+		}
+
 
 }
 

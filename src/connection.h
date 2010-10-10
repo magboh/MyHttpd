@@ -22,11 +22,13 @@ public:
 	 * @param size amount of data to read from socket
 	 * @return
 	 */
-	int Read(size_t size);
-	void Write(const Response* response);
+	bool Read(size_t size);
 	void Write(size_t size);
 	int GetSocket() const;
 	bool WantToRead() const;
+	bool HasData();
+	void SetHasData(bool b);
+	void SetResponse(const Response* response);
 private:
 	int mSocket;
 
@@ -36,6 +38,11 @@ private:
 	ConnectionManager* mConnectionManager;
 	Request* mRequest;
 	bool mWantToRead;
+
+	const Response* mResponse;
+	bool mHasData;
+	char mWriteStatus;
+	size_t mWritten;
 };
 
 #endif /* CONNECTION_H_ */

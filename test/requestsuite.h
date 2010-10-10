@@ -11,9 +11,14 @@ public:
 	RequestSuite();
 	virtual ~RequestSuite();
 
-	void TestGood();
+	void TestGood1();
+	void TestGood2();
+	void TestBADRequest();
 	void TestSimpleGet();
-	void TestSimpleGet2();
+	void TestVersionNotSupported();
+
+	void TestHalf();
+
 };
 
 #endif /* MATHTESTSUITE_H_ */

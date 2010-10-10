@@ -93,7 +93,8 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 		}
 
 	}
-	request->GetConnection()->Write(response);
-	delete response;
+
+	request->GetConnection()->SetResponse(response);
+	request->GetConnection()->SetHasData(true);
 	delete request ;
 }

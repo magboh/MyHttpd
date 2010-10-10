@@ -15,14 +15,16 @@ public:
 	explicit ByteBuffer(size_t sizeGrow);
 	virtual ~ByteBuffer();
 	void Clear();
-	bool Add(unsigned char* data, size_t size);
+	bool Add(char* data, size_t size);
 	bool Add(const char *data, size_t size);
 
 	size_t GetSpaceLeft() const;
 	size_t GetSize() const;
-	unsigned char* GetBuffer()  const;
+	const char* GetBuffer()  const;
+	size_t GetUsage() const;
+	void Remove(int size);
 private:
-	unsigned char* mBuffer;
+	char* mBuffer;
 	size_t mSize;
 	unsigned int mPosition;
 };

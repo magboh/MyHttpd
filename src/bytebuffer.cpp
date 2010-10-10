@@ -10,8 +10,9 @@
 
 ByteBuffer::ByteBuffer(size_t size)
 {
-	mBuffer = new unsigned char[size];
+	mBuffer = new char[size];
 	mSize = size;
+	mPosition=0;
 }
 
 ByteBuffer::~ByteBuffer()
@@ -29,10 +30,10 @@ size_t ByteBuffer::GetSpaceLeft()  const
 
 bool ByteBuffer::Add(const char *data, size_t size)
 {
-	return Add((unsigned char *)data, size);
+	return Add((char *)data, size);
 }
 
-bool ByteBuffer::Add(unsigned char *data, size_t size)
+bool ByteBuffer::Add(char *data, size_t size)
 {
 	size_t spaceLeft = GetSpaceLeft();
 	bool bOk=true;
@@ -54,13 +55,29 @@ size_t ByteBuffer::GetSize()  const
 {
 	return mSize;
 }
-
+size_t ByteBuffer::GetUsage() const
+{
+	return mPosition;
+}
 void ByteBuffer::Clear()
 {
 	memset(mBuffer,0x00,mSize);
+	mPosition = 0 ;
 }
 
-unsigned char* ByteBuffer::GetBuffer() const
+const char* ByteBuffer::GetBuffer() const
 {
 	return mBuffer;
+}
+
+void ByteBuffer::Remove(int size)
+{
+	if (size >= mPosition)
+		Clear();
+	else
+	{
+		memcpy(mBuffer,mBuffer+size,mPosition-size);
+		mPosition -= size;
+	}
+
 }

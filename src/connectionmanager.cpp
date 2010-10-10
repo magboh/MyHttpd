@@ -57,6 +57,10 @@ ConnectionManager::ConnectionManager(int maxConnections)
 
 		ConnectionQueueWorker* worker1 = new ConnectionQueueWorker(this, mReadList[i],  ConnectionQueueWorker::Reader);
 		ConnectionQueueWorker* worker2 = new ConnectionQueueWorker(this, mWriteList[i], ConnectionQueueWorker::Writer);
+
+		worker1->Start();
+		worker2->Start();
+
 	}
 
 
@@ -72,7 +76,8 @@ void ConnectionManager::CreateConnection(int socket)
 {
 
 	Connection* con= new Connection(socket,this);
-	mReadList[mCurrentThread++ % mNrWorkers]->push_back(con);
+	mReadList[mCurrentThread % mNrWorkers]->push_back(con);
+	mWriteList[mCurrentThread++ % mNrWorkers]->push_back(con);
 }
 
 

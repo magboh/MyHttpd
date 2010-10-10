@@ -26,13 +26,16 @@ public:
 		REQUEST_TO_LARGE,
 		REQUEST_URI_TO_LONG,
 		};
-	static Request::ParseReturn ParseRequest(Request* request,ByteBuffer* buffer);
+	static bool ParseRequest(Request* request,ByteBuffer* buffer);
 	enum RequestType {HTTP_GET,HTTP_POST};
 
 	const std::string ToString() const;
 	const std::string & GetUri() const;
 	Http::Version GetHttpVersion() const;
 	RequestType GetHttpType() const;
+
+	Http::Status GetStatus() const;
+    void SetStatus(Http::Status mStatus);
 
 	Connection *GetConnection() const;
     void SetConnection(Connection *mConnection);
@@ -48,6 +51,8 @@ private:
 	RequestType mType;
 	Connection* mConnection;
 	int mParseState;
+	size_t mParsePos;
+	Http::Status mStatus;
 };
 
 #endif /* REQUEST_H_ */

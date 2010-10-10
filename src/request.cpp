@@ -8,7 +8,7 @@
 #include <string>
 #include <string.h>
 #include <iostream>
-
+#include <cassert>
 #include "request.h"
 #include "http.h"
 #include "connection.h"
@@ -23,6 +23,7 @@ Request::Request(Connection* connection) {
 	mKeepAlive=true;
 	mConnection = connection;
 	mParseState = 0 ;
+	mParsePos = 0;
 }
 
 Request::~Request() {
@@ -35,30 +36,120 @@ Request::~Request() {
  * @param size
  * @return
  */
-Request::ParseReturn Request::ParseRequest(Request* request,ByteBuffer* buffer)
+bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 {
-	ParseReturn = REQUEST_UNFINISHED;
+	ParseReturn pret= REQUEST_UNFINISHED;
 
 	char *ptr;
 	char *line;
 	int status=0;
-	unsigned char* data = buffer->GetBuffer();
+	int parsePos=request->mParsePos;
+	// ParseState == 0 is GET/POST line
+	const char* data = buffer->GetBuffer();
+	size_t size = buffer->GetUsage();
+	if (size < 18)
+		return false;
+//	std::cout << "parsePos=" << parsePos << " size=" << size <<"\n";
+	if (request->mParseState==0)
+	{
+		Http::Version version = Http::HTTP_VERSION_1_1;
+		RequestType rt = Request::HTTP_GET;
 
-			if(strcmp(cmd,"HTTP/1.1\r")==0)
+		if (strncmp(data,"GET",3)==0)
+		{
+			rt = Request::HTTP_GET;
+			parsePos+=3;
+//			std::cout << "ParsePos=" << parsePos << "GET\n";
+		}
+		else if (strncmp(data,"POST",4)==0)
+		{
+			rt = Request::HTTP_POST;
+			parsePos+=4;
+			std::cout << "rparsePos=" << parsePos << "POST\n";
+		}
+
+		assert(data[parsePos]==' ');
+		parsePos++;
+
+		int i=parsePos;
+		for (i;i<size;i++)
+			if (data[i]==' ')
+				break;
+
+		if (i-parsePos > Request::MAX_URI_LENGTH)
+		{
+//			std::cout << "URI too LONG\n";
+			request->mStatus = Http::HTTP_REQUEST_URI_TO_LONG;
+			return true;
+		}
+
+		std::string uri = std::string( data+parsePos, i-parsePos);
+		parsePos+= i-parsePos;
+//		std::cout << "parsePos=" << parsePos << " URI="<< uri <<"\n";
+
+
+		if (size > parsePos+9)
+		{
+			assert(data[parsePos]==' ');
+			parsePos++;
+			if(strncmp("HTTP/1.1",data+parsePos,8)==0)
 			{
-				request->mVersion = Http::HTTP_VERSION_1_1;
-				status++;
+				version = Http::HTTP_VERSION_1_1;
+				parsePos+=8;
 			}
-			else if(strcmp(cmd,"HTTP/1.0\r")==0)
+			else if(strncmp("HTTP/1.0",data+parsePos,8)==0)
 			{
-				request->mVersion = Http::HTTP_VERSION_1_0;
-				status++;
+				version = Http::HTTP_VERSION_1_0;
+				parsePos+=8;
+			}
+			else
+			{
+	//			std::cout << "Bad version\n";
+				request->mStatus = Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED;
+				return true;
+			}
+
+
+		}
+		else
+			return false;
+
+//		std::cout << "parsePos=" << parsePos << "version=" << Http::GetVersionString(version) << " \n";
+
+		if (size > parsePos+2)
+		{
+			if (*(data+parsePos)=='\r')
+				parsePos++;
+
+			if (*(data+parsePos)=='\n')
+			{
+				parsePos++;
+
+				request->mParseState = 1 ;
+				request->mType = rt;
+				request->mVersion = version;
+				request->mUri = uri;
+				request->mParsePos = parsePos;
 			}
 		}
 	}
 
+	if (request->mParseState == 1)
+	{
+		for (int i=request->mParsePos; i<=size-4; i++)
+		{
+			if (strncmp("\r\n\r\n",(data+i),4)==0)
+			{
+				request->mParsePos=0;
+				request->mStatus = Http::HTTP_OK;
+				buffer->Remove(i+4);
+//				std::cout << "request->mParsePos=" << request->mParsePos << " req=" << request->ToString() <<"\n";
+				return true;
+			}
+		}
+	}
+	return false;
 
-	return ;
 }
 
 const std::string Request::ToString() const
@@ -66,6 +157,7 @@ const std::string Request::ToString() const
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
 	str+= Http::GetVersionString(mVersion);
+	str+= " " + Http::GetStatusString(mStatus);
 	std::cout << "\nRequest::ToString=" << str << "\n";
 	return str;
 }
@@ -100,4 +192,16 @@ void Request::SetConnection(Connection *mConnection)
 bool Request::GetKeepAlive() const
 {
 	return mKeepAlive;
+}
+
+
+
+void Request::SetStatus(Http::Status status)
+{
+	mStatus = status;
+}
+
+Http::Status Request::GetStatus() const
+{
+	return mStatus;
 }
