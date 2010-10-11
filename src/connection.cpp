@@ -42,25 +42,27 @@ Connection::~Connection()
 {
 	if (mReadBuffer)
 	{
-		delete [] mReadBuffer;
+		delete mReadBuffer;
 		mReadBuffer = 0;
 	}
 
 	if (mWriteBuffer)
 	{
-		delete [] mWriteBuffer;
+		delete mWriteBuffer;
 		mWriteBuffer = 0;
 	}
 
 	if (mRequest)
 		delete mRequest;
 
+	if (mResponse)
+		delete mResponse;
 //	printf("\nClosing Connection socket=%d\n",mSocket);
 }
 
 bool Connection::Read(size_t size)
 {
-	int len;
+	bool keepAlive=true;
 	size_t toRead = size;
 
 	if (toRead > mReadBuffer->GetSpaceLeft())
@@ -69,7 +71,7 @@ bool Connection::Read(size_t size)
 	}
 
 	char* tbuff = new char[toRead];
-	len = read(mSocket, tbuff , toRead);
+	int len = read(mSocket, tbuff , toRead);
 
 
 	if (len > 0)
@@ -92,7 +94,9 @@ bool Connection::Read(size_t size)
 			{
 				// Transfer ownership of request to RequestQueue..
 				RequestQueue::GetInstance()->AddRequest(mRequest);
+				keepAlive = mRequest->GetKeepAlive();
 				mRequest = NULL;
+
 				break;
 			}
 
@@ -105,7 +109,7 @@ bool Connection::Read(size_t size)
 	}
 	delete [] tbuff;
 
-	return len;
+	return keepAlive;
 }
 
 int Connection::GetSocket() const
@@ -113,9 +117,10 @@ int Connection::GetSocket() const
 	return mSocket;
 }
 
-void Connection::Write(size_t size)
+bool Connection::Write(size_t size)
 {
 	size_t toWrite = size;
+	bool keepAlive=true;
 //	std::cout << "\nWrite" << size << "bytes\n";
 	if (mWriteStatus==0)
 	{
@@ -158,11 +163,16 @@ void Connection::Write(size_t size)
 	if (mWriteStatus == 2)
 	{
 //		if ( !mResponse->GetKeepAlive() )
+		keepAlive = mResponse->GetKeepAlive();
+		delete mResponse;
 		mResponse = NULL;
 		mHasData = false;
+
+
+
 	}
 
-
+	return keepAlive;
 }
 
 

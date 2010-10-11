@@ -83,49 +83,6 @@ void ConnectionManager::CreateConnection(int socket)
 
 void ConnectionManager::HandleConnections()
 {
-/*	nfds_t nfds = mMaxConnections ;
-	while(1)
-	{
-		int ret = poll(mFds,nfds,100);
-
-		if (ret<0)
-		{
-			perror("poll failed");
-		}
-		if (ret>0)
-		{
-			int handled=0;
-			for (int index=0 ; (index<mMaxConnections) && (handled < ret) ; index++, handled++)
-			{
-
-				pollfd* fds = &mFds[index];
-				Connection* con = mConnections[index];
-				if (con == NULL || fds == NULL)
-					continue;
-				if (fds->revents  & (POLLERR | POLLNVAL | POLLHUP))
-				{
-*/					// Some kind of error occured, or connection closed
-//					printf("Connection closing from Poll() socket=%d",fds->fd);
-
-/*					continue;
-				}
-
-				if (fds->revents & POLLIN)
-				{
-					if (con->Read()<=0)
-					{
-						continue;
-					}
-				}
-*/
-			/*	if (fds->revents & POLLOUT)
-				{
-					con->Write();
-				}
-*/
-/*			}
-		}
-	}*/
 }
 
 void ConnectionManager::StartHandleConnections()

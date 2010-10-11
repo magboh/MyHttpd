@@ -91,7 +91,7 @@ void VirtualServer::WaitForIncomming()
 
 		if (clientSock > 0)
 		{
-			if (++a > 1000)
+			if (++a > 1000000)
 			{
 				return;
 			}

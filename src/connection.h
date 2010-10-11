@@ -23,7 +23,7 @@ public:
 	 * @return
 	 */
 	bool Read(size_t size);
-	void Write(size_t size);
+	bool Write(size_t size);
 	int GetSocket() const;
 	bool WantToRead() const;
 	bool HasData();

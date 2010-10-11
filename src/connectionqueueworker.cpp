@@ -71,10 +71,10 @@ void ConnectionQueueWorker::HandleRead()
 		for(it = mList->begin() ; count >0 &&   it != mList->end() ; it++)
 		{
 			Connection* con = *it;
-			con->Read(readThrougput / count);
-			usleep(100);
+			if (!con->Read(readThrougput / count))
+				it = mList->erase(it);
 		}
-
+		usleep(10);
 	}
 
 }
@@ -91,14 +91,21 @@ void ConnectionQueueWorker::HandleWrite()
 			std::list<Connection*>::iterator it;
 			int count = mList->size();
 
-			for(it = mList->begin() ; it != mList->end() ; it++)
+			for(it = mList->begin() ; count >0  &&  it != mList->end() ; it++)
 			{
 				Connection* con = *it;
-				if (con->HasData())
-					con->Write(writeThrougput / count);
+				if (con->HasData()) {
+					if (!con->Write(writeThrougput / count))
+					{
+						close(con->GetSocket());
+						delete con;
+						it = mList->erase(it);
 
-				usleep(100);
+					}
+				}
+
 			}
+			usleep(10);
 
 		}
 

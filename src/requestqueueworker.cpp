@@ -78,7 +78,7 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 	}
 	else /* Set fail */
 	{
-		*((char*)0)=1;
+//		*((char*)0)=1;
 		switch (error)
 		{
 		case EACCES:

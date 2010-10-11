@@ -95,26 +95,26 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	std::string str="";
 	size_t len=0;
 
-	ss << Http::GetVersionString(mVersion) << " " << mStatus << " " << Http::GetStatusString(mStatus) <<" \r\n";
+	ss << Http::GetVersionString(mVersion) << " " << mStatus << " " << Http::GetStatusString(mStatus) <<"\r\n";
 
 //	if (!mKeepAlive)
 	//{
-		ss << "Connection: close \r\n";
+		ss << "Connection:Close\r\n";
 	//}
 
 
 	if (mStatus == Http::HTTP_OK)
 	{
-		ss << "Content-Length:" << mContentLength << " \r\n";
-		ss << "Content-Type: text/html \r\n";
+		ss << "Content-Length:" << mContentLength << "\r\n";
+		ss << "Content-Type: text/html\r\n";
 		ss << "\r\n";
 	}
 	else
 	{
-//		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
+		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
 	//	mContentLength = str.length();
-		ss << "Content-Length:" << mContentLength << " \r\n";
-		ss << "Content-Type: text/html \r\n";
+//		ss << "Content-Length:" << mContentLength << "\r\n";
+		ss << "Content-Type: text/html\r\n";
 		ss << "\r\n";
 		ss << str;
 	}
