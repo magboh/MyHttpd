@@ -18,13 +18,16 @@
 #include "connectionmanager.h"
 #include "connectionqueueworker.h"
 
-ConnectionQueueWorker::	ConnectionQueueWorker(ConnectionManager* conMgr , std::list <Connection*>* list, Type type)
+ConnectionQueueWorker::	ConnectionQueueWorker(ConnectionManager* conMgr)
 {
-	mType = type;
 	mThread = new pthread_t;
 	mKeepRunning = true;
 	mConnectionManager = conMgr;
-	mList= list;
+
+	mMutex = new pthread_mutex_t;
+	pthread_mutex_init(mMutex, NULL);
+
+	mKeepRunning = false;
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
@@ -36,79 +39,65 @@ ConnectionQueueWorker::~ConnectionQueueWorker()
 void* ConnectionQueueWorker::ThreadCallBack(void* arg)
 {
 	ConnectionQueueWorker* worker = (ConnectionQueueWorker*) arg;
-
-	switch (worker->mType)
-	{
-	case ConnectionQueueWorker::Reader:
-		worker->HandleRead();
-		break;
-	case ConnectionQueueWorker::Writer:
-		worker->HandleWrite();
-		break;
-	}
-
+	worker->Work();
 	return (NULL);
 }
 
 bool ConnectionQueueWorker::Start()
 {
+	mKeepRunning = true;
 	bool ok = (pthread_create(mThread,NULL, ConnectionQueueWorker::ThreadCallBack,(void*)this)==0);
 	return ok ;
 }
 
 
-void ConnectionQueueWorker::HandleRead()
+void ConnectionQueueWorker::Work()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
 	int readThrougput = 512000;
-
+	// Max per iteration of data to send.. Should be ca 100kb.. this
+		// This should be TrafficShaped to be throughput per second
+		int writeThrougput = 512000;
 	while (1)
 	{
 		std::list<Connection*>::iterator it;
-		int count = mList->size();
+		int count = mList.size();
 
-		for(it = mList->begin() ; count >0 &&   it != mList->end() ; it++)
+		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
 		{
 			Connection* con = *it;
-			if (!con->Read(readThrougput / count))
-				it = mList->erase(it);
+
+			if(mKeepRunning)
+				con->Read(readThrougput / count);
+
+			if (con->HasData())
+			{
+				if (!con->Write(writeThrougput / count))
+				{
+					close(con->GetSocket());
+					delete con;
+					it = mList.erase(it);
+				}
+			}
+
 		}
+		if (!mKeepRunning && mList.size() == 0 )
+			return;
 		usleep(10);
+
 	}
 
 }
 
-void ConnectionQueueWorker::HandleWrite()
+void ConnectionQueueWorker::AddConnection(Connection* con)
 {
-
-	// Max per iteration of data to send.. Should be ca 100kb.. this
-		// This should be TrafficShaped to be throughput per second
-		int writeThrougput = 512000;
-
-		while (1)
-		{
-			std::list<Connection*>::iterator it;
-			int count = mList->size();
-
-			for(it = mList->begin() ; count >0  &&  it != mList->end() ; it++)
-			{
-				Connection* con = *it;
-				if (con->HasData()) {
-					if (!con->Write(writeThrougput / count))
-					{
-						close(con->GetSocket());
-						delete con;
-						it = mList->erase(it);
-
-					}
-				}
-
-			}
-			usleep(10);
-
-		}
-
-
+	pthread_mutex_lock(mMutex);
+	mList.push_back(con);
+	pthread_mutex_unlock(mMutex);
 }
 
+bool ConnectionQueueWorker::Stop()
+{
+	mKeepRunning = false;
+}

@@ -67,13 +67,11 @@ bool VirtualServer::Start()
 
     RequestQueue::GetInstance();
 
-	mConnectionManager->StartHandleConnections();
+	RequestQueue::GetInstance()->CreateQueueWorker();
+	RequestQueue::GetInstance()->CreateQueueWorker();
+	RequestQueue::GetInstance()->CreateQueueWorker();
 
-	RequestQueue::GetInstance()->CreateQueueWorker();
-/*	RequestQueue::GetInstance()->CreateQueueWorker();
-	RequestQueue::GetInstance()->CreateQueueWorker();
-*/
-    WaitForIncomming();
+	WaitForIncomming();
     return retval;
 
 }

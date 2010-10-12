@@ -14,21 +14,20 @@ class ConnectionManager;
 class ConnectionQueueWorker
 {
 public:
-	enum Type {Reader=0,Writer};
-	ConnectionQueueWorker(ConnectionManager* conMgr , std::list <Connection*>* list, Type type);
+	ConnectionQueueWorker(ConnectionManager* conMgr);
+
+	void AddConnection(Connection* con);
 	virtual ~ConnectionQueueWorker();
 	bool Start();
+	bool Stop();
 private:
 	void Work();
 	static void* ThreadCallBack(void* arg);
-	void HandleRead();
-	void HandleWrite();
-
-	bool mKeepRunning;
 	pthread_t* mThread;
-	Type mType;
 	ConnectionManager* mConnectionManager;
-	std::list <Connection*>* mList;
+	std::list <Connection*> mList;
+	pthread_mutex_t* mMutex;
+	bool mKeepRunning;
 };
 
 #endif /* CONNECTIONQUEUEWORKER_H_ */

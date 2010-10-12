@@ -11,36 +11,24 @@
 
 #include <list>
 
-class Connection;
-struct pollfd;
-
-class ConnectionManager {
+class ConnectionQueueWorker;
+class ConnectionManager
+{
 public:
 	ConnectionManager(int maxConnections);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket);
 	void StartHandleConnections();
-	Connection* GetWriteConnection();
-	Connection* GetReadConnection();
 private:
 	static void* ThreadCallBack(void* arg);
 	void HandleConnections();
 
 	int mNumConnections;
 	int mMaxConnections;
-	Connection** mConnections;
-	pollfd* mFds;
-	pthread_mutex_t* mMutex;
-	pthread_mutex_t* mReadMutex;
-	pthread_mutex_t* mWriteMutex;
 
-	pthread_cond_t* mCondReadThread;
-	pthread_cond_t* mCondWriteThread;
-
-	std::list <Connection*>** 	mReadList;
-	std::list <Connection*>** 	mWriteList;
 	int mNrWorkers;
 	int mCurrentThread;
+	ConnectionQueueWorker** mWorker;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

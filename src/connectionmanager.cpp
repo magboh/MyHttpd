@@ -4,63 +4,33 @@
  *  Created on: Sep 20, 2010
  *      Author: magnus
  */
-#include <sys/types.h>          /* See NOTES */
-#include <sys/socket.h>
-#include <netinet/in.h>
+//#include <sys/types.h>          /* See NOTES */
+//#include <sys/socket.h>
+//#include <netinet/in.h>
 #include <stdio.h>
-#include <string.h>
+
 #include <cassert>
-#include <poll.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <iostream>
 #include <list>
 
 #include "connection.h"
 #include "connectionmanager.h"
-#include "requestqueue.h"
 #include "connectionqueueworker.h"
 
 ConnectionManager::ConnectionManager(int maxConnections)
 {
-	mNrWorkers = 1 ;
-
-
-	mMutex = new pthread_mutex_t;
-	pthread_mutex_init(mMutex, NULL);
-
-	mReadMutex = new pthread_mutex_t;
-	pthread_mutex_init(mReadMutex, NULL);
-
-	mWriteMutex = new pthread_mutex_t;
-	pthread_mutex_init(mWriteMutex, NULL);
-
-	mCondReadThread = new pthread_cond_t;
-	pthread_cond_init (mCondReadThread , NULL);
-
-	mCondWriteThread = new pthread_cond_t;
-	pthread_cond_init (mCondWriteThread , NULL);
+	mNrWorkers = 2 ;
 
 	mMaxConnections = maxConnections;
 	mNumConnections = 0;
 	mCurrentThread = 0 ;
 
-	typedef  std::list <Connection*> conque;
-
-	mReadList = new conque*[mNrWorkers];
-	mWriteList= new conque*[mNrWorkers];
-
+	typedef ConnectionQueueWorker cqwp;
+	mWorker = new ConnectionQueueWorker*[2];
 	for(int i=0; i<mNrWorkers;i++)
 	{
-		mReadList[i] = new conque;
-		mWriteList[i] = new conque;
-
-		ConnectionQueueWorker* worker1 = new ConnectionQueueWorker(this, mReadList[i],  ConnectionQueueWorker::Reader);
-		ConnectionQueueWorker* worker2 = new ConnectionQueueWorker(this, mWriteList[i], ConnectionQueueWorker::Writer);
-
-		worker1->Start();
-		worker2->Start();
-
+		mWorker[i]= new ConnectionQueueWorker(this);
+		mWorker[i]->Start();
 	}
 
 
@@ -68,7 +38,13 @@ ConnectionManager::ConnectionManager(int maxConnections)
 
 ConnectionManager::~ConnectionManager()
 {
-	// TODO Auto-generated destructor stub
+
+	for(int i=0; i<mNrWorkers;i++)
+	{
+		delete mWorker[i];
+	}
+
+	delete mWorker;
 }
 
 
@@ -76,29 +52,5 @@ void ConnectionManager::CreateConnection(int socket)
 {
 
 	Connection* con= new Connection(socket,this);
-	mReadList[mCurrentThread % mNrWorkers]->push_back(con);
-	mWriteList[mCurrentThread++ % mNrWorkers]->push_back(con);
-}
-
-
-void ConnectionManager::HandleConnections()
-{
-}
-
-void ConnectionManager::StartHandleConnections()
-{
-	static pthread_t mThread;
-	if (pthread_create(&mThread,NULL, ConnectionManager::ThreadCallBack,(void*)this)!=0)
-	{
-		perror("pthread_create");
-	}
-
-}
-
-
-void* ConnectionManager::ThreadCallBack(void* arg)
-{
-	ConnectionManager* connectionManager = (ConnectionManager*) arg;
-	connectionManager->HandleConnections();
-	return NULL;
+	mWorker[mCurrentThread++ % mNrWorkers]->AddConnection(con);
 }
