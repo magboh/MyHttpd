@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <list>
+#include <cassert>
 
 #include "connection.h"
 #include "connectionmanager.h"
@@ -34,6 +35,14 @@ ConnectionQueueWorker::~ConnectionQueueWorker()
 {
 	delete mThread;
 	mThread = NULL;
+}
+
+void ConnectionQueueWorker::RemoveConnection(Connection *con)
+{
+	assert(con);
+	close( con->GetSocket() );
+	delete con;
+
 }
 
 void* ConnectionQueueWorker::ThreadCallBack(void* arg)
@@ -58,16 +67,17 @@ void ConnectionQueueWorker::Work()
 	int readThrougput = 512000;
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 		// This should be TrafficShaped to be throughput per second
-		int writeThrougput = 512000;
-	while (1)
+	int writeThrougput = 512000;
+	int count=0;
+	std::list<Connection*>::iterator it;
+	Connection* con;
+	assert(mKeepRunning);
+	while (mKeepRunning || count > 0 )
 	{
-		std::list<Connection*>::iterator it;
-		int count = mList.size();
-
+		count = mList.size();
 		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
 		{
-			Connection* con = *it;
-
+			con = *it;
 			if(mKeepRunning)
 				con->Read(readThrougput / count);
 
@@ -75,17 +85,14 @@ void ConnectionQueueWorker::Work()
 			{
 				if (!con->Write(writeThrougput / count))
 				{
-					close(con->GetSocket());
-					delete con;
+					RemoveConnection(con);
+					con=NULL;
 					it = mList.erase(it);
 				}
 			}
 
 		}
-		if (!mKeepRunning && mList.size() == 0 )
-			return;
 		usleep(10);
-
 	}
 
 }

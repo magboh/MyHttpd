@@ -186,6 +186,11 @@ void Connection::SetHasData(bool b)
 	mHasData = b ;
 }
 
+/**
+ * Called from RequestQueueWorker thread to "deliver" the repsonse.
+ * ConnectionQueueoworked thread SHOULD not touch this data until SetHasData() is called..
+ * @param response
+ */
 void Connection::SetResponse(const Response* response)
 {
 //	std::cout << "Connection::SetResponse:\n";

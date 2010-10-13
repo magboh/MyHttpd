@@ -27,6 +27,7 @@ ConnectionManager::ConnectionManager(int maxConnections)
 
 	typedef ConnectionQueueWorker cqwp;
 	mWorker = new ConnectionQueueWorker*[2];
+
 	for(int i=0; i<mNrWorkers;i++)
 	{
 		mWorker[i]= new ConnectionQueueWorker(this);

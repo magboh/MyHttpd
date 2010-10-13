@@ -59,11 +59,11 @@ const Request* RequestQueue::GetNextRequest()
 
 void RequestQueue::AddRequest(const Request* request)
 {
-	std::cout << "\nRequestQueue::AddRequest\n";
 	assert(pthread_mutex_lock(mMutex)==0);
 	pthread_cond_broadcast(mCondThread);
 	mReqQueue.push(request);
 	assert(pthread_mutex_unlock(mMutex)==0);
+
 }
 
 bool RequestQueue::CreateQueueWorker()

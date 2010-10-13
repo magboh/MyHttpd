@@ -22,6 +22,8 @@ public:
 	bool Stop();
 private:
 	void Work();
+
+	void RemoveConnection(Connection* con);
 	static void* ThreadCallBack(void* arg);
 	pthread_t* mThread;
 	ConnectionManager* mConnectionManager;
