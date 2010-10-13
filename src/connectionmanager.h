@@ -9,15 +9,15 @@
 #define CONNECTIONMANAGER_H_
 
 
-class Connection;
-struct pollfd;
+#include <list>
 
-class ConnectionManager {
+class ConnectionQueueWorker;
+class ConnectionManager
+{
 public:
 	ConnectionManager(int maxConnections);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket);
-	void DeleteConnection(int socket);
 	void StartHandleConnections();
 private:
 	static void* ThreadCallBack(void* arg);
@@ -25,8 +25,10 @@ private:
 
 	int mNumConnections;
 	int mMaxConnections;
-	Connection** mConnections;
-	pollfd* mFds;
+
+	int mNrWorkers;
+	int mCurrentThread;
+	ConnectionQueueWorker** mWorker;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */
