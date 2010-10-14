@@ -55,3 +55,12 @@ void ConnectionManager::CreateConnection(int socket)
 	Connection* con= new Connection(socket,this);
 	mWorker[mCurrentThread++ % mNrWorkers]->AddConnection(con);
 }
+
+void ConnectionManager::Stop()
+{
+	for(int i=0; i<mNrWorkers;i++)
+	{
+		mWorker[i]->Stop();
+	}
+
+}

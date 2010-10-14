@@ -115,4 +115,5 @@ void VirtualServer::WaitForIncomming()
 void VirtualServer::Stop()
 {
 	mKeepRunning = false;
+	mConnectionManager->Stop();
 }

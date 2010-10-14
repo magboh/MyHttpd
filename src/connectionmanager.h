@@ -19,6 +19,7 @@ public:
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket);
 	void StartHandleConnections();
+	void Stop();
 private:
 	static void* ThreadCallBack(void* arg);
 	void HandleConnections();

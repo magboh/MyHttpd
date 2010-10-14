@@ -19,7 +19,7 @@ public:
 	void AddConnection(Connection* con);
 	virtual ~ConnectionQueueWorker();
 	bool Start();
-	bool Stop();
+	void Stop();
 private:
 	void Work();
 

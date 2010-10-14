@@ -25,11 +25,11 @@ public:
  * @return
  */
 	int Start();
-	int Start();
-
+	void Stop();
+	void SigINTHandler(int signal);
 private:
 	VirtualServer *mServer;
-	static void SigINTHandler(int signal);
+
 };
 
 #endif /* MYHTTPD_H_ */

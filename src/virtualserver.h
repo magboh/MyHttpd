@@ -15,7 +15,7 @@ public:
 	virtual ~VirtualServer();
 
 	bool Start();
-	bool Stop();
+	void Stop();
 	void WaitForIncomming();
 private:
 private:

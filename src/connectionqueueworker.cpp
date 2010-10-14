@@ -104,7 +104,7 @@ void ConnectionQueueWorker::AddConnection(Connection* con)
 	pthread_mutex_unlock(mMutex);
 }
 
-bool ConnectionQueueWorker::Stop()
+void ConnectionQueueWorker::Stop()
 {
 	mKeepRunning = false;
 }
