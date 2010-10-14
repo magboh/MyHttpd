@@ -24,6 +24,7 @@ VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
 	mConnectionManager = new ConnectionManager(500);
+	mKeepRunning = true;
 }
 
 VirtualServer::~VirtualServer() {
@@ -32,6 +33,8 @@ VirtualServer::~VirtualServer() {
 
 bool VirtualServer::Start()
 {
+	mKeepRunning = true;
+
 	int domain= AF_INET;
 	int protocol = 0 ;
 	int type = SOCK_STREAM;
@@ -71,7 +74,6 @@ bool VirtualServer::Start()
 	RequestQueue::GetInstance()->CreateQueueWorker();
 	RequestQueue::GetInstance()->CreateQueueWorker();
 
-	WaitForIncomming();
     return retval;
 
 }
@@ -81,7 +83,7 @@ void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
 
-	while(1)
+	while(mKeepRunning)
 	{
 		socklen_t len = sizeof(addr);
 
@@ -110,3 +112,7 @@ void VirtualServer::WaitForIncomming()
 }
 
 
+void VirtualServer::Stop()
+{
+	mKeepRunning = false;
+}

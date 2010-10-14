@@ -15,11 +15,14 @@ public:
 	virtual ~VirtualServer();
 
 	bool Start();
-private:
+	bool Stop();
 	void WaitForIncomming();
+private:
 private:
 	int mSocket;
 	ConnectionManager* mConnectionManager;
+	bool mKeepRunning;
+
 };
 
 #endif /* VIRTUALSERVER_H_ */
