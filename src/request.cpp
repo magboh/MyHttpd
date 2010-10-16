@@ -18,7 +18,6 @@ Request::Request(Connection* connection) {
 	// TODO Auto-generated constructor stub
 	mHost="";
 	mUri="";
-	mVersion = Http::HTTP_VERSION_1_1;
 	mType= HTTP_GET;
 	mKeepAlive=true;
 	mConnection = connection;
@@ -79,7 +78,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		if (i-parsePos > Request::MAX_URI_LENGTH)
 		{
 //			std::cout << "URI too LONG\n";
-			request->mStatus = Http::HTTP_REQUEST_URI_TO_LONG;
+			request->SetStatus(Http::HTTP_REQUEST_URI_TO_LONG);
 			return true;
 		}
 
@@ -105,7 +104,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 			else
 			{
 	//			std::cout << "Bad version\n";
-				request->mStatus = Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED;
+				request->SetStatus(Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED);
 				return true;
 			}
 
@@ -127,7 +126,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 
 				request->mParseState = 1 ;
 				request->mType = rt;
-				request->mVersion = version;
+				request->SetHttpVersion(version);
 				request->mUri = uri;
 				request->mParsePos = parsePos;
 				request->mKeepAlive = false;
@@ -142,7 +141,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 			if (strncmp("\r\n\r\n",(data+i),4)==0)
 			{
 				request->mParsePos=0;
-				request->mStatus = Http::HTTP_OK;
+				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
 //				std::cout << "request->mParsePos=" << request->mParsePos << " req=" << request->ToString() <<"\n";
 				return true;
@@ -157,8 +156,8 @@ const std::string Request::ToString() const
 {
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
-	str+= Http::GetVersionString(mVersion);
-	str+= " " + Http::GetStatusString(mStatus);
+	str+= Http::GetVersionString( GetHttpVersion() );
+	str+= " " + Http::GetStatusString(GetStatus());
 	std::cout << "\nRequest::ToString=" << str << "\n";
 	return str;
 }
@@ -166,11 +165,6 @@ const std::string Request::ToString() const
 const std::string & Request::GetUri() const
 {
 	return mUri;
-}
-
-Http::Version Request::GetHttpVersion() const
-{
-	return mVersion;
 }
 
 Request::RequestType Request::GetHttpType() const
@@ -196,13 +190,3 @@ bool Request::GetKeepAlive() const
 }
 
 
-
-void Request::SetStatus(Http::Status status)
-{
-	mStatus = status;
-}
-
-Http::Status Request::GetStatus() const
-{
-	return mStatus;
-}

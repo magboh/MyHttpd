@@ -8,10 +8,16 @@
 #ifndef HTTP_H_
 #define HTTP_H_
 #include <string>
+
 class Http
 {
 public:
-	enum Version {HTTP_VERSION_1_0,HTTP_VERSION_1_1};
+
+	enum Version {
+		HTTP_VERSION_1_0,
+		HTTP_VERSION_1_1
+	};
+
 	enum Status {
 		HTTP_OK=200,
 		HTTP_BAD_REQUEST=400,
@@ -62,8 +68,33 @@ public:
 
 	}
 
-	Http();
-	virtual ~Http();
+	Http() {};
+	virtual ~Http() {};
+
+	Http::Version GetHttpVersion()  const
+	{
+		return mVersion;
+	}
+
+	void SetHttpVersion(Version version)
+    {
+    	mVersion = version ;
+    }
+
+
+	Http::Status GetStatus() const
+	{
+		return mStatus;
+	}
+
+    void SetStatus(Status status)
+    {
+    	mStatus = status ;
+    }
+
+private:
+	Http::Version mVersion;
+	Http::Status mStatus;
 };
 
 #endif /* HTTP_H_ */
