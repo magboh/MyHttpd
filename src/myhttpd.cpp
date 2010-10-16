@@ -33,7 +33,7 @@ int MyHttpd::Start() {
 
 	SignalHandler<MyHttpd>::GetInstance()->BlockAll();
 	SignalHandler<MyHttpd>::pFkn fkn;
-	fkn = &(MyHttpd::SigINTHandler);
+	fkn = SigINTHandler;
 	SignalHandler<MyHttpd>::GetInstance()->RegisterINTHandler(fkn);
 
 	mServer->WaitForIncomming();

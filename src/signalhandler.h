@@ -17,6 +17,7 @@ public:
 
 	void BlockAll();
 	void AllowAll();
+
 	typedef void (T::*pFkn)(int);
 	void RegisterINTHandler(pFkn fkn );
 	void IntHandler(int s);
