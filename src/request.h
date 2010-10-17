@@ -14,7 +14,7 @@
 class Connection;
 class ByteBuffer;
 
-class Request {
+class Request : public Http {
 public:
 	Request(Connection* connection);
 	virtual ~Request();
@@ -31,11 +31,8 @@ public:
 
 	const std::string ToString() const;
 	const std::string & GetUri() const;
-	Http::Version GetHttpVersion() const;
 	RequestType GetHttpType() const;
 
-	Http::Status GetStatus() const;
-    void SetStatus(Http::Status mStatus);
 
 	Connection *GetConnection() const;
     void SetConnection(Connection *mConnection);
@@ -45,14 +42,13 @@ private:
 	enum {MAX_URI_LENGTH=2048};
 	std::string mHost;
 	std::string mUri;
-	Http::Version mVersion;
+
 
 	bool mKeepAlive;
 	RequestType mType;
 	Connection* mConnection;
 	int mParseState;
 	size_t mParsePos;
-	Http::Status mStatus;
 };
 
 #endif /* REQUEST_H_ */

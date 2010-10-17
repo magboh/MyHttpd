@@ -13,17 +13,11 @@
 class Request;
 class Connection;
 class ByteBuffer;
-class Response
+class Response : public Http
 {
 public:
 	static Response* CreateResponse(const Request* request);
 	virtual ~Response();
-
-	Http::Status GetStatus() const;
-    void SetStatus(Http::Status mStatus);
-
-    Http::Version GetHttpVersion() const;
-    void SetHttpVersion(Http::Version mVersion);
 
     void SetContentLength(unsigned int length);
     unsigned int GetContentLength() const;
@@ -36,9 +30,7 @@ public:
     int ToBuffer(ByteBuffer* buffer) const;
 private:
 	Response();
-	Http::Status mStatus ;
 	unsigned int mContentLength;
-	Http::Version mVersion;
 	int mFile;
 	Connection* mConnection;
 	bool mKeepAlive;
