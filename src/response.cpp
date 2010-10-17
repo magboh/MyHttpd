@@ -54,30 +54,11 @@ void Response::SetFile(int fd)
 }
 
 
-void Response::SetStatus(Http::Status status)
-{
-	mStatus = status;
-}
-
-Http::Status Response::GetStatus() const
-{
-	return mStatus;
-}
-
-void Response::SetHttpVersion(Http::Version version)
-{
-	mVersion = version;
-}
-
 unsigned int Response::GetContentLength() const
 {
 	return mContentLength;
 }
 
-Http::Version Response::GetHttpVersion() const
-{
-	return mVersion;
-}
 
 void Response::SetContentLength(unsigned int length)
 {
@@ -95,7 +76,8 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	std::string str="";
 	size_t len=0;
 
-	ss << Http::GetVersionString(mVersion) << " " << mStatus << " " << Http::GetStatusString(mStatus) <<"\r\n";
+	Http::Status status = GetStatus();
+	ss << Http::GetVersionString(GetHttpVersion()) << " " << status << " " << Http::GetStatusString(status) <<"\r\n";
 
 //	if (!mKeepAlive)
 	//{
@@ -103,7 +85,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	//}
 
 
-	if (mStatus == Http::HTTP_OK)
+	if (status == Http::HTTP_OK)
 	{
 		ss << "Content-Length:" << mContentLength << "\r\n";
 		ss << "Content-Type: text/html\r\n";
@@ -111,7 +93,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	}
 	else
 	{
-		str=  "<html><body><h1>" + Http::GetStatusString(mStatus) + "</h1></body></html>";
+		str=  "<html><body><h1>" + Http::GetStatusString(status) + "</h1></body></html>";
 	//	mContentLength = str.length();
 //		ss << "Content-Length:" << mContentLength << "\r\n";
 		ss << "Content-Type: text/html\r\n";
