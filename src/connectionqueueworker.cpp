@@ -16,15 +16,14 @@
 #include <cassert>
 
 #include "connection.h"
-#include "connectionmanager.h"
 #include "connectionqueueworker.h"
+#include "requestqueue.h"
 
-ConnectionQueueWorker::	ConnectionQueueWorker(ConnectionManager* conMgr)
+ConnectionQueueWorker::	ConnectionQueueWorker(RequestQueue* reqQueue)
 {
 	mThread = new pthread_t;
 	mKeepRunning = true;
-	mConnectionManager = conMgr;
-
+	mRequestQueue = reqQueue;
 	mMutex = new pthread_mutex_t;
 	pthread_mutex_init(mMutex, NULL);
 
@@ -79,8 +78,10 @@ void ConnectionQueueWorker::Work()
 		{
 			con = *it;
 			if(mKeepRunning)
-				con->Read(readThrougput / count);
-
+			{
+				if ( con->Read(readThrougput / count) )
+					mRequestQueue->AddRequest(con->GetRequest());
+			}
 			if (con->HasData())
 			{
 				if (!con->Write(writeThrougput / count))

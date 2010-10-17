@@ -7,13 +7,27 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <signal.h>
+#include <pthread.h>
+
 #include "myhttpd.h"
 #include "virtualserver.h"
-#include "signalhandler.h"
+
+MyHttpd* MyHttpd::myhttpd = NULL;
+
+
+void handlerInt(int s);
+
+void handlerInt(int s)
+{
+	MyHttpd::myhttpd->SigINTHandler(s);
+}
+
 
 MyHttpd::MyHttpd() {
 	// TODO Auto-generated constructor stub
 	mServer = NULL;
+	myhttpd = this;
 
 }
 MyHttpd::~MyHttpd() {
@@ -22,29 +36,37 @@ MyHttpd::~MyHttpd() {
 }
 
 int MyHttpd::Start() {
-	std::cout << __FUNCTION__;
 
-	SignalHandler<MyHttpd>::GetInstance()->BlockAll();
-
+	BlockSignals();
 	mServer = new VirtualServer();
 
 	// Start up threads, sockets etc.
+
 	mServer->Start();
-
-	SignalHandler<MyHttpd>::GetInstance()->BlockAll();
-	SignalHandler<MyHttpd>::pFkn fkn;
-	fkn = SigINTHandler;
-	SignalHandler<MyHttpd>::GetInstance()->RegisterINTHandler(fkn);
-
+	AllowSignals();
+	signal(SIGINT,handlerInt);
 	mServer->WaitForIncomming();
 	return 0;
 }
 
+void MyHttpd::AllowSignals()
+{
+	sigset_t set;
+	sigfillset(&set);
+	pthread_sigmask(SIG_UNBLOCK,&set,NULL);
+}
+
+void MyHttpd::BlockSignals()
+{
+	sigset_t set;
+	sigfillset(&set);
+	pthread_sigmask(SIG_BLOCK,&set,NULL);
+}
+
 void MyHttpd::SigINTHandler(int signal)
 {
-	std::cout << "\n HELLO \n" ;
+	std::cout << "\n Shutting Down Now\n" ;
 	Stop();
-	exit(0);
 }
 
 void MyHttpd::Stop()

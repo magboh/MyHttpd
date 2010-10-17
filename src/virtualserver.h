@@ -7,7 +7,12 @@
 
 #ifndef VIRTUALSERVER_H_
 #define VIRTUALSERVER_H_
+
 class ConnectionManager;
+
+class ConnectionQueueWorker;
+class RequestQueueWorker;
+class RequestQueue;
 
 class VirtualServer {
 public:
@@ -17,11 +22,29 @@ public:
 	bool Start();
 	void Stop();
 	void WaitForIncomming();
-private:
+
 private:
 	int mSocket;
 	ConnectionManager* mConnectionManager;
 	bool mKeepRunning;
+	void SetupSocket();
+	void SetupSubsystem();
+	void ShutdownSubsystem();
+	void Shutdown();
+
+	int mNumConnections;
+	int mMaxConnections;
+
+	int mNrConnectionWorkers;
+	int mNrRequestWorkers;
+	int mCurrentThread;
+	ConnectionQueueWorker** mConnectionWorker;
+	RequestQueueWorker** mRequestWorker;
+	RequestQueue* mRequestQueue;
+
+	struct stats {
+		unsigned int nrTotalConnections;
+	};
 
 };
 

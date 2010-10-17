@@ -64,7 +64,7 @@ bool Connection::Read(size_t size)
 {
 	bool keepAlive=true;
 	size_t toRead = size;
-
+	bool done = false;
 	if (toRead > mReadBuffer->GetSpaceLeft())
 	{
 		toRead = mReadBuffer->GetSpaceLeft();
@@ -93,10 +93,9 @@ bool Connection::Read(size_t size)
 			case Http::HTTP_OK:
 			{
 				// Transfer ownership of request to RequestQueue..
-				RequestQueue::GetInstance()->AddRequest(mRequest);
-				keepAlive = mRequest->GetKeepAlive();
-				mRequest = NULL;
 
+				mRequest = NULL;
+				done= true;
 				break;
 			}
 
@@ -109,7 +108,7 @@ bool Connection::Read(size_t size)
 	}
 	delete [] tbuff;
 
-	return keepAlive;
+	return done;
 }
 
 int Connection::GetSocket() const
@@ -197,4 +196,9 @@ void Connection::SetResponse(const Response* response)
 	mWriteBuffer->Clear();
 	mResponse = response;
 	mResponse->ToBuffer(mWriteBuffer);
+}
+
+Request* Connection::GetRequest() const
+{
+	return mRequest;
 }

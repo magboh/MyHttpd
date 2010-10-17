@@ -15,11 +15,10 @@ class ConnectionQueueWorker;
 class ConnectionManager
 {
 public:
-	ConnectionManager(int maxConnections);
+	ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket);
 	void StartHandleConnections();
-	void Stop();
 private:
 	static void* ThreadCallBack(void* arg);
 	void HandleConnections();
@@ -30,6 +29,10 @@ private:
 	int mNrWorkers;
 	int mCurrentThread;
 	ConnectionQueueWorker** mWorker;
+
+	struct stats {
+		unsigned int nrTotalConnections;
+	};
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

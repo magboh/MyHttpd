@@ -35,16 +35,11 @@ RequestQueueWorker::~RequestQueueWorker()
 void RequestQueueWorker::HandleRequests()
 {
 	const Request* request;
-	while(mKeepRunning)
+	/* Handle request until Request queue is closed, IE. returns NULL*/
+	while( (request = mRequestQueue->GetNextRequest()))
 	{
-		request = mRequestQueue->GetNextRequest();
-
-		if (request != NULL)
-		{
-			HandleRequest(request);
-		}
+		HandleRequest(request);
 	}
-
 }
 
 void* RequestQueueWorker::ThreadCallBack(void* arg)
@@ -98,3 +93,4 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 	request->GetConnection()->SetHasData(true);
 	delete request ;
 }
+

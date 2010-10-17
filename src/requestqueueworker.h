@@ -23,7 +23,6 @@ private:
 	static void* ThreadCallBack(void* arg);
 	void HandleRequest(const Request* request);
 
-	bool mKeepRunning;
 	RequestQueue* mRequestQueue;
 	pthread_t* mThread;
 };

@@ -13,7 +13,6 @@
 
 #include "request.h"
 #include "requestqueue.h"
-#include "requestqueueworker.h"
 
 
 RequestQueue::RequestQueue()
@@ -23,6 +22,7 @@ RequestQueue::RequestQueue()
 
 	mCondThread = new pthread_cond_t;
 	pthread_cond_init (mCondThread, NULL);
+	mKeepRunning= true;
 }
 
 RequestQueue::~RequestQueue()
@@ -33,6 +33,10 @@ RequestQueue::~RequestQueue()
 	mCondThread = NULL;
 }
 
+/***
+ * Used by RequestWorker to obtain a request to work with.
+ * @return The request is returned or NULL if we are in closing down mode
+ */
 const Request* RequestQueue::GetNextRequest()
 {
 	assert(mMutex);
@@ -41,17 +45,22 @@ const Request* RequestQueue::GetNextRequest()
 
 	assert(pthread_mutex_lock(mMutex)==0);
 
-	if (mReqQueue.empty())
+	while (1)
 	{
-		assert(pthread_cond_wait(mCondThread,mMutex)==0);
+		if (mReqQueue.empty())
+		{
+			if (mKeepRunning)
+				assert(pthread_cond_wait(mCondThread,mMutex)==0);
+			else
+				break; // closing down..
+		}
+		else
+		{
+			request = mReqQueue.front();
+			mReqQueue.pop();
+			break;
+		}
 	}
-	else
-	{
-		request = mReqQueue.front();
-		mReqQueue.pop();
-//		std::cout << "\n" << pthread_self() <<  " : " << mReqQueue.size()<<  ":" << request->ToString() << "\n";
-	}
-
 
 	assert(pthread_mutex_unlock(mMutex)==0);
 	return request;
@@ -63,28 +72,17 @@ void RequestQueue::AddRequest(const Request* request)
 	pthread_cond_broadcast(mCondThread);
 	mReqQueue.push(request);
 	assert(pthread_mutex_unlock(mMutex)==0);
-
 }
 
-bool RequestQueue::CreateQueueWorker()
+
+void RequestQueue::Shutdown()
 {
-	RequestQueueWorker* rqw = new RequestQueueWorker(this);
-
-	if (rqw->Start()) // worker started
-	{
-		mWorkerVector.push_back(rqw);
-	}
-	else
-	{
-		delete rqw;
-		rqw = NULL;
-	}
-
-	return true;
+	assert(pthread_mutex_lock(mMutex)==0);
+/* Awake the threads, and have them get a NULL reequest*/
+	mKeepRunning = false;
+	pthread_cond_broadcast(mCondThread);
+	assert(pthread_mutex_unlock(mMutex)==0);
 }
 
-static RequestQueue sInstance;
-RequestQueue* RequestQueue::GetInstance()
-{
-	return &sInstance;
-}
+
+

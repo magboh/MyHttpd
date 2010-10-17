@@ -15,16 +15,21 @@
 #include <iostream>
 #include <poll.h>
 
+#include "connectionqueueworker.h"
 #include "connectionmanager.h"
 #include "virtualserver.h"
 #include "request.h"
 #include "requestqueue.h"
+#include "requestqueueworker.h"
 
 VirtualServer::VirtualServer() {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
-	mConnectionManager = new ConnectionManager(500);
 	mKeepRunning = true;
+
+	mMaxConnections = 500 ;
+	mNrConnectionWorkers = 2;
+	mNrRequestWorkers = 3;
 }
 
 VirtualServer::~VirtualServer() {
@@ -33,52 +38,15 @@ VirtualServer::~VirtualServer() {
 
 bool VirtualServer::Start()
 {
-	mKeepRunning = true;
+	SetupSubsystem();
 
-	int domain= AF_INET;
-	int protocol = 0 ;
-	int type = SOCK_STREAM;
-	bool retval = true;
-	mSocket = socket(domain,type,protocol);
+	/*Open up to others*/
+	SetupSocket();
 
-	if (mSocket == -1 )
-	{
-		perror("socket fail:");
-	}
-
-
-	struct sockaddr_in my_addr;
-
-    memset(&my_addr, 0, sizeof(struct sockaddr_in));
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_addr.s_addr = INADDR_ANY;
-    my_addr.sin_port = htons(8080);
-
-    int on = 1;
-    setsockopt( mSocket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) );
-
-    if (bind(mSocket, (struct sockaddr *) &my_addr, sizeof(struct sockaddr_in)) == -1)
-    {
-    	perror("bind failed");
-    }
-
-
-    if (listen(mSocket,60)==-1)
-    {
-    	perror("Listen failed:");
-    }
-
-    RequestQueue::GetInstance();
-
-	RequestQueue::GetInstance()->CreateQueueWorker();
-	RequestQueue::GetInstance()->CreateQueueWorker();
-	RequestQueue::GetInstance()->CreateQueueWorker();
-
-    return retval;
+    return true;
 
 }
 
-static int a=0;
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
@@ -91,11 +59,6 @@ void VirtualServer::WaitForIncomming()
 
 		if (clientSock > 0)
 		{
-			if (++a > 1000000)
-			{
-				return;
-			}
-
 			/* set to non blocking*/
 			//fcntl(clientSock,O_NONBLOCK);
 
@@ -109,11 +72,100 @@ void VirtualServer::WaitForIncomming()
 		}
 
 	};
+
 }
 
 
 void VirtualServer::Stop()
 {
 	mKeepRunning = false;
-	mConnectionManager->Stop();
+	ShutdownSubsystem();
 }
+
+void VirtualServer::Shutdown()
+{
+	close(mSocket);
+	ShutdownSubsystem();
+}
+
+
+void VirtualServer::SetupSocket()
+{
+	mKeepRunning = true;
+
+	int domain= AF_INET;
+	int protocol = 0 ;
+	int type = SOCK_STREAM;
+
+	mSocket = socket(domain,type,protocol);
+
+	if (mSocket == -1 )
+	{
+		perror("socket fail:");
+	}
+
+	struct sockaddr_in my_addr;
+
+	memset(&my_addr, 0, sizeof(struct sockaddr_in));
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_addr.s_addr = INADDR_ANY;
+	my_addr.sin_port = htons(8080);
+
+	int on = 1;
+	setsockopt( mSocket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) );
+
+	if (bind(mSocket, (struct sockaddr *) &my_addr, sizeof(struct sockaddr_in)) == -1)
+	{
+		perror("bind failed");
+	}
+
+	if (listen(mSocket,60)==-1)
+	{
+		perror("Listen failed:");
+	}
+}
+
+void VirtualServer::SetupSubsystem()
+{
+
+	mRequestQueue = new RequestQueue();
+
+	for(int i=0; i<mNrRequestWorkers;i++)
+	{
+		mRequestWorker[i]= new RequestQueueWorker(mRequestQueue);
+		mRequestWorker[i]->Start();
+	}
+
+
+
+	typedef ConnectionQueueWorker cqwp;
+	new ConnectionQueueWorker*[mNrConnectionWorkers];
+
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		mConnectionWorker[i]= new ConnectionQueueWorker(mRequestQueue);
+		mConnectionWorker[i]->Start();
+	}
+
+	mConnectionManager = new ConnectionManager(mMaxConnections,mNrConnectionWorkers,mConnectionWorker);
+}
+
+void VirtualServer::ShutdownSubsystem()
+{
+
+	// Turn of reading new request from connections
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		mConnectionWorker[i]->Stop();
+	}
+
+	/*send */
+	for(int i=0; i<mNrRequestWorkers;i++)
+	{
+
+	}
+
+
+
+}
+
