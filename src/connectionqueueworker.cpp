@@ -21,19 +21,17 @@
 
 ConnectionQueueWorker::	ConnectionQueueWorker(RequestQueue* reqQueue)
 {
-	mThread = new pthread_t;
+
 	mKeepRunning = true;
 	mRequestQueue = reqQueue;
 	mMutex = new pthread_mutex_t;
 	pthread_mutex_init(mMutex, NULL);
 
-	mKeepRunning = false;
+	mKeepRunning = true;
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
 {
-	delete mThread;
-	mThread = NULL;
 }
 
 void ConnectionQueueWorker::RemoveConnection(Connection *con)
@@ -44,22 +42,7 @@ void ConnectionQueueWorker::RemoveConnection(Connection *con)
 
 }
 
-void* ConnectionQueueWorker::ThreadCallBack(void* arg)
-{
-	ConnectionQueueWorker* worker = (ConnectionQueueWorker*) arg;
-	worker->Work();
-	return (NULL);
-}
-
-bool ConnectionQueueWorker::Start()
-{
-	mKeepRunning = true;
-	bool ok = (pthread_create(mThread,NULL, ConnectionQueueWorker::ThreadCallBack,(void*)this)==0);
-	return ok ;
-}
-
-
-void ConnectionQueueWorker::Work()
+void ConnectionQueueWorker::DoWork()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
@@ -70,7 +53,7 @@ void ConnectionQueueWorker::Work()
 	int count=0;
 	std::list<Connection*>::iterator it;
 	Connection* con;
-	assert(mKeepRunning);
+
 	while (mKeepRunning || count > 0 )
 	{
 		count = mList.size();
@@ -80,7 +63,11 @@ void ConnectionQueueWorker::Work()
 			if(mKeepRunning)
 			{
 				if ( con->Read(readThrougput / count) )
+				{
 					mRequestQueue->AddRequest(con->GetRequest());
+					con->SetRequest(NULL);
+				}
+
 			}
 			if (con->HasData())
 			{

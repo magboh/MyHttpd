@@ -5,7 +5,6 @@
  *      Author: magnus
  */
 
-#include "pthread.h"
 #include <iostream>
 #include <errno.h>
 #include <sys/types.h>
@@ -21,18 +20,15 @@
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
-	mThread = new pthread_t;
-	mKeepRunning = true;
 	mRequestQueue = requestQueue;
 }
 
 RequestQueueWorker::~RequestQueueWorker()
 {
-	delete mThread;
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
-void RequestQueueWorker::HandleRequests()
+void RequestQueueWorker::DoWork()
 {
 	const Request* request;
 	/* Handle request until Request queue is closed, IE. returns NULL*/
@@ -40,18 +36,6 @@ void RequestQueueWorker::HandleRequests()
 	{
 		HandleRequest(request);
 	}
-}
-
-void* RequestQueueWorker::ThreadCallBack(void* arg)
-{
-	((RequestQueueWorker*)arg)->HandleRequests();
-	return (NULL);
-}
-
-bool RequestQueueWorker::Start()
-{
-	bool ok = (pthread_create(mThread,NULL, RequestQueueWorker::ThreadCallBack,(void*)this)==0);
-	return ok ;
 }
 
 void RequestQueueWorker::HandleRequest(const Request* request)

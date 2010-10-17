@@ -30,6 +30,7 @@ public:
 	void SetHasData(bool b);
 	void SetResponse(const Response* response);
 	Request* GetRequest() const;
+	void SetRequest(Request* request);
 private:
 	int mSocket;
 

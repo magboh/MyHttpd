@@ -31,12 +31,6 @@ ConnectionManager::ConnectionManager(int maxConnections, int nrWorkers,Connectio
 ConnectionManager::~ConnectionManager()
 {
 
-	for(int i=0; i<mNrWorkers;i++)
-	{
-		delete mWorker[i];
-	}
-
-	delete mWorker;
 }
 
 

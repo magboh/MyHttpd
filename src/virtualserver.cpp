@@ -129,7 +129,7 @@ void VirtualServer::SetupSubsystem()
 {
 
 	mRequestQueue = new RequestQueue();
-
+	mRequestWorker = new RequestQueueWorker*[mNrRequestWorkers];
 	for(int i=0; i<mNrRequestWorkers;i++)
 	{
 		mRequestWorker[i]= new RequestQueueWorker(mRequestQueue);
@@ -139,7 +139,7 @@ void VirtualServer::SetupSubsystem()
 
 
 	typedef ConnectionQueueWorker cqwp;
-	new ConnectionQueueWorker*[mNrConnectionWorkers];
+	mConnectionWorker = new ConnectionQueueWorker*[mNrConnectionWorkers];
 
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{

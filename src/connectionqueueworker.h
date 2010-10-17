@@ -7,24 +7,27 @@
 
 #ifndef CONNECTIONQUEUEWORKER_H_
 #define CONNECTIONQUEUEWORKER_H_
+
 #include <list>
+
+#include "thread.h"
+
 class RequestQueue;
 class Connection;
-class ConnectionQueueWorker
+
+class ConnectionQueueWorker : public Thread
 {
 public:
 	ConnectionQueueWorker(RequestQueue *requestWorker);
 
 	void AddConnection(Connection* con);
 	virtual ~ConnectionQueueWorker();
-	bool Start();
 	void Stop();
 private:
-	void Work();
+	virtual void DoWork();
 
 	void RemoveConnection(Connection* con);
-	static void* ThreadCallBack(void* arg);
-	pthread_t* mThread;
+
 	std::list <Connection*> mList;
 	pthread_mutex_t* mMutex;
 	bool mKeepRunning;

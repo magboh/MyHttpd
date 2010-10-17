@@ -93,8 +93,6 @@ bool Connection::Read(size_t size)
 			case Http::HTTP_OK:
 			{
 				// Transfer ownership of request to RequestQueue..
-
-				mRequest = NULL;
 				done= true;
 				break;
 			}
@@ -201,4 +199,9 @@ void Connection::SetResponse(const Response* response)
 Request* Connection::GetRequest() const
 {
 	return mRequest;
+}
+
+void Connection::SetRequest(Request* request)
+{
+	mRequest = request;
 }
