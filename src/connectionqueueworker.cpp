@@ -95,5 +95,4 @@ void ConnectionQueueWorker::AddConnection(Connection* con)
 void ConnectionQueueWorker::Stop()
 {
 	mKeepRunning = false;
-	return true;
 }
