@@ -13,7 +13,7 @@
 #include <string.h>
 #include <cassert>
 #include <iostream>
-#include <poll.h>
+#include <errno.h>
 
 #include "connectionqueueworker.h"
 #include "connectionmanager.h"
@@ -33,7 +33,19 @@ VirtualServer::VirtualServer() {
 }
 
 VirtualServer::~VirtualServer() {
-	// TODO Auto-generated destructor stub
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		delete mConnectionWorker[i] ;
+	}
+
+	for(int i=0; i<mNrRequestWorkers;i++)
+	{
+		delete mRequestWorker[i];
+	}
+
+	delete [] mConnectionWorker;
+	delete [] mRequestWorker;
+
 }
 
 bool VirtualServer::Start()
@@ -56,7 +68,7 @@ void VirtualServer::WaitForIncomming()
 		socklen_t len = sizeof(addr);
 
 		int clientSock = accept(mSocket, (struct sockaddr *) &addr, &len);
-
+		int error = errno;
 		if (clientSock > 0)
 		{
 			/* set to non blocking*/
@@ -68,7 +80,7 @@ void VirtualServer::WaitForIncomming()
 		}
 		else
 		{
-			perror("accept failed:");
+			usleep(10);
 		}
 
 	};
@@ -123,6 +135,11 @@ void VirtualServer::SetupSocket()
 	{
 		perror("Listen failed:");
 	}
+
+	int flags = fcntl(mSocket, F_GETFL, 0);
+	fcntl(mSocket, F_SETFL, flags | O_NONBLOCK);
+
+
 }
 
 void VirtualServer::SetupSubsystem()
@@ -154,18 +171,13 @@ void VirtualServer::ShutdownSubsystem()
 {
 
 	// Turn of reading new request from connections
+	std::cout << "Blocking Connection Workers\n";
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{
 		mConnectionWorker[i]->Stop();
 	}
-
-	/*send */
-	for(int i=0; i<mNrRequestWorkers;i++)
-	{
-
-	}
-
-
+	std::cout << "Shutting down Request Queue\n";
+	mRequestQueue->Shutdown();
 
 }
 
