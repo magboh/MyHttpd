@@ -42,9 +42,9 @@ private:
 	RequestQueueWorker** mRequestWorker;
 	RequestQueue* mRequestQueue;
 
-	struct stats {
-		unsigned int nrTotalConnections;
-	};
+	struct stats_t {
+		unsigned long mNrAcceptErrors;
+	} mStats;
 
 
 };

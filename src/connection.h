@@ -31,6 +31,7 @@ public:
 	void SetResponse(const Response* response);
 	Request* GetRequest() const;
 	void SetRequest(Request* request);
+
 private:
 	int mSocket;
 

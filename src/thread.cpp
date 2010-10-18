@@ -27,6 +27,8 @@ void Thread::DoWork()
 
 bool Thread::Join()
 {
+	void** arg;
+	pthread_join(*mThread,arg);
 	return true;
 }
 
@@ -49,6 +51,7 @@ bool Thread::Stop()
 bool Thread::Start()
 {
 	pthread_create(mThread,NULL, Thread::ThreadCallBack,(void*)this);
+	return true;
 }
 
 

@@ -60,15 +60,12 @@ void ConnectionQueueWorker::DoWork()
 		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
 		{
 			con = *it;
-			if(mKeepRunning)
+			if ( con->Read(readThrougput / count) )
 			{
-				if ( con->Read(readThrougput / count) )
-				{
-					mRequestQueue->AddRequest(con->GetRequest());
-					con->SetRequest(NULL);
-				}
-
+				mRequestQueue->AddRequest(con->GetRequest());
+				con->SetRequest(NULL);
 			}
+
 			if (con->HasData())
 			{
 				if (!con->Write(writeThrougput / count))
@@ -77,6 +74,13 @@ void ConnectionQueueWorker::DoWork()
 					con=NULL;
 					it = mList.erase(it);
 				}
+			}
+
+			if(!mKeepRunning && con->GetRequest()!= NULL)
+			{
+				RemoveConnection(con);
+				con=NULL;
+				it = mList.erase(it);
 			}
 
 		}

@@ -30,6 +30,8 @@ VirtualServer::VirtualServer() {
 	mMaxConnections = 500 ;
 	mNrConnectionWorkers = 2;
 	mNrRequestWorkers = 4;
+
+	mStats.mNrAcceptErrors=0;
 }
 
 VirtualServer::~VirtualServer() {
@@ -80,7 +82,13 @@ void VirtualServer::WaitForIncomming()
 		}
 		else
 		{
-			usleep(10);
+			if (error == EWOULDBLOCK || error == EAGAIN)
+			{
+				usleep(10);
+			}
+			else {
+				mStats.mNrAcceptErrors++;
+			}
 		}
 
 		if (++a>100)
@@ -186,12 +194,31 @@ void VirtualServer::ShutdownSubsystem()
 
 	// Turn of reading new request from connections
 	std::cout << "Blocking Connection Workers\n";
+
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{
 		mConnectionWorker[i]->Stop();
 	}
+
 	std::cout << "Shutting down Request Queue\n";
 	mRequestQueue->Shutdown();
+
+	for(int i=0; i<mNrRequestWorkers;i++)
+	{
+		if(mRequestWorker[i]->Join())
+		{
+			std::cout << "Request Worker shut down\n";
+		}
+	}
+
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		if(mConnectionWorker[i]->Join())
+		{
+			std::cout << "Connection Worked shut down\n";
+		}
+	}
+
 }
 
 
@@ -199,6 +226,9 @@ void VirtualServer::PrintStats()
 {
 	mRequestQueue->PrintStats();
 	mConnectionManager->PrintStats();
+
+	std::cout << "---- Virtual Server  ----\n";
+	std::cout << "Total accept() errors:" << mStats.mNrAcceptErrors << "\n";
 }
 
 
