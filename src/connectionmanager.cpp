@@ -17,35 +17,20 @@
 #include "connectionmanager.h"
 #include "connectionqueueworker.h"
 
-ConnectionManager::ConnectionManager(int maxConnections)
+ConnectionManager::ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers)
 {
-	mNrWorkers = 2 ;
+	mNrWorkers = nrWorkers ;
 
 	mMaxConnections = maxConnections;
 	mNumConnections = 0;
 	mCurrentThread = 0 ;
-
-	typedef ConnectionQueueWorker cqwp;
-	mWorker = new ConnectionQueueWorker*[2];
-
-	for(int i=0; i<mNrWorkers;i++)
-	{
-		mWorker[i]= new ConnectionQueueWorker(this);
-		mWorker[i]->Start();
-	}
-
-
+	mWorker = workers;
+	mCurrentThread = 0 ;
 }
 
 ConnectionManager::~ConnectionManager()
 {
 
-	for(int i=0; i<mNrWorkers;i++)
-	{
-		delete mWorker[i];
-	}
-
-	delete mWorker;
 }
 
 

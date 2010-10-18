@@ -28,15 +28,12 @@ public:
 	virtual ~RequestQueue();
 	void AddRequest(const Request* request);
 	const Request* GetNextRequest();
-	bool CreateQueueWorker();
-
-	static RequestQueue* GetInstance();
-
+	void Shutdown();
 private:
 	std::queue <const Request*> mReqQueue;
-	std::vector <RequestQueueWorker*> mWorkerVector;
 	pthread_mutex_t* mMutex;
 	pthread_cond_t* mCondThread;
+	bool mKeepRunning;
 };
 
 #endif /* REQUESTQUEUE_H_ */

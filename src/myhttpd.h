@@ -24,8 +24,14 @@ public:
  *
  * @return
  */
-int Start();
+	int Start();
+	void Stop();
+	void SigINTHandler(int signal);
 
+	void AllowSignals();
+	void BlockSignals();
+
+	static MyHttpd* myhttpd;
 private:
 	VirtualServer *mServer;
 };

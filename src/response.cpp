@@ -20,7 +20,6 @@ Response *Response::CreateResponse(const Request *request)
 	Response* response = new Response();
 	response->SetHttpVersion( request->GetHttpVersion() );
 	response->mKeepAlive = request->GetKeepAlive();
-	response->mKeepAlive = false;
 
 	return response;
 }

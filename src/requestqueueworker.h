@@ -8,24 +8,21 @@
 #ifndef REQUESTQUEUEWORKER_H_
 #define REQUESTQUEUEWORKER_H_
 
+#include "thread.h"
+
 class RequestQueue;
 
 // Worker is responsible to DELETE the request gotten from queue
 
-class RequestQueueWorker
+class RequestQueueWorker : public Thread
 {
 public:
 	RequestQueueWorker(RequestQueue* requestQueue);
 	virtual ~RequestQueueWorker();
-	bool Start();
 private:
-	void HandleRequests();
-	static void* ThreadCallBack(void* arg);
+	void DoWork();
 	void HandleRequest(const Request* request);
-
-	bool mKeepRunning;
 	RequestQueue* mRequestQueue;
-	pthread_t* mThread;
 };
 
 #endif /* REQUESTQUEUEWORKER_H_ */
