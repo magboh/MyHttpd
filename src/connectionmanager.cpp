@@ -26,6 +26,7 @@ ConnectionManager::ConnectionManager(int maxConnections, int nrWorkers,Connectio
 	mCurrentThread = 0 ;
 	mWorker = workers;
 	mCurrentThread = 0 ;
+	mStats.nrTotalConnections = 0 ;
 }
 
 ConnectionManager::~ConnectionManager()
@@ -39,4 +40,13 @@ void ConnectionManager::CreateConnection(int socket)
 
 	Connection* con= new Connection(socket,this);
 	mWorker[mCurrentThread++ % mNrWorkers]->AddConnection(con);
+	++mStats.nrTotalConnections;
 }
+
+void ConnectionManager::PrintStats()
+{
+	std:: cout << "---- ConnectionManager ----\n";
+	std:: cout << "Total Connections: " <<  mStats.nrTotalConnections <<  "\n";
+}
+
+

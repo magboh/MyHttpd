@@ -18,10 +18,9 @@ public:
 	ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket);
-	void StartHandleConnections();
+	void PrintStats();
 private:
 	static void* ThreadCallBack(void* arg);
-	void HandleConnections();
 
 	int mNumConnections;
 	int mMaxConnections;
@@ -30,9 +29,9 @@ private:
 	int mCurrentThread;
 	ConnectionQueueWorker** mWorker;
 
-	struct stats {
+	struct stats_t {
 		unsigned int nrTotalConnections;
-	};
+	} mStats;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

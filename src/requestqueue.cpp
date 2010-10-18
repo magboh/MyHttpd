@@ -23,6 +23,9 @@ RequestQueue::RequestQueue()
 	mCondThread = new pthread_cond_t;
 	pthread_cond_init (mCondThread, NULL);
 	mKeepRunning= true;
+
+	mStats.mHighestInQueue=0;
+	mStats.mTotalNrInQueue=0;
 }
 
 RequestQueue::~RequestQueue()
@@ -58,6 +61,7 @@ const Request* RequestQueue::GetNextRequest()
 		{
 			request = mReqQueue.front();
 			mReqQueue.pop();
+			mNrInQueue--;
 			break;
 		}
 	}
@@ -71,6 +75,10 @@ void RequestQueue::AddRequest(const Request* request)
 	assert(pthread_mutex_lock(mMutex)==0);
 	pthread_cond_broadcast(mCondThread);
 	mReqQueue.push(request);
+	mStats.mTotalNrInQueue++;
+	if (++mNrInQueue>mStats.mHighestInQueue)
+		mStats.mHighestInQueue=mNrInQueue;
+
 	assert(pthread_mutex_unlock(mMutex)==0);
 }
 
@@ -84,5 +92,11 @@ void RequestQueue::Shutdown()
 	assert(pthread_mutex_unlock(mMutex)==0);
 }
 
+void RequestQueue::PrintStats()
+{
+	std:: cout << "---- Request Queue ----\n";
+	std:: cout << "Total number of requests: " <<  mStats.mTotalNrInQueue <<  "\n";
+	std:: cout << "Highest number of requests in queue: " <<  mStats.mHighestInQueue <<  "\n";
+}
 
 

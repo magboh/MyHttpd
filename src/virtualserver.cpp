@@ -14,7 +14,7 @@
 #include <cassert>
 #include <iostream>
 #include <errno.h>
-
+#include <time.h>
 #include "connectionqueueworker.h"
 #include "connectionmanager.h"
 #include "virtualserver.h"
@@ -29,7 +29,7 @@ VirtualServer::VirtualServer() {
 
 	mMaxConnections = 500 ;
 	mNrConnectionWorkers = 2;
-	mNrRequestWorkers = 3;
+	mNrRequestWorkers = 4;
 }
 
 VirtualServer::~VirtualServer() {
@@ -58,11 +58,11 @@ bool VirtualServer::Start()
     return true;
 
 }
-
+int a=0;
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
-
+	time_t statsTime = time(NULL);
 	while(mKeepRunning)
 	{
 		socklen_t len = sizeof(addr);
@@ -83,7 +83,19 @@ void VirtualServer::WaitForIncomming()
 			usleep(10);
 		}
 
-	};
+		if (++a>100)
+		{
+			a=0;
+			time_t newTime = time(NULL);
+
+			if (newTime>statsTime+5)
+			{
+				statsTime=newTime;
+				PrintStats();
+			}
+		}
+
+	}
 
 }
 
@@ -92,6 +104,8 @@ void VirtualServer::Stop()
 {
 	mKeepRunning = false;
 	ShutdownSubsystem();
+
+	PrintStats();
 }
 
 void VirtualServer::Shutdown()
@@ -178,6 +192,13 @@ void VirtualServer::ShutdownSubsystem()
 	}
 	std::cout << "Shutting down Request Queue\n";
 	mRequestQueue->Shutdown();
-
 }
+
+
+void VirtualServer::PrintStats()
+{
+	mRequestQueue->PrintStats();
+	mConnectionManager->PrintStats();
+}
+
 

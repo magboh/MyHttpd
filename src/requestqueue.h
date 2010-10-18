@@ -29,11 +29,18 @@ public:
 	void AddRequest(const Request* request);
 	const Request* GetNextRequest();
 	void Shutdown();
+	void PrintStats();
 private:
 	std::queue <const Request*> mReqQueue;
 	pthread_mutex_t* mMutex;
 	pthread_cond_t* mCondThread;
 	bool mKeepRunning;
+	unsigned short mNrInQueue;
+	struct stats_t
+	{
+		unsigned long mTotalNrInQueue;
+		unsigned long mHighestInQueue;
+	} mStats;
 };
 
 #endif /* REQUESTQUEUE_H_ */
