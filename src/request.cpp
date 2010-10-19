@@ -129,7 +129,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 				request->SetHttpVersion(version);
 				request->mUri = uri;
 				request->mParsePos = parsePos;
-				request->mKeepAlive = false;
+				request->mKeepAlive = true;
 			}
 		}
 	}

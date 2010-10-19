@@ -23,7 +23,12 @@ public:
 	 * @return
 	 */
 	bool Read(size_t size);
-	bool Write(size_t size);
+/**
+ *
+ * @param size
+ * @return 1 if all written 0 on more to write -1 if failure
+ */
+	int Write(size_t size);
 	int GetSocket() const;
 	bool WantToRead() const;
 	bool HasData();
@@ -31,6 +36,11 @@ public:
 	void SetResponse(const Response* response);
 	Request* GetRequest() const;
 	void SetRequest(Request* request);
+	void SetLastRequstTime(time_t lastTime);
+	time_t GetLastRequstTime() const;
+
+	bool IsCloseable() const;
+	void SetCloseable(bool closeable);
 private:
 	int mSocket;
 
@@ -45,6 +55,9 @@ private:
 	bool mHasData;
 	char mWriteStatus;
 	size_t mWritten;
+	time_t mCreated;
+	time_t mLastRequest;
+	bool mCloseable;
 };
 
 #endif /* CONNECTION_H_ */

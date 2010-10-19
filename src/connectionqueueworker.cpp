@@ -53,9 +53,11 @@ void ConnectionQueueWorker::DoWork()
 	int count=0;
 	std::list<Connection*>::iterator it;
 	Connection* con;
-
-	while (mKeepRunning || count > 0 )
+	time_t now = time(NULL);
+	const int timeout = 30 ;
+	while (mKeepRunning || count > 0 )s
 	{
+
 		count = mList.size();
 		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
 		{
@@ -66,17 +68,38 @@ void ConnectionQueueWorker::DoWork()
 				{
 					mRequestQueue->AddRequest(con->GetRequest());
 					con->SetRequest(NULL);
+					con->SetLastRequstTime(now);
 				}
 
 			}
 			if (con->HasData())
 			{
-				if (!con->Write(writeThrougput / count))
+				int ret = con->Write(writeThrougput / count);
+				if (ret<0)
 				{
+					std::cout << "Connection write error. Close\n";
 					RemoveConnection(con);
 					con=NULL;
 					it = mList.erase(it);
 				}
+				else if (ret==1)
+				{
+
+					if (con->IsCloseable())
+					{
+						RemoveConnection(con);
+						con=NULL;
+						it = mList.erase(it);
+					}
+				}
+			}
+
+			if (con->GetLastRequstTime() + timeout > now)
+			{
+				std::cout << "Connection timeout\n";
+				RemoveConnection(con);
+				con=NULL;
+				it = mList.erase(it);
 			}
 
 		}

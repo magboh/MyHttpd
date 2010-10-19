@@ -16,6 +16,7 @@
 #include <sys/sendfile.h>
 #include <iostream>
 #include <poll.h>
+#include <time.h>
 
 #include "request.h"
 #include "response.h"
@@ -36,6 +37,10 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mHasData = false;
 	mWriteStatus = 0 ;
 	mWritten = 0;
+
+	mCreated = time(NULL);
+	mLastRequest = 0 ;
+	SetCloseable(false);
 }
 
 Connection::~Connection()
@@ -57,7 +62,7 @@ Connection::~Connection()
 
 	if (mResponse)
 		delete mResponse;
-//	printf("\nClosing Connection socket=%d\n",mSocket);
+	printf("Closing Connection\n");
 }
 
 bool Connection::Read(size_t size)
@@ -114,11 +119,10 @@ int Connection::GetSocket() const
 	return mSocket;
 }
 
-bool Connection::Write(size_t size)
+int Connection::Write(size_t size)
 {
 	size_t toWrite = size;
-	bool keepAlive=true;
-//	std::cout << "\nWrite" << size << "bytes\n";
+	int ret = 0 ;
 	if (mWriteStatus==0)
 	{
 		if ( size > mWriteBuffer->GetUsage() )
@@ -159,17 +163,12 @@ bool Connection::Write(size_t size)
 	// All written...
 	if (mWriteStatus == 2)
 	{
-//		if ( !mResponse->GetKeepAlive() )
-		keepAlive = mResponse->GetKeepAlive();
-		delete mResponse;
-		mResponse = NULL;
-		mHasData = false;
-
-
-
+		if ( (mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0) || mResponse->GetKeepAlive()==false )
+			SetCloseable(true);
+		ret = 1 ;
 	}
 
-	return keepAlive;
+	return ret;
 }
 
 
@@ -191,7 +190,6 @@ void Connection::SetHasData(bool b)
 void Connection::SetResponse(const Response* response)
 {
 //	std::cout << "Connection::SetResponse:\n";
-	mWriteBuffer->Clear();
 	mResponse = response;
 	mResponse->ToBuffer(mWriteBuffer);
 }
@@ -205,3 +203,25 @@ void Connection::SetRequest(Request* request)
 {
 	mRequest = request;
 }
+
+void Connection::SetLastRequstTime(time_t lastTime)
+{
+	mLastRequest = lastTime;
+}
+
+time_t Connection::GetLastRequstTime() const
+{
+	return mLastRequest;
+}
+
+bool Connection::IsCloseable() const
+{
+	return mCloseable;
+}
+
+void Connection::SetCloseable(bool closeable)
+{
+	mCloseable = closeable;
+}
+
+
