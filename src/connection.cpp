@@ -39,12 +39,13 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mWritten = 0;
 
 	mCreated = time(NULL);
-	mLastRequest = 0 ;
+	mLastRequest = mCreated ;
 	SetCloseable(false);
 }
 
 Connection::~Connection()
 {
+	printf("Closing Connection\n");
 	if (mReadBuffer)
 	{
 		delete mReadBuffer;
@@ -62,7 +63,6 @@ Connection::~Connection()
 
 	if (mResponse)
 		delete mResponse;
-	printf("Closing Connection\n");
 }
 
 bool Connection::Read(size_t size)
@@ -158,6 +158,8 @@ int Connection::Write(size_t size)
 			if (mWritten == mResponse->GetContentLength())
 				mWriteStatus = 2;
 		}
+		else
+			mWriteStatus = 2;
 	}
 
 	// All written...
@@ -166,6 +168,12 @@ int Connection::Write(size_t size)
 		if ( (mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0) || mResponse->GetKeepAlive()==false )
 			SetCloseable(true);
 		ret = 1 ;
+		mWriteBuffer->Clear();
+		mWritten=0;
+		mWriteStatus=0;
+		delete mResponse;
+		mResponse=NULL;
+		mHasData = false ;
 	}
 
 	return ret;
@@ -189,7 +197,8 @@ void Connection::SetHasData(bool b)
  */
 void Connection::SetResponse(const Response* response)
 {
-//	std::cout << "Connection::SetResponse:\n";
+	std::cout << "Connection::SetResponse:\n";
+	assert(mResponse==NULL);
 	mResponse = response;
 	mResponse->ToBuffer(mWriteBuffer);
 }

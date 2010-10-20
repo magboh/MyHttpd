@@ -55,8 +55,9 @@ void ConnectionQueueWorker::DoWork()
 	Connection* con;
 	time_t now = time(NULL);
 	const int timeout = 30 ;
-	while (mKeepRunning || count > 0 )s
+	while (mKeepRunning || count > 0 )
 	{
+		time_t now = time(NULL);
 
 		count = mList.size();
 		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
@@ -90,11 +91,14 @@ void ConnectionQueueWorker::DoWork()
 						RemoveConnection(con);
 						con=NULL;
 						it = mList.erase(it);
+					} else
+					{
 					}
+
 				}
 			}
 
-			if (con->GetLastRequstTime() + timeout > now)
+			if (con !=0 && con->GetLastRequstTime() + timeout < now)
 			{
 				std::cout << "Connection timeout\n";
 				RemoveConnection(con);

@@ -136,14 +136,14 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 
 	if (request->mParseState == 1)
 	{
-		for (int i=request->mParsePos; i<=size-4; i++)
+		for (int i=parsePos; i<=size-4; i++)
 		{
 			if (strncmp("\r\n\r\n",(data+i),4)==0)
 			{
 				request->mParsePos=0;
 				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
-//				std::cout << "request->mParsePos=" << request->mParsePos << " req=" << request->ToString() <<"\n";
+				std::cout << "request = " << request->ToString() <<"\n";
 				return true;
 			}
 		}
