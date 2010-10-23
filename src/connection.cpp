@@ -16,6 +16,7 @@
 #include <sys/sendfile.h>
 #include <iostream>
 #include <poll.h>
+#include <time.h>
 
 #include "request.h"
 #include "response.h"
@@ -36,10 +37,15 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mHasData = false;
 	mWriteStatus = 0 ;
 	mWritten = 0;
+	mResponse = NULL;
+	mCreated = time(NULL);
+	mLastRequest = mCreated ;
+	SetCloseable(false);
 }
 
 Connection::~Connection()
 {
+//	printf("Closing Connection\n");
 	if (mReadBuffer)
 	{
 		delete mReadBuffer;
@@ -57,7 +63,6 @@ Connection::~Connection()
 
 	if (mResponse)
 		delete mResponse;
-//	printf("\nClosing Connection socket=%d\n",mSocket);
 }
 
 bool Connection::Read(size_t size)
@@ -114,16 +119,14 @@ int Connection::GetSocket() const
 	return mSocket;
 }
 
-bool Connection::Write(size_t size)
+int Connection::Write(size_t size)
 {
 	size_t toWrite = size;
-	bool keepAlive=true;
-//	std::cout << "\nWrite" << size << "bytes\n";
+	int ret = 0 ;
 	if (mWriteStatus==0)
 	{
 		if ( size > mWriteBuffer->GetUsage() )
 			toWrite = mWriteBuffer->GetUsage();
-	//	std::cout << "\nWrite" << size << " " << mWriteBuffer->GetUsage()  <<"\n";
 
 		const char* buffer = mWriteBuffer->GetBuffer();
 		int len = write(mSocket, buffer, toWrite);
@@ -154,22 +157,25 @@ bool Connection::Write(size_t size)
 			if (mWritten == mResponse->GetContentLength())
 				mWriteStatus = 2;
 		}
+		else
+			mWriteStatus = 2;
 	}
 
 	// All written...
 	if (mWriteStatus == 2)
 	{
-//		if ( !mResponse->GetKeepAlive() )
-		keepAlive = mResponse->GetKeepAlive();
+		if ( (mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0) || mResponse->GetKeepAlive()==false )
+			SetCloseable(true);
+		ret = 1 ;
+		mWriteBuffer->Clear();
+		mWritten=0;
+		mWriteStatus=0;
 		delete mResponse;
-		mResponse = NULL;
-		mHasData = false;
-
-
-
+		mResponse=NULL;
+		mHasData = false ;
 	}
 
-	return keepAlive;
+	return ret;
 }
 
 
@@ -190,8 +196,8 @@ void Connection::SetHasData(bool b)
  */
 void Connection::SetResponse(const Response* response)
 {
-//	std::cout << "Connection::SetResponse:\n";
-	mWriteBuffer->Clear();
+	//std::cout << "Connection::SetResponse:\n";
+	assert(mResponse==NULL);
 	mResponse = response;
 	mResponse->ToBuffer(mWriteBuffer);
 }
@@ -205,3 +211,25 @@ void Connection::SetRequest(Request* request)
 {
 	mRequest = request;
 }
+
+void Connection::SetLastRequstTime(time_t lastTime)
+{
+	mLastRequest = lastTime;
+}
+
+time_t Connection::GetLastRequstTime() const
+{
+	return mLastRequest;
+}
+
+bool Connection::IsCloseable() const
+{
+	return mCloseable;
+}
+
+void Connection::SetCloseable(bool closeable)
+{
+	mCloseable = closeable;
+}
+
+

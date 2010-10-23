@@ -61,7 +61,7 @@ size_t ByteBuffer::GetUsage() const
 }
 void ByteBuffer::Clear()
 {
-	memset(mBuffer,0x00,mSize);
+	memset(mBuffer,0x00,mSize-1);
 	mPosition = 0 ;
 }
 

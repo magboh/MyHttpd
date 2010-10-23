@@ -52,12 +52,21 @@ void ConnectionQueueWorker::DoWork()
 	int writeThrougput = 512000;
 	int count=0;
 	std::list<Connection*>::iterator it;
+	std::list<Connection*>::iterator end;
 	Connection* con;
-
+	const int timeout = 30 ;
 	while (mKeepRunning || count > 0 )
 	{
+		time_t now = time(NULL);
+
+		pthread_mutex_lock(mMutex);
 		count = mList.size();
-		for(it = mList.begin() ; count >0 &&   it != mList.end() ; it++)
+		it = mList.begin();
+		end = mList.end();
+		pthread_mutex_unlock(mMutex);
+
+
+		for(it ; count >0 &&   it != end ; it++)
 		{
 			con = *it;
 			if(mKeepRunning)
@@ -66,17 +75,43 @@ void ConnectionQueueWorker::DoWork()
 				{
 					mRequestQueue->AddRequest(con->GetRequest());
 					con->SetRequest(NULL);
+					con->SetLastRequstTime(now);
 				}
 
 			}
 			if (con->HasData())
 			{
-				if (!con->Write(writeThrougput / count))
+				con->SetLastRequstTime(now);
+				int ret = con->Write(writeThrougput / count);
+				if (ret<0)
 				{
+					//std::cout << "Connection write error. Close\n";
 					RemoveConnection(con);
 					con=NULL;
 					it = mList.erase(it);
 				}
+				else if (ret==1)
+				{
+
+					if (con->IsCloseable())
+					{
+						//std::cout << "Connection closing.. Done its work\n";
+						RemoveConnection(con);
+						con=NULL;
+						it = mList.erase(it);
+					} else
+					{
+					}
+
+				}
+			}
+
+			if (con !=0 && con->GetLastRequstTime() + timeout < now)
+			{
+				std::cout << "Connection timeout\n";
+				RemoveConnection(con);
+				con=NULL;
+				it = mList.erase(it);
 			}
 
 		}

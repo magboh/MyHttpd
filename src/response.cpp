@@ -37,7 +37,6 @@ Response::Response()
 {
 	mFile = -1 ;
 	mContentLength = 0 ;
-	mKeepAlive = true;
 }
 
 
@@ -78,10 +77,14 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	Http::Status status = GetStatus();
 	ss << Http::GetVersionString(GetHttpVersion()) << " " << status << " " << Http::GetStatusString(status) <<"\r\n";
 
-//	if (!mKeepAlive)
-	//{
-		ss << "Connection:Close\r\n";
-	//}
+	if (mKeepAlive)
+	{
+		ss << "Connection: keep-alive\r\n";
+	}
+	else
+	{
+		ss << "Connection: close\r\n";
+	}
 
 
 	if (status == Http::HTTP_OK)

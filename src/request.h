@@ -9,6 +9,8 @@
 #define REQUEST_H_
 
 #include <string>
+#include <map>
+
 #include "http.h"
 
 class Connection;
@@ -49,6 +51,7 @@ private:
 	Connection* mConnection;
 	int mParseState;
 	size_t mParsePos;
+	std::map<std::string , std::string> mHeader;
 };
 
 #endif /* REQUEST_H_ */
