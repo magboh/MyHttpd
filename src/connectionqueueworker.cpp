@@ -71,13 +71,9 @@ void ConnectionQueueWorker::DoWork()
 			con = *it;
 			if ( con->Read(readThrougput / count) )
 			{
-				if ( con->Read(readThrougput / count) )
-				{
-					mRequestQueue->AddRequest(con->GetRequest());
-					con->SetRequest(NULL);
-					con->SetLastRequstTime(now);
-				}
-
+				mRequestQueue->AddRequest(con->GetRequest());
+				con->SetRequest(NULL);
+				con->SetLastRequstTime(now);
 			}
 
 			if (con->HasData())
