@@ -37,7 +37,7 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mHasData = false;
 	mWriteStatus = 0 ;
 	mWritten = 0;
-
+	mResponse = NULL;
 	mCreated = time(NULL);
 	mLastRequest = mCreated ;
 	SetCloseable(false);
@@ -45,7 +45,7 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 
 Connection::~Connection()
 {
-	printf("Closing Connection\n");
+//	printf("Closing Connection\n");
 	if (mReadBuffer)
 	{
 		delete mReadBuffer;
@@ -127,7 +127,6 @@ int Connection::Write(size_t size)
 	{
 		if ( size > mWriteBuffer->GetUsage() )
 			toWrite = mWriteBuffer->GetUsage();
-	//	std::cout << "\nWrite" << size << " " << mWriteBuffer->GetUsage()  <<"\n";
 
 		const char* buffer = mWriteBuffer->GetBuffer();
 		int len = write(mSocket, buffer, toWrite);
@@ -197,7 +196,7 @@ void Connection::SetHasData(bool b)
  */
 void Connection::SetResponse(const Response* response)
 {
-	std::cout << "Connection::SetResponse:\n";
+	//std::cout << "Connection::SetResponse:\n";
 	assert(mResponse==NULL);
 	mResponse = response;
 	mResponse->ToBuffer(mWriteBuffer);

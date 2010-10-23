@@ -37,7 +37,6 @@ Response::Response()
 {
 	mFile = -1 ;
 	mContentLength = 0 ;
-	mKeepAlive = true;
 }
 
 
@@ -84,7 +83,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	}
 	else
 	{
-		ss << "Connection: Close\r\n";
+		ss << "Connection: close\r\n";
 	}
 
 

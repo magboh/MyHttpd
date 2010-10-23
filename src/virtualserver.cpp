@@ -29,7 +29,7 @@ VirtualServer::VirtualServer() {
 
 	mMaxConnections = 500 ;
 	mNrConnectionWorkers = 2;
-	mNrRequestWorkers = 3;
+	mNrRequestWorkers = 2;
 }
 
 VirtualServer::~VirtualServer() {
@@ -131,7 +131,7 @@ void VirtualServer::SetupSocket()
 		perror("bind failed");
 	}
 
-	if (listen(mSocket,60)==-1)
+	if (listen(mSocket,500)==-1)
 	{
 		perror("Listen failed:");
 	}

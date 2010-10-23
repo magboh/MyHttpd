@@ -129,23 +129,39 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 				request->SetHttpVersion(version);
 				request->mUri = uri;
 				request->mParsePos = parsePos;
-				request->mKeepAlive = true;
 			}
 		}
 	}
 
 	if (request->mParseState == 1)
 	{
+		int headStart = parsePos;
+		int headEnd = parsePos;
 		for (int i=parsePos; i<=size-4; i++)
 		{
+
+			if (strncmp("\r\n",(data+i),2)==0)
+			{
+				request->mHeader[ std::string(data+headStart,headEnd-headStart-1) ] =
+						std::string(data+headEnd+1,i-headEnd-1);
+				headStart = i+2;
+				headEnd= headStart;
+			}
+
 			if (strncmp("\r\n\r\n",(data+i),4)==0)
 			{
 				request->mParsePos=0;
 				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
-				std::cout << "request = " << request->ToString() <<"\n";
+				if (request->mHeader["Connection"].compare("keep-alive")==0 )
+					request->mKeepAlive= true;
+				else if (request->mHeader["Connection"].compare("close")==0 )
+					request->mKeepAlive = false;
 				return true;
 			}
+
+			if (data[i]==' ' && headEnd == headStart)
+				headEnd = i ;
 		}
 	}
 	return false;
@@ -157,8 +173,14 @@ const std::string Request::ToString() const
 	std::string str = (mType == HTTP_GET) ? "GET" : "POST";
 	str+= " " + mUri +" ";
 	str+= Http::GetVersionString( GetHttpVersion() );
-	str+= " " + Http::GetStatusString(GetStatus());
-	std::cout << "\nRequest::ToString=" << str << "\n";
+	str+= " " + Http::GetStatusString(GetStatus())+"\n";
+
+	std::map<std::string, std::string>::const_iterator i = mHeader.begin();
+
+	for( ; i != mHeader.end(); ++i )
+	{
+	    str+=":" + i->first + ":" +i->second +":::\n";
+	}
 	return str;
 }
 

@@ -30,6 +30,9 @@ public:
 	const Request* GetNextRequest();
 	void Shutdown();
 private:
+	RequestQueue(const RequestQueue &) {};
+	RequestQueue& operator=(const RequestQueue& p) {return *this;};
+
 	std::queue <const Request*> mReqQueue;
 	pthread_mutex_t* mMutex;
 	pthread_cond_t* mCondThread;
