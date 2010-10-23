@@ -22,7 +22,7 @@ public:
 	bool Start();
 	void Stop();
 	void WaitForIncomming();
-
+	void PrintStats();
 private:
 	int mSocket;
 	ConnectionManager* mConnectionManager;
@@ -42,9 +42,10 @@ private:
 	RequestQueueWorker** mRequestWorker;
 	RequestQueue* mRequestQueue;
 
-	struct stats {
-		unsigned int nrTotalConnections;
-	};
+	struct stats_t {
+		unsigned long mNrAcceptErrors;
+	} mStats;
+
 
 };
 

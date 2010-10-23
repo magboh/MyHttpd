@@ -67,7 +67,6 @@ Connection::~Connection()
 
 bool Connection::Read(size_t size)
 {
-	bool keepAlive=true;
 	size_t toRead = size;
 	bool done = false;
 	if (toRead > mReadBuffer->GetSpaceLeft())

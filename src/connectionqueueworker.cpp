@@ -66,10 +66,10 @@ void ConnectionQueueWorker::DoWork()
 		pthread_mutex_unlock(mMutex);
 
 
-		for(it ; count >0 &&   it != end ; it++)
+		for(it ; (count >0) && (it!=end) ; it++)
 		{
 			con = *it;
-			if(mKeepRunning)
+			if ( con->Read(readThrougput / count) )
 			{
 				if ( con->Read(readThrougput / count) )
 				{
@@ -79,6 +79,7 @@ void ConnectionQueueWorker::DoWork()
 				}
 
 			}
+
 			if (con->HasData())
 			{
 				con->SetLastRequstTime(now);
@@ -109,6 +110,13 @@ void ConnectionQueueWorker::DoWork()
 			if (con !=0 && con->GetLastRequstTime() + timeout < now)
 			{
 				std::cout << "Connection timeout\n";
+				RemoveConnection(con);
+				con=NULL;
+				it = mList.erase(it);
+			}
+
+			if(!mKeepRunning && con->GetRequest()!= NULL)
+			{
 				RemoveConnection(con);
 				con=NULL;
 				it = mList.erase(it);

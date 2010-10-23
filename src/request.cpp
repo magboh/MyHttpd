@@ -37,11 +37,6 @@ Request::~Request() {
  */
 bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 {
-	ParseReturn pret= REQUEST_UNFINISHED;
-
-	char *ptr;
-	char *line;
-	int status=0;
 	int parsePos=request->mParsePos;
 	// ParseState == 0 is GET/POST line
 	const char* data = buffer->GetBuffer();
@@ -157,6 +152,9 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 					request->mKeepAlive= true;
 				else if (request->mHeader["Connection"].compare("close")==0 )
 					request->mKeepAlive = false;
+
+				std::cout << "Requst:" << request->ToString();
+
 				return true;
 			}
 

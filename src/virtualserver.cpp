@@ -14,7 +14,7 @@
 #include <cassert>
 #include <iostream>
 #include <errno.h>
-
+#include <time.h>
 #include "connectionqueueworker.h"
 #include "connectionmanager.h"
 #include "virtualserver.h"
@@ -30,6 +30,8 @@ VirtualServer::VirtualServer() {
 	mMaxConnections = 500 ;
 	mNrConnectionWorkers = 2;
 	mNrRequestWorkers = 2;
+
+	mStats.mNrAcceptErrors=0;
 }
 
 VirtualServer::~VirtualServer() {
@@ -54,15 +56,14 @@ bool VirtualServer::Start()
 
 	/*Open up to others*/
 	SetupSocket();
-
     return true;
 
 }
-
+int a=0;
 void VirtualServer::WaitForIncomming()
 {
 	struct sockaddr_in addr;
-
+	time_t statsTime = time(NULL);
 	while(mKeepRunning)
 	{
 		socklen_t len = sizeof(addr);
@@ -80,10 +81,28 @@ void VirtualServer::WaitForIncomming()
 		}
 		else
 		{
-			usleep(10);
+			if (error == EWOULDBLOCK || error == EAGAIN)
+			{
+				usleep(10);
+			}
+			else {
+				mStats.mNrAcceptErrors++;
+			}
 		}
 
-	};
+		if (++a>100)
+		{
+			a=0;
+			time_t newTime = time(NULL);
+
+			if (newTime>statsTime+5)
+			{
+				statsTime=newTime;
+				PrintStats();
+			}
+		}
+
+	}
 
 }
 
@@ -92,6 +111,8 @@ void VirtualServer::Stop()
 {
 	mKeepRunning = false;
 	ShutdownSubsystem();
+
+	PrintStats();
 }
 
 void VirtualServer::Shutdown()
@@ -172,12 +193,41 @@ void VirtualServer::ShutdownSubsystem()
 
 	// Turn of reading new request from connections
 	std::cout << "Blocking Connection Workers\n";
+
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{
 		mConnectionWorker[i]->Stop();
 	}
+
 	std::cout << "Shutting down Request Queue\n";
 	mRequestQueue->Shutdown();
 
+	for(int i=0; i<mNrRequestWorkers;i++)
+	{
+		if(mRequestWorker[i]->Join())
+		{
+			std::cout << "Request Worker shut down\n";
+		}
+	}
+
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		if(mConnectionWorker[i]->Join())
+		{
+			std::cout << "Connection Worked shut down\n";
+		}
+	}
+
 }
+
+
+void VirtualServer::PrintStats()
+{
+	mRequestQueue->PrintStats();
+	mConnectionManager->PrintStats();
+
+	std::cout << "---- Virtual Server  ----\n";
+	std::cout << "Total accept() errors:" << mStats.mNrAcceptErrors << "\n";
+}
+
 

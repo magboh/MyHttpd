@@ -36,11 +36,13 @@ public:
 	void SetResponse(const Response* response);
 	Request* GetRequest() const;
 	void SetRequest(Request* request);
+
 	void SetLastRequstTime(time_t lastTime);
 	time_t GetLastRequstTime() const;
 
 	bool IsCloseable() const;
 	void SetCloseable(bool closeable);
+
 private:
 	int mSocket;
 
