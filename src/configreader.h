@@ -16,6 +16,19 @@ public:
 	ConfigReader();
 	virtual ~ConfigReader();
 	void Load(const std::string & filename);
+
+	void ParseLogOptions();
+	void ParseSiteOptions();
+
+	void ParseServerOptions();
+
+	void ParseSites();
+	void ParseSite();
+
+	void ParseVirtualHostSites();
+	void ParseVirtualHostSite();
+
+
 };
 
 #endif /* CONFIGREADER_H_ */
