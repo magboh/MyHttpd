@@ -11,8 +11,16 @@
 class SiteOptions
 {
 public:
+
+
 	SiteOptions();
 	virtual ~SiteOptions();
+    bool GetAllowDirectoryBrowsing() const;
+    int GetConnectionTimeout() const;
+    std::string GetDefaultFile() const;
+    void SetAllowDirectoryBrowsing(bool mAllowDirectoryBrowsing);
+    void SetConnectionTimeout(int mConnectionTimeout);
+    void SetDefaultFile(std::string mDefaultFile);
 private:
 
 	std::string mDefaultFile;

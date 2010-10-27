@@ -23,7 +23,7 @@ private:
 	std::string mDefaultFile;
 
 	std::string mDocRoot;
-	in_addr_t mAddress;
+	//in_addr_t mAddress;
 	unsigned short mPort ;
 };
 

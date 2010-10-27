@@ -61,7 +61,7 @@ void RequestSuite::TestVersionNotSupported()
 	  ByteBuffer* buf = new ByteBuffer(2000);
 	  char *txt ="GET /versionnotsupported.html HTTP/2.1\n\r";
 			  buf->Add(txt,strlen(txt));
-	  Request::ParseReturn pr= Request::ParseRequest(r,buf);
+
 	  TEST_ASSERT(pr == Request::REQUEST_HTPP_VERSION_NOT_SUPPORTED);
 	  delete buf;
 	  delete r;

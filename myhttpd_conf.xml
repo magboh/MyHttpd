@@ -1,3 +1,4 @@
+<?xml version="1.0" standalone="no" ?>
 <MyHttpd>
 	<log>
 		<accesslog>
@@ -32,7 +33,7 @@
 
 			<VirtualHostSites>
 				<Host>SecretVirtualHost</Host>
-			<VirtualHostSites>
+			</VirtualHostSites>
 							
   		</Site>
   	
@@ -46,8 +47,4 @@
     		<AllowDirectoryBrowsing>false</AllowDirectoryBrowsing>
   		</VirtualHostSite>
   	</VirtualHostSites>  	
-
-
-
-
 </MyHttpd>

@@ -9,16 +9,21 @@
 #define CONFIGREADER_H_
 
 #include <string>
+#include <vector>
+#include "site.h"
+#include "siteoptions.h"
+
+class TiXmlElement;
 
 class ConfigReader
 {
 public:
 	ConfigReader();
 	virtual ~ConfigReader();
-	void Load(const std::string & filename);
+	bool Load(const std::string & filename);
 
 	void ParseLogOptions();
-	void ParseSiteOptions();
+	bool ParseSiteOptions(TiXmlElement* element);
 
 	void ParseServerOptions();
 
@@ -27,8 +32,10 @@ public:
 
 	void ParseVirtualHostSites();
 	void ParseVirtualHostSite();
+private:
 
-
+	std::vector <Site> mSiteVec;
+	SiteOptions mSiteOptions;
 };
 
 #endif /* CONFIGREADER_H_ */
