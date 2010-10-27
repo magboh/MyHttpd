@@ -6,7 +6,7 @@
  */
 
 #include "myhttpd.h"
-#include "configreader.h"
+#include "config/configreader.h"
 
 int main(int argc, char** argv)
 {

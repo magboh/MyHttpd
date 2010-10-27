@@ -7,7 +7,7 @@
 
 #include <map>
 
-#include "tinyxml.h"
+#include "../tinyxml/tinyxml.h"
 #include "configreader.h"
 
 ConfigReader::ConfigReader()
