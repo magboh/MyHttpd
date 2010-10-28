@@ -41,8 +41,13 @@ bool ConfigReader::Load(const std::string & filename)
     }
 
     TiXmlElement* siteOptionsElement = rootElement->FirstChildElement("DefaultSiteOptions");
+    TiXmlElement* serverOptionsElement = rootElement->FirstChildElement("ServerOptions");
+
     if (siteOptionsElement!=0)
     	ParseSiteOptions(siteOptionsElement);
+    if (serverOptionsElement!=0)
+    	ParseServerOptions(serverOptionsElement);
+
     return true;
 }
 
@@ -85,6 +90,54 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 		ss >> timeout;
 
 		mSiteOptions.SetConnectionTimeout(timeout);
+	}
+
+	return true;
+}
+
+bool ConfigReader::ParseServerOptions(TiXmlElement* element)
+{
+	assert(element!=0);
+
+	std::map<std::string,std::string> map;
+	std::map<std::string,std::string>::iterator it;
+	std::stringstream ss;
+
+	TiXmlElement* child = element->FirstChildElement();
+
+	for (child; child!=0; child=child->NextSiblingElement())
+	{
+		map[child->ValueStr()] = std::string(child->GetText());
+	}
+/*
+  	<RequestWorkers>3</RequestWorkers>
+	<IOWorkers>2</IOWorkers>
+	<RequestBuffer>4096</RequestBuffer>
+	<ResponseBuffer>4096</ResponseBuffer>
+	<ConnectionQueue>400</ConnectionQueue>
+*/
+  	std::string tags[] =
+  	{
+  			std::string("RequestWorkers"),
+  			std::string("IOWorkers"),
+  			std::string("RequestBuffer"),
+  			std::string("ResponseBuffer"),
+  			std::string("ConnectionQueue")
+  	};
+
+	for ( int i=0 ; i<5 ; i++)
+	{
+
+		if ( (it=map.find( tags[i] ) )!= map.end())
+		{
+			int value=0;
+			ss.clear();
+			ss << it->second;
+			ss >> value;
+
+			std::cout << "i=" << i << " val=" << value <<"\n";
+
+		}
 	}
 
 	return true;

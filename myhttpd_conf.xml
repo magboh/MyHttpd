@@ -8,11 +8,9 @@
 
 	<ServerOptions>
 	  	<RequestWorkers>3</RequestWorkers>
-		<IoWorkers>2</IoWorkers>
-
+		<IOWorkers>2</IOWorkers>
 		<RequestBuffer>4096</RequestBuffer>
 		<ResponseBuffer>4096</ResponseBuffer>
-
     	<ConnectionQueue>400</ConnectionQueue>
 	</ServerOptions>
 

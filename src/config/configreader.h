@@ -25,7 +25,7 @@ public:
 	void ParseLogOptions();
 	bool ParseSiteOptions(TiXmlElement* element);
 
-	void ParseServerOptions();
+	bool ParseServerOptions(TiXmlElement* element);
 
 	void ParseSites();
 	void ParseSite();
