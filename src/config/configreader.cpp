@@ -62,7 +62,7 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 
 	TiXmlElement* child = element->FirstChildElement();
 
-	for (child; child!=0; child=child->NextSiblingElement())
+	for (; child!=0; child=child->NextSiblingElement())
 	{
 		map[child->ValueStr()] = std::string(child->GetText());
 	}
@@ -105,7 +105,7 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 
 	TiXmlElement* child = element->FirstChildElement();
 
-	for (child; child!=0; child=child->NextSiblingElement())
+	for ( ; child!=0; child=child->NextSiblingElement())
 	{
 		map[child->ValueStr()] = std::string(child->GetText());
 	}

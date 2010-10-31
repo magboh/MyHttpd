@@ -66,9 +66,12 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		parsePos++;
 
 		int i=parsePos;
-		for (i;i<size;i++)
+
+		for (;i<size;i++)
+		{
 			if (data[i]==' ')
 				break;
+		}
 
 		if (i-parsePos > Request::MAX_URI_LENGTH)
 		{
@@ -201,8 +204,6 @@ void Request::SetConnection(Connection *mConnection)
 {
     mConnection = mConnection;
 }
-
-
 
 bool Request::GetKeepAlive() const
 {
