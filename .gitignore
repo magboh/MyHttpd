@@ -3,3 +3,6 @@ Release
 results
 *~
 *.o
+dox
+core
+a.out
