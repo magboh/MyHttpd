@@ -24,7 +24,7 @@ public:
 	void AllowSignals();
 	void BlockSignals();
 
-	void LoadConfig();
+	bool LoadConfig();
 
 	static MyHttpd* myhttpd;
 private:

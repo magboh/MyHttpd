@@ -5,14 +5,12 @@
  *      Author: magnus
  */
 
-#include "pthread.h"
 #include <iostream>
 #include <sstream>
 #include "string.h"
 
 #include "request.h"
 #include "response.h"
-#include "requestqueueworker.h"
 #include "bytebuffer.h"
 
 Response *Response::CreateResponse(const Request *request)

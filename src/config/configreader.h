@@ -19,9 +19,10 @@ class TiXmlElement;
 class ConfigReader
 {
 public:
+	enum LoadStatus {LOAD_OK,NO_FILE,BAD_FILE};
 	ConfigReader();
 	virtual ~ConfigReader();
-	bool Load(const std::string & filename);
+	ConfigReader::LoadStatus Load(const std::string & filename);
 
 	void ParseLogOptions();
 	bool ParseSiteOptions(TiXmlElement* element);

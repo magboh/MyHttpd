@@ -21,15 +21,16 @@ ConfigReader::~ConfigReader()
 	// TODO Auto-generated destructor stub
 }
 
-bool ConfigReader::Load(const std::string & filename)
+ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)
 {
 
 	TiXmlDocument doc(filename);
+	ConfigReader::LoadStatus status ;
 
    if (!doc.LoadFile())
    {
 	   std::cout << "ConfigReader::Load() Unable to Load file:"<< filename <<"\n";
-    	return false ;
+    	return NO_FILE ;
    }
 
     TiXmlElement* rootElement = doc.FirstChildElement("MyHttpd");
@@ -37,18 +38,19 @@ bool ConfigReader::Load(const std::string & filename)
     if (rootElement==0)
     {
     	std::cout << "ConfigReader::Load() No root element 'MyHttpd'\n";
-    	return false ;
+    	return  BAD_FILE;
     }
 
     TiXmlElement* siteOptionsElement = rootElement->FirstChildElement("DefaultSiteOptions");
     TiXmlElement* serverOptionsElement = rootElement->FirstChildElement("ServerOptions");
 
+    status = LOAD_OK ;
     if (siteOptionsElement!=0)
     	ParseSiteOptions(siteOptionsElement);
     if (serverOptionsElement!=0)
     	ParseServerOptions(serverOptionsElement);
 
-    return true;
+    return status;
 }
 
 bool ConfigReader::ParseSiteOptions(TiXmlElement* element)

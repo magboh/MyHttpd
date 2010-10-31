@@ -16,12 +16,8 @@
 #include <errno.h>
 #include <time.h>
 
-#include "connectionqueueworker.h"
 #include "connectionmanager.h"
 #include "virtualserver.h"
-#include "request.h"
-#include "requestqueue.h"
-#include "requestqueueworker.h"
 
 VirtualServer::VirtualServer(ConnectionManager* connectionManager) {
 	// TODO Auto-generated constructor stub
@@ -88,20 +84,20 @@ void VirtualServer::WaitForIncomming()
 
 	}
 
+	Shutdown();
 }
 
 
 void VirtualServer::Stop()
 {
 	mKeepRunning = false;
-
-	PrintStats();
 }
 
 void VirtualServer::Shutdown()
 {
 	close(mSocket);
 	mSocket=-1;
+	PrintStats();
 }
 
 

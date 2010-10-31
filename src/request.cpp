@@ -10,7 +10,6 @@
 #include <iostream>
 #include <cassert>
 #include "request.h"
-#include "http.h"
 #include "connection.h"
 #include "bytebuffer.h"
 
