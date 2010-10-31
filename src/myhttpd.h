@@ -7,23 +7,16 @@
 
 #ifndef MYHTTPD_H_
 #define MYHTTPD_H_
+
 class VirtualServer;
+class RequestQueue;
+class ConnectionQueueWorker;
+class RequestQueueWorker;
+
 class MyHttpd {
 public:
-/**
- *
- * @return
- */
 	MyHttpd();
-/**
- *
- * @return
- */
 	virtual ~MyHttpd();
-/**
- *
- * @return
- */
 	int Start();
 	void Stop();
 	void SigINTHandler(int signal);
@@ -31,9 +24,34 @@ public:
 	void AllowSignals();
 	void BlockSignals();
 
+	void LoadConfig();
+
 	static MyHttpd* myhttpd;
 private:
+
 	VirtualServer *mServer;
+	RequestQueue* mRequestQueue;
+
+	int mNumConnections;
+	int mMaxConnections;
+
+	int mNrConnectionWorkers;
+	int mNrRequestWorkers;
+
+	ConnectionQueueWorker** mConnectionWorker;
+	RequestQueueWorker** mRequestWorker;
+
+	void StartRequestQueue();
+	void StartConnectionWorkers();
+	void StartRequestWorkers();
+	void StopRequestQueue();
+	void StopConnectionWorkers();
+
+	void WaitForConnectionWorkers();
+	void WaitForRequestWorkers();
+
+	void StartVirtualServers();
+
 };
 
 #endif /* MYHTTPD_H_ */

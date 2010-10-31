@@ -27,6 +27,7 @@ ConnectionManager::ConnectionManager(int maxConnections, int nrWorkers,Connectio
 	mWorker = workers;
 	mCurrentThread = 0 ;
 	mStats.nrTotalConnections = 0 ;
+
 }
 
 ConnectionManager::~ConnectionManager()

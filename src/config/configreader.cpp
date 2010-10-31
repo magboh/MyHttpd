@@ -109,14 +109,8 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 	{
 		map[child->ValueStr()] = std::string(child->GetText());
 	}
-/*
-  	<RequestWorkers>3</RequestWorkers>
-	<IOWorkers>2</IOWorkers>
-	<RequestBuffer>4096</RequestBuffer>
-	<ResponseBuffer>4096</ResponseBuffer>
-	<ConnectionQueue>400</ConnectionQueue>
-*/
-  	std::string tags[] =
+
+	std::string tags[] =
   	{
   			std::string("RequestWorkers"),
   			std::string("IOWorkers"),
@@ -125,7 +119,7 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
   			std::string("ConnectionQueue")
   	};
 
-	for ( int i=0 ; i<5 ; i++)
+	for ( int i=0 ; i< 5 ; i++)
 	{
 
 		if ( (it=map.find( tags[i] ) )!= map.end())
@@ -135,10 +129,21 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 			ss << it->second;
 			ss >> value;
 
-			std::cout << "i=" << i << " val=" << value <<"\n";
-
+			switch (i)
+			{
+				case 0: mServerOptions.SetNoRequstWorkers(value); break;
+				case 1: mServerOptions.SetNoIOWorkers(value); break;
+				case 2: mServerOptions.SetRequestBufferSize(value); break;
+				case 3: mServerOptions.SetResponseBufferSize(value); break;
+				case 4: mServerOptions.SetConnectionQueueSize(value); break;
+			}
 		}
 	}
 
 	return true;
+}
+
+const ServerOptions & ConfigReader::GetServerOptions()
+{
+	return mServerOptions;
 }

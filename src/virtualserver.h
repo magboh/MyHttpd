@@ -10,13 +10,9 @@
 
 class ConnectionManager;
 
-class ConnectionQueueWorker;
-class RequestQueueWorker;
-class RequestQueue;
-
 class VirtualServer {
 public:
-	VirtualServer();
+	VirtualServer(ConnectionManager* connectionManager);
 	virtual ~VirtualServer();
 
 	bool Start();
@@ -27,20 +23,15 @@ private:
 	int mSocket;
 	ConnectionManager* mConnectionManager;
 	bool mKeepRunning;
+
 	void SetupSocket();
-	void SetupSubsystem();
 	void ShutdownSubsystem();
 	void Shutdown();
-
 	int mNumConnections;
 	int mMaxConnections;
 
-	int mNrConnectionWorkers;
-	int mNrRequestWorkers;
 	int mCurrentThread;
-	ConnectionQueueWorker** mConnectionWorker;
-	RequestQueueWorker** mRequestWorker;
-	RequestQueue* mRequestQueue;
+
 
 	struct stats_t {
 		unsigned long mNrAcceptErrors;

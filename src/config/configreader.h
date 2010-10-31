@@ -12,6 +12,7 @@
 #include <vector>
 #include "site.h"
 #include "siteoptions.h"
+#include "serveroptions.h"
 
 class TiXmlElement;
 
@@ -32,10 +33,15 @@ public:
 
 	void ParseVirtualHostSites();
 	void ParseVirtualHostSite();
+
+	const std::vector<Site> & GetSites();
+
+	const ServerOptions & GetServerOptions();
 private:
 
 	std::vector <Site> mSiteVec;
 	SiteOptions mSiteOptions;
+	ServerOptions mServerOptions;
 };
 
 #endif /* CONFIGREADER_H_ */

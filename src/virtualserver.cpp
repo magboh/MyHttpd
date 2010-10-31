@@ -5,7 +5,7 @@
  *      Author: magnus
  */
 
-#include <sys/types.h>          /* See NOTES */
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/fcntl.h>
 #include <netinet/in.h>
@@ -15,6 +15,7 @@
 #include <iostream>
 #include <errno.h>
 #include <time.h>
+
 #include "connectionqueueworker.h"
 #include "connectionmanager.h"
 #include "virtualserver.h"
@@ -22,43 +23,26 @@
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 
-VirtualServer::VirtualServer() {
+VirtualServer::VirtualServer(ConnectionManager* connectionManager) {
 	// TODO Auto-generated constructor stub
 	mSocket=-1;
 	mKeepRunning = true;
-
-	mMaxConnections = 500 ;
-	mNrConnectionWorkers = 2;
-	mNrRequestWorkers = 2;
-
+	mConnectionManager = connectionManager;
 	mStats.mNrAcceptErrors=0;
 }
 
-VirtualServer::~VirtualServer() {
-	for(int i=0; i<mNrConnectionWorkers;i++)
-	{
-		delete mConnectionWorker[i] ;
-	}
-
-	for(int i=0; i<mNrRequestWorkers;i++)
-	{
-		delete mRequestWorker[i];
-	}
-
-	delete [] mConnectionWorker;
-	delete [] mRequestWorker;
+VirtualServer::~VirtualServer()
+{
 
 }
 
 bool VirtualServer::Start()
 {
-	SetupSubsystem();
-
 	/*Open up to others*/
 	SetupSocket();
-    return true;
-
+	return true;
 }
+
 int a=0;
 void VirtualServer::WaitForIncomming()
 {
@@ -110,7 +94,6 @@ void VirtualServer::WaitForIncomming()
 void VirtualServer::Stop()
 {
 	mKeepRunning = false;
-	ShutdownSubsystem();
 
 	PrintStats();
 }
@@ -118,7 +101,7 @@ void VirtualServer::Stop()
 void VirtualServer::Shutdown()
 {
 	close(mSocket);
-	ShutdownSubsystem();
+	mSocket=-1;
 }
 
 
@@ -163,67 +146,8 @@ void VirtualServer::SetupSocket()
 
 }
 
-void VirtualServer::SetupSubsystem()
-{
-
-	mRequestQueue = new RequestQueue();
-	mRequestWorker = new RequestQueueWorker*[mNrRequestWorkers];
-	for(int i=0; i<mNrRequestWorkers;i++)
-	{
-		mRequestWorker[i]= new RequestQueueWorker(mRequestQueue);
-		mRequestWorker[i]->Start();
-	}
-
-
-
-	typedef ConnectionQueueWorker cqwp;
-	mConnectionWorker = new ConnectionQueueWorker*[mNrConnectionWorkers];
-
-	for(int i=0; i<mNrConnectionWorkers;i++)
-	{
-		mConnectionWorker[i]= new ConnectionQueueWorker(mRequestQueue);
-		mConnectionWorker[i]->Start();
-	}
-
-	mConnectionManager = new ConnectionManager(mMaxConnections,mNrConnectionWorkers,mConnectionWorker);
-}
-
-void VirtualServer::ShutdownSubsystem()
-{
-
-	// Turn of reading new request from connections
-	std::cout << "Blocking Connection Workers\n";
-
-	for(int i=0; i<mNrConnectionWorkers;i++)
-	{
-		mConnectionWorker[i]->Stop();
-	}
-
-	std::cout << "Shutting down Request Queue\n";
-	mRequestQueue->Shutdown();
-
-	for(int i=0; i<mNrRequestWorkers;i++)
-	{
-		if(mRequestWorker[i]->Join())
-		{
-			std::cout << "Request Worker shut down\n";
-		}
-	}
-
-	for(int i=0; i<mNrConnectionWorkers;i++)
-	{
-		if(mConnectionWorker[i]->Join())
-		{
-			std::cout << "Connection Worked shut down\n";
-		}
-	}
-
-}
-
-
 void VirtualServer::PrintStats()
 {
-	mRequestQueue->PrintStats();
 	mConnectionManager->PrintStats();
 
 	std::cout << "---- Virtual Server  ----\n";
