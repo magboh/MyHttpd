@@ -66,7 +66,7 @@ void ConnectionQueueWorker::DoWork()
 		pthread_mutex_unlock(mMutex);
 
 
-		for(it ; (count >0) && (it!=end) ; it++)
+		for(; (count >0) && (it!=end) ; it++)
 		{
 			con = *it;
 			if ( con->Read(readThrougput / count) )

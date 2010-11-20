@@ -1,0 +1,48 @@
+<?xml version="1.0" standalone="no" ?>
+<MyHttpd>
+	<log>
+		<accesslog>
+			<file>/home/magnus/Devel/myhttpd/acces.log</file>
+		</accesslog>
+	</log>
+
+	<ServerOptions>
+	  	<RequestWorkers>3</RequestWorkers>
+		<IOWorkers>2</IOWorkers>
+		<RequestBuffer>4096</RequestBuffer>
+		<ResponseBuffer>4096</ResponseBuffer>
+    	<ConnectionQueue>400</ConnectionQueue>
+	</ServerOptions>
+
+	
+
+	<DefaultSiteOptions>
+		<DefaultFile>index.html</DefaultFile>
+		<AllowDirectoryBrowsing>true</AllowDirectoryBrowsing>
+    	<ConnectionTimeout>30</ConnectionTimeout>
+	</DefaultSiteOptions>
+
+	<Sites>
+  		<Site>
+	    	<Host>localhost</Host>
+    		<ip-address>127.0.0.1</ip-address>
+    		<Port>8080</Port>
+    		<DocRoot>/home/magnus/myhttpd_site/</DocRoot>
+
+			<VirtualHostSites>
+				<Host>SecretVirtualHost</Host>
+			</VirtualHostSites>
+							
+  		</Site>
+  	
+	</Sites>
+	<VirtualHostSites>
+		<VirtualHostSite>
+			<Name>SecretVirtualHost</Name>
+	    	<Host>SecretVirtualHost</Host>
+    		<DocRoot>/home/magnus/myhttpd_virtual_site/</DocRoot>
+    		<DefaultFile>default.html</DefaultFile>
+    		<AllowDirectoryBrowsing>false</AllowDirectoryBrowsing>
+  		</VirtualHostSite>
+  	</VirtualHostSites>  	
+</MyHttpd>

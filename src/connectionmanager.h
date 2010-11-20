@@ -25,6 +25,8 @@ private:
 	int mNumConnections;
 	int mMaxConnections;
 
+	ConnectionQueueWorker** mConnectionWorker;
+
 	int mNrWorkers;
 	int mCurrentThread;
 	ConnectionQueueWorker** mWorker;

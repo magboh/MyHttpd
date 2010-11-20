@@ -42,7 +42,7 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 {
 	Response* response  = Response::CreateResponse(request);
 
-	std::string filename = std::string("/home/magnus/") + request->GetUri();
+	std::string filename = std::string("/home/magnus/site") + request->GetUri();
 
 	int fd = open(filename.c_str(),O_RDONLY);
 	int error = errno;

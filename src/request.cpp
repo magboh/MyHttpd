@@ -10,7 +10,6 @@
 #include <iostream>
 #include <cassert>
 #include "request.h"
-#include "http.h"
 #include "connection.h"
 #include "bytebuffer.h"
 
@@ -66,9 +65,12 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		parsePos++;
 
 		int i=parsePos;
-		for (i;i<size;i++)
+
+		for (;i<size;i++)
+		{
 			if (data[i]==' ')
 				break;
+		}
 
 		if (i-parsePos > Request::MAX_URI_LENGTH)
 		{
@@ -148,12 +150,13 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 				request->mParsePos=0;
 				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
+
 				if (request->mHeader["Connection"].compare("keep-alive")==0 )
 					request->mKeepAlive= true;
 				else if (request->mHeader["Connection"].compare("close")==0 )
 					request->mKeepAlive = false;
 
-				std::cout << "Requst:" << request->ToString();
+//				std::cout << "Requst:" << request->ToString();
 
 				return true;
 			}
@@ -201,8 +204,6 @@ void Request::SetConnection(Connection *mConnection)
 {
     mConnection = mConnection;
 }
-
-
 
 bool Request::GetKeepAlive() const
 {
