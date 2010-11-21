@@ -24,9 +24,13 @@ public:
 	virtual ~ConfigReader();
 	ConfigReader::LoadStatus Load(const std::string & filename);
 
+	const std::vector<Site> & GetSites();
+
+	const ServerOptions & GetServerOptions();
+private:
+
 	void ParseLogOptions();
 	bool ParseSiteOptions(TiXmlElement* element);
-
 	bool ParseServerOptions(TiXmlElement* element);
 
 	void ParseSites();
@@ -35,14 +39,12 @@ public:
 	void ParseVirtualHostSites();
 	void ParseVirtualHostSite();
 
-	const std::vector<Site> & GetSites();
 
-	const ServerOptions & GetServerOptions();
-private:
 
 	std::vector <Site> mSiteVec;
-	SiteOptions mSiteOptions;
+	SiteOptions mDefaultSiteOptions;
 	ServerOptions mServerOptions;
+
 };
 
 #endif /* CONFIGREADER_H_ */

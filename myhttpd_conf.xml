@@ -34,15 +34,12 @@
 			</VirtualHostSites>
 							
   		</Site>
-  	
+
+  		<Site>
+	    	<Host>debian</Host>
+    		<ip-address>127.0.0.1</ip-address>
+    		<Port>8081</Port>
+    		<DocRoot>/home/magnus/myhttpd_site2/</DocRoot>
+  		</Site>
 	</Sites>
-	<VirtualHostSites>
-		<VirtualHostSite>
-			<Name>SecretVirtualHost</Name>
-	    	<Host>SecretVirtualHost</Host>
-    		<DocRoot>/home/magnus/myhttpd_virtual_site/</DocRoot>
-    		<DefaultFile>default.html</DefaultFile>
-    		<AllowDirectoryBrowsing>false</AllowDirectoryBrowsing>
-  		</VirtualHostSite>
-  	</VirtualHostSites>  	
 </MyHttpd>

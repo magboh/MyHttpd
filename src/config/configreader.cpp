@@ -43,12 +43,15 @@ ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)
 
     TiXmlElement* siteOptionsElement = rootElement->FirstChildElement("DefaultSiteOptions");
     TiXmlElement* serverOptionsElement = rootElement->FirstChildElement("ServerOptions");
+    TiXmlElement* sitesElement = rootElement->FirstChildElement("ServerOptions");
 
     status = LOAD_OK ;
     if (siteOptionsElement!=0)
     	ParseSiteOptions(siteOptionsElement);
     if (serverOptionsElement!=0)
     	ParseServerOptions(serverOptionsElement);
+    if (sitesElement!=0)
+    	ParseSites(sitesElement);
 
     return status;
 }
@@ -72,15 +75,15 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 
 	if ( (it=map.find("DefaultFile")) != map.end() )
 	{
-		mSiteOptions.SetDefaultFile(it->second);
+		mDefaultSiteOptions.SetDefaultFile(it->second);
 	}
 
 	if ( (it=map.find("AllowDirectoryBrowsing")) != map.end() )
 	{
 		if (it->second.compare("true") == 0 )
-			mSiteOptions.SetAllowDirectoryBrowsing(true);
+			mDefaultSiteOptions.SetAllowDirectoryBrowsing(true);
 		else
-			mSiteOptions.SetAllowDirectoryBrowsing(false);
+			mDefaultSiteOptions.SetAllowDirectoryBrowsing(false);
 	}
 
 
@@ -91,7 +94,7 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 		ss << it->second;
 		ss >> timeout;
 
-		mSiteOptions.SetConnectionTimeout(timeout);
+		mDefaultSiteOptions.SetConnectionTimeout(timeout);
 	}
 
 	return true;
