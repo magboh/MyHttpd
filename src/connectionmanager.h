@@ -12,12 +12,14 @@
 #include <list>
 
 class ConnectionQueueWorker;
+class Site;
+
 class ConnectionManager
 {
 public:
 	ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers);
 	virtual ~ConnectionManager();
-	void CreateConnection(int socket);
+	void CreateConnection(int socket, const Site* site);
 	void PrintStats();
 private:
 	static void* ThreadCallBack(void* arg);

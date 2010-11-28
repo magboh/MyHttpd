@@ -9,22 +9,31 @@
 #define SITE_H_
 
 #include <string>
+#include <netinet/in.h>
+
+class SiteOptions;
+class ConnectionManager;
 
 class Site
 {
 public:
-	Site();
+	Site(const SiteOptions* siteOptions , ConnectionManager* connectionManager );
 	virtual ~Site();
 
-
-
+	bool Setup();
+	void HandleIncomming();
+	const std::string & GetDocumentRoot() const;
 private:
+	int SetupSocket();
 
+	int mSocket;
 	std::string mDefaultFile;
 
-	std::string mDocRoot;
-	//in_addr_t mAddress;
-	unsigned short mPort ;
+	std::string mDocumentRoot;
+	in_addr_t mAddress;
+	in_port_t mPort ;
+	size_t mListenQueue;
+	ConnectionManager* mConnectionManager;
 };
 
 #endif /* SITE_H_ */

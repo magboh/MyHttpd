@@ -18,6 +18,7 @@
 #include <poll.h>
 #include <time.h>
 
+#include "site.h"
 #include "request.h"
 #include "response.h"
 #include "connection.h"
@@ -25,7 +26,7 @@
 #include "requestqueue.h"
 #include "bytebuffer.h"
 
-Connection::Connection(int socket,ConnectionManager* conectionMgr) {
+Connection::Connection(int socket,ConnectionManager* conectionMgr,const Site* site) {
 	mSocket = socket;
 
 	mReadBuffer = new ByteBuffer(4096);
@@ -41,6 +42,7 @@ Connection::Connection(int socket,ConnectionManager* conectionMgr) {
 	mCreated = time(NULL);
 	mLastRequest = mCreated ;
 	SetCloseable(false);
+	mSite= site;
 }
 
 Connection::~Connection()
@@ -77,13 +79,14 @@ bool Connection::Read(size_t size)
 	char* tbuff = new char[toRead];
 	int len = read(mSocket, tbuff , toRead);
 
+	
 
 	if (len > 0)
 	{
 		mReadBuffer->Add(tbuff,len);
 
 		if (mRequest==NULL)
-			mRequest = new Request(this);
+			mRequest = new Request(this,mSite);
 
 		if (Request::ParseRequest(mRequest, mReadBuffer))
 		{

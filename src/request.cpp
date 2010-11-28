@@ -12,8 +12,9 @@
 #include "request.h"
 #include "connection.h"
 #include "bytebuffer.h"
+#include "site.h"
 
-Request::Request(Connection* connection) {
+Request::Request(Connection* connection, const Site* site) {
 	// TODO Auto-generated constructor stub
 	mHost="";
 	mUri="";
@@ -22,6 +23,7 @@ Request::Request(Connection* connection) {
 	mConnection = connection;
 	mParseState = 0 ;
 	mParsePos = 0;
+	mSite = site;
 }
 
 Request::~Request() {
@@ -211,3 +213,7 @@ bool Request::GetKeepAlive() const
 }
 
 
+const Site* Request::GetSite() const
+{
+	return mSite;
+}

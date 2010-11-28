@@ -11,7 +11,6 @@
 #include <pthread.h>
 
 #include "myhttpd.h"
-#include "virtualserver.h"
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 #include "connectionmanager.h"
@@ -30,14 +29,10 @@ void handlerInt(int s)
 
 MyHttpd::MyHttpd() {
 	// TODO Auto-generated constructor stub
-	mServer = NULL;
 	myhttpd = this;
 }
 
 MyHttpd::~MyHttpd() {
-	// TODO Auto-generated destructor stub
-	delete mServer;
-
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{
 		delete mConnectionWorker[i] ;
@@ -54,11 +49,14 @@ MyHttpd::~MyHttpd() {
 
 }
 
-int MyHttpd::Start() {
+int MyHttpd::Start()
+{
+	ConfigReader* cr = new ConfigReader();
 
-	if (!LoadConfig())
+	if (!LoadConfig(cr))
 	{
 		std::cout << "MyHttpd exiting due to problem loading configuration\n";
+		delete cr ;
 		return 0;
 	}
 
@@ -71,8 +69,19 @@ int MyHttpd::Start() {
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
-	StartVirtualServers();
+	StartSites(cr);
 
+	mKeepRunning = true;
+	while (mKeepRunning)
+	{
+		for (size_t i=0; i<mSites.size() ; i++)
+		{
+			mSites[i].HandleIncomming();
+		}
+		usleep(10);
+	}
+	std::cout << "\nShutting Down Now\n" ;
+	Stop();
 	return 0;
 }
 
@@ -92,14 +101,11 @@ void MyHttpd::BlockSignals()
 
 void MyHttpd::SigINTHandler(int signal)
 {
-	std::cout << "\nShutting Down Now\n" ;
-	Stop();
+	mKeepRunning = false;
 }
 
 void MyHttpd::Stop()
 {
-	// cLose Virtual Server sockets
-	mServer->Stop();
 	// Stop request queue
 	StopRequestQueue();
 	// Wait for request worker threads to die
@@ -108,28 +114,26 @@ void MyHttpd::Stop()
 	WaitForConnectionWorkers();
 }
 
-bool MyHttpd::LoadConfig()
+bool MyHttpd::LoadConfig(ConfigReader* cr)
 {
-	ConfigReader* cm = new ConfigReader();
-
-	ConfigReader::LoadStatus ls= cm->Load("/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
-	bool ok=false;
-
+	ConfigReader::LoadStatus ls= cr->Load("/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
+	bool ok = true;
 	if (ls == ConfigReader::LOAD_OK)
 	{
-		const ServerOptions& so  = cm->GetServerOptions();
+		const ServerOptions& so  = cr->GetServerOptions();
 
 		mNrConnectionWorkers = so.GetNoIOWorkers();
 		mNrRequestWorkers = so.GetNoRequstWorkers();
-		ok=true;
 	}
 	else if (ls == ConfigReader::BAD_FILE)
 	{
 		std::cout << "Error in config file\n";
+		ok=false;
 	}
 	else if (ls == ConfigReader::NO_FILE)
 	{
 		std::cout << "Problem accessing config file\n";
+		ok=false;
 	}
 	return ok;
 }
@@ -202,14 +206,22 @@ void MyHttpd::WaitForConnectionWorkers()
 	}
 }
 
-void MyHttpd::StartVirtualServers()
+void MyHttpd::StartSites(const ConfigReader* cr)
 {
 	ConnectionManager* cm = new ConnectionManager(400,mNrConnectionWorkers,mConnectionWorker);
 
-	mServer = new VirtualServer(cm);
+	const std::vector<SiteOptions> siteOpts = cr->GetSiteOptions();
 
+	for (size_t i=0 ; i< siteOpts.size();i++)
+	{
 
-	mServer->Start();
-	mServer->WaitForIncomming();
+		const SiteOptions& so = siteOpts[i];
+		Site s(&so,cm);
+		if (s.Setup())
+		{
+			std::cout << "Site Setup and added to list\n";
+			mSites.push_back(s);
+		}
+	}
 
 }

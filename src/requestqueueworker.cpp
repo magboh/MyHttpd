@@ -17,6 +17,7 @@
 #include "requestqueueworker.h"
 #include "response.h"
 #include "connection.h"
+#include "site.h"
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
@@ -42,7 +43,9 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 {
 	Response* response  = Response::CreateResponse(request);
 
-	std::string filename = std::string("/home/magnus/site") + request->GetUri();
+	const std::string & root = request->GetSite()->GetDocumentRoot();
+
+	std::string filename =  root + request->GetUri();
 
 	int fd = open(filename.c_str(),O_RDONLY);
 	int error = errno;
@@ -57,7 +60,6 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 	}
 	else /* Set fail */
 	{
-//		*((char*)0)=1;
 		switch (error)
 		{
 		case EACCES:

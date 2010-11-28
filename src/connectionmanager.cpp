@@ -16,6 +16,7 @@
 #include "connection.h"
 #include "connectionmanager.h"
 #include "connectionqueueworker.h"
+#include "site.h"
 
 ConnectionManager::ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers)
 {
@@ -36,10 +37,10 @@ ConnectionManager::~ConnectionManager()
 }
 
 
-void ConnectionManager::CreateConnection(int socket)
+void ConnectionManager::CreateConnection(int socket,const Site *site)
 {
 	std::cout << "Created new connection\n";
-	Connection* con= new Connection(socket,this);
+	Connection* con= new Connection(socket,this,site);
 	mWorker[mCurrentThread++ % mNrWorkers]->AddConnection(con);
 	++mStats.nrTotalConnections;
 }

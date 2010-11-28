@@ -7,11 +7,12 @@
 
 #ifndef MYHTTPD_H_
 #define MYHTTPD_H_
-
-class VirtualServer;
+#include <vector>
+#include "site.h"
 class RequestQueue;
 class ConnectionQueueWorker;
 class RequestQueueWorker;
+class ConfigReader;
 
 class MyHttpd {
 public:
@@ -24,14 +25,12 @@ public:
 	void AllowSignals();
 	void BlockSignals();
 
-	bool LoadConfig();
+	bool LoadConfig(ConfigReader* cr);
 
 	static MyHttpd* myhttpd;
 private:
-
-	VirtualServer *mServer;
 	RequestQueue* mRequestQueue;
-
+	bool mKeepRunning;
 	int mNumConnections;
 	int mMaxConnections;
 
@@ -50,8 +49,8 @@ private:
 	void WaitForConnectionWorkers();
 	void WaitForRequestWorkers();
 
-	void StartVirtualServers();
-
+	void StartSites(const ConfigReader* cr);
+	std::vector <Site> mSites;
 };
 
 #endif /* MYHTTPD_H_ */

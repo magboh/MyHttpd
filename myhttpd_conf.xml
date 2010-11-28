@@ -25,19 +25,14 @@
 	<Sites>
   		<Site>
 	    	<Host>localhost</Host>
-    		<ip-address>127.0.0.1</ip-address>
+    		<IP4-Address>127.0.0.1</IP4-Address>
     		<Port>8080</Port>
     		<DocRoot>/home/magnus/myhttpd_site/</DocRoot>
-
-			<VirtualHostSites>
-				<Host>SecretVirtualHost</Host>
-			</VirtualHostSites>
-							
   		</Site>
 
   		<Site>
 	    	<Host>debian</Host>
-    		<ip-address>127.0.0.1</ip-address>
+    		<IP4-Address>127.0.0.1</IP4-Address>
     		<Port>8081</Port>
     		<DocRoot>/home/magnus/myhttpd_site2/</DocRoot>
   		</Site>
