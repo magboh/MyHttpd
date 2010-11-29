@@ -15,10 +15,11 @@
 
 class Connection;
 class ByteBuffer;
+class Site;
 
 class Request : public Http {
 public:
-	Request(Connection* connection);
+	Request(Connection* connection,const Site* site);
 	virtual ~Request();
 	enum ParseReturn {
 		REQUEST_OK,
@@ -34,6 +35,8 @@ public:
 	const std::string ToString() const;
 	const std::string & GetUri() const;
 	RequestType GetHttpType() const;
+
+	const Site* GetSite() const;
 
 
 	Connection *GetConnection() const;
@@ -52,6 +55,7 @@ private:
 	int mParseState;
 	size_t mParsePos;
 	std::map<std::string , std::string> mHeader;
+	const Site* mSite;
 };
 
 #endif /* REQUEST_H_ */

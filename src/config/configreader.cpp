@@ -6,6 +6,10 @@
  */
 
 #include <map>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <netinet/in.h>
 
 #include "../tinyxml/tinyxml.h"
 #include "configreader.h"
@@ -41,19 +45,23 @@ ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)
     	return  BAD_FILE;
     }
 
-    TiXmlElement* siteOptionsElement = rootElement->FirstChildElement("DefaultSiteOptions");
+    TiXmlElement* defaultSiteOptionsElement = rootElement->FirstChildElement("DefaultSiteOptions");
     TiXmlElement* serverOptionsElement = rootElement->FirstChildElement("ServerOptions");
+    TiXmlElement* siteOptionsElement = rootElement->FirstChildElement("Sites");
 
     status = LOAD_OK ;
-    if (siteOptionsElement!=0)
-    	ParseSiteOptions(siteOptionsElement);
+    if (defaultSiteOptionsElement!=0)
+    	ParseDefaultSiteOptions(defaultSiteOptionsElement);
     if (serverOptionsElement!=0)
     	ParseServerOptions(serverOptionsElement);
+
+    if (siteOptionsElement!=0)
+    	ParseSites(siteOptionsElement);
 
     return status;
 }
 
-bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
+bool ConfigReader::ParseDefaultSiteOptions(TiXmlElement* element)
 {
 	assert(element!=0);
 
@@ -72,15 +80,15 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 
 	if ( (it=map.find("DefaultFile")) != map.end() )
 	{
-		mSiteOptions.SetDefaultFile(it->second);
+		mDefaultSiteOptions.SetDefaultFile(it->second);
 	}
 
 	if ( (it=map.find("AllowDirectoryBrowsing")) != map.end() )
 	{
 		if (it->second.compare("true") == 0 )
-			mSiteOptions.SetAllowDirectoryBrowsing(true);
+			mDefaultSiteOptions.SetAllowDirectoryBrowsing(true);
 		else
-			mSiteOptions.SetAllowDirectoryBrowsing(false);
+			mDefaultSiteOptions.SetAllowDirectoryBrowsing(false);
 	}
 
 
@@ -91,11 +99,113 @@ bool ConfigReader::ParseSiteOptions(TiXmlElement* element)
 		ss << it->second;
 		ss >> timeout;
 
-		mSiteOptions.SetConnectionTimeout(timeout);
+		mDefaultSiteOptions.SetConnectionTimeout(timeout);
 	}
 
 	return true;
 }
+
+
+bool ConfigReader::ParseSites(TiXmlElement* element)
+{
+	assert(element!=0);
+
+	TiXmlElement* child = element->FirstChildElement();
+
+	for (; child!=0; child=child->NextSiblingElement())
+	{
+		SiteOptions so = mDefaultSiteOptions;
+
+		if (ParseSiteOptions(child,&so))
+		{
+			mSiteOptionsVec.push_back(so);
+		}
+	}
+	return true;
+}
+
+bool ConfigReader::ParseSiteOptions(TiXmlElement* element, SiteOptions *siteOptions)
+{
+	assert(element!=0);
+
+	std::map<std::string,std::string> map;
+	std::map<std::string,std::string>::iterator it;
+	std::stringstream ss;
+
+	TiXmlElement* child = element->FirstChildElement();
+
+	for (; child!=0; child=child->NextSiblingElement())
+	{
+		map[child->ValueStr()] = std::string(child->GetText());
+	}
+
+	if ( (it=map.find("DefaultFile")) != map.end() )
+	{
+		siteOptions->SetDefaultFile(it->second);
+	}
+
+	if ( (it=map.find("AllowDirectoryBrowsing")) != map.end() )
+	{
+		if (it->second.compare("true") == 0 )
+			siteOptions->SetAllowDirectoryBrowsing(true);
+		else
+			siteOptions->SetAllowDirectoryBrowsing(false);
+	}
+
+
+	if ( (it=map.find("ConnectionTimeout")) != map.end() )
+	{
+		int timeout=0;
+
+		ss << it->second;
+		ss >> timeout;
+
+		siteOptions->SetConnectionTimeout(timeout);
+	}
+
+	// IP setting
+	if ( (it=map.find("IP4-Address") ) != map.end())
+	{
+
+		std::istringstream ss2(it->second);
+		std::string token;
+		in_addr_t addr=0;
+		int i=3;
+		while ( getline(ss2, token, '.') )
+		{
+			std::cout << token << "." <<std::endl;
+			ss.clear();
+			ss << token;
+			unsigned int a;
+			ss >> a;
+			addr |= (unsigned char) a << (i--)*8;
+		}
+		std::cout << "Ip4-Address:" << addr << "\n";
+		siteOptions->SetIp4Address(addr);
+	}
+
+	// Port
+	if ( (it=map.find("Port")) != map.end())
+	{
+		ss.clear();
+		ss << it->second;
+		unsigned int a;
+		ss >> a;
+
+		siteOptions->SetPort(a);
+		std::cout << "Port=" << siteOptions->GetPort() << "\n";
+	}
+
+
+	if ( (it=map.find("DocRoot") ) != map.end())
+	{
+		siteOptions->SetDocumentRoot(it->second);
+		std::cout << "Document Root:" << siteOptions->GetDocumentRoot() << "\n";
+	}
+
+	return true;
+}
+
 
 bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 {
@@ -149,3 +259,9 @@ const ServerOptions & ConfigReader::GetServerOptions()
 {
 	return mServerOptions;
 }
+
+const std::vector<SiteOptions> & ConfigReader::GetSiteOptions() const
+{
+	return mSiteOptionsVec;
+}
+

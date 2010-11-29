@@ -9,9 +9,6 @@
 
 int main(int argc, char** argv)
 {
-
-
-
 	MyHttpd* myHttpd = new MyHttpd();
 
 	if (myHttpd)

@@ -12,9 +12,11 @@ class Response;
 class Request;
 class ConnectionManager;
 class ByteBuffer;
+class Site;
+
 class Connection {
 public:
-	Connection(int socket,ConnectionManager* conectionMgr);
+	Connection(int socket,ConnectionManager* conectionMgr,const Site* site);
 	virtual ~Connection();
 
 	/**
@@ -60,6 +62,7 @@ private:
 	time_t mCreated;
 	time_t mLastRequest;
 	bool mCloseable;
+	const Site* mSite;
 };
 
 #endif /* CONNECTION_H_ */

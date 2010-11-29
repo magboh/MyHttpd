@@ -10,7 +10,6 @@
 
 #include <string>
 #include <vector>
-#include "site.h"
 #include "siteoptions.h"
 #include "serveroptions.h"
 
@@ -24,25 +23,24 @@ public:
 	virtual ~ConfigReader();
 	ConfigReader::LoadStatus Load(const std::string & filename);
 
-	void ParseLogOptions();
-	bool ParseSiteOptions(TiXmlElement* element);
-
-	bool ParseServerOptions(TiXmlElement* element);
-
-	void ParseSites();
-	void ParseSite();
-
-	void ParseVirtualHostSites();
-	void ParseVirtualHostSite();
-
-	const std::vector<Site> & GetSites();
+	const std::vector<SiteOptions> & GetSiteOptions() const;
 
 	const ServerOptions & GetServerOptions();
 private:
 
-	std::vector <Site> mSiteVec;
-	SiteOptions mSiteOptions;
+	void ParseLogOptions();
+	bool ParseSiteOptions(TiXmlElement* element,SiteOptions *siteOptions);
+	bool ParseServerOptions(TiXmlElement* element);
+	bool ParseDefaultSiteOptions(TiXmlElement* element);
+	bool ParseSites(TiXmlElement* element);
+
+	void ParseVirtualHostSites();
+	void ParseVirtualHostSite();
+
+	std::vector <SiteOptions> mSiteOptionsVec;
+	SiteOptions mDefaultSiteOptions;
 	ServerOptions mServerOptions;
+
 };
 
 #endif /* CONFIGREADER_H_ */
