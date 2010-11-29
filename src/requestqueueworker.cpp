@@ -36,6 +36,8 @@ void RequestQueueWorker::DoWork()
 	while( (request = mRequestQueue->GetNextRequest()))
 	{
 		HandleRequest(request);
+		delete request ;
+		request = NULL;
 	}
 }
 
@@ -77,6 +79,5 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
-	delete request ;
 }
 
