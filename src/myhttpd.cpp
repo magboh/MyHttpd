@@ -111,7 +111,8 @@ void MyHttpd::Stop()
 	// Wait for request worker threads to die
 	WaitForRequestWorkers();
 	// Connection
-	WaitForConnectionWorkers();
+	StopConnectionWorkers();
+	//WaitForConnectionWorkers();
 }
 
 bool MyHttpd::LoadConfig(ConfigReader* cr)
@@ -173,17 +174,6 @@ void MyHttpd::StartConnectionWorkers()
 	}
 }
 
-void MyHttpd::StopConnectionWorkers()
-{
-	// Turn of reading new request from connections
-	std::cout << "Blocking Connection Workers\n";
-
-	for(int i=0; i<mNrConnectionWorkers;i++)
-	{
-		mConnectionWorker[i]->Stop();
-	}
-}
-
 void MyHttpd::WaitForRequestWorkers()
 {
 	for(int i=0; i<mNrRequestWorkers;i++)
@@ -192,6 +182,15 @@ void MyHttpd::WaitForRequestWorkers()
 		{
 			std::cout << "Request Worker shut down\n";
 		}
+	}
+}
+
+void MyHttpd::StopConnectionWorkers()
+{
+	for(int i=0; i<mNrConnectionWorkers;i++)
+	{
+		mConnectionWorker[i]->Stop();
+		std::cout << "Connection Worker Stopped\n";
 	}
 }
 

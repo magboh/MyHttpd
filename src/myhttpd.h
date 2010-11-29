@@ -45,7 +45,6 @@ private:
 	void StartRequestWorkers();
 	void StopRequestQueue();
 	void StopConnectionWorkers();
-
 	void WaitForConnectionWorkers();
 	void WaitForRequestWorkers();
 
