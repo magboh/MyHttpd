@@ -18,13 +18,6 @@ Thread::~Thread()
 	delete mThread;
 }
 
-void Thread::DoWork()
-{
-
-}
-
-
-
 bool Thread::Join()
 {
 	void** arg;
@@ -32,21 +25,15 @@ bool Thread::Join()
 	return true;
 }
 
-
-
 void *Thread::ThreadCallBack(void *arg)
 {
 	((Thread*)arg)->DoWork();
 	return NULL;
 }
 
-
-
 bool Thread::Stop()
 {
 }
-
-
 
 bool Thread::Start()
 {
