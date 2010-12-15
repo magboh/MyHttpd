@@ -26,7 +26,7 @@ Response::~Response()
 {
 	if (mFile!=-1)
 	{
-		close(mFile);
+//		close(mFile);
 		mFile = -1;
 	}
 }

@@ -6,11 +6,6 @@
  */
 
 #include <iostream>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 #include "request.h"
 #include "requestqueue.h"
@@ -18,10 +13,12 @@
 #include "response.h"
 #include "connection.h"
 #include "site.h"
+#include "filehandler.h"
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
 	mRequestQueue = requestQueue;
+	mFilehandler = new FileHandler();
 }
 
 RequestQueueWorker::~RequestQueueWorker()
@@ -49,25 +46,24 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 
 	std::string filename =  root + request->GetUri();
 
-	int fd = open(filename.c_str(),O_RDONLY);
-	int error = errno;
 
-	if (fd != -1)
+	FileHandler::FileStatus status ;
+	const File* file =  mFilehandler->GetFile(filename,status);
+
+	if (file!=NULL)
 	{
-		response->SetFile(fd);
-		struct stat fileStat;
-		fstat(fd,&fileStat);
-		response->SetContentLength(fileStat.st_size);
+		response->SetContentLength(file->GetSize());
+		response->SetFile(file->GetFd());
 		response->SetStatus(Http::HTTP_OK);
 	}
-	else /* Set fail */
+	else
 	{
-		switch (error)
+		switch (status)
 		{
-		case EACCES:
+		case FileHandler::FILESTATUS_NOT_AUTHORIZED:
 			response->SetStatus(Http::HTTP_NO_ACCESS);
 			break;
-		case ENOENT:
+		case FileHandler::FILESTATUS_NO_FILE:
 			response->SetStatus(Http::HTTP_NOT_FOUND);
 			break;
 		default:

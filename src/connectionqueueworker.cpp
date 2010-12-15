@@ -46,10 +46,10 @@ void ConnectionQueueWorker::DoWork()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
-	int readThrougput = 512000;
+	int readThrougput = 4096;
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 		// This should be TrafficShaped to be throughput per second
-	int writeThrougput = 512000;
+	int writeThrougput = 4096;
 	int count=0;
 	std::list<Connection*>::iterator it;
 	std::list<Connection*>::iterator end;
@@ -69,7 +69,7 @@ void ConnectionQueueWorker::DoWork()
 		for(; (count >0) && (it!=end) ; it++)
 		{
 			con = *it;
-			if ( con->Read(readThrougput / count) )
+			if ( con->Read(readThrougput ) )
 			{
 				mRequestQueue->AddRequest(con->GetRequest());
 				con->SetRequest(NULL);
@@ -79,7 +79,7 @@ void ConnectionQueueWorker::DoWork()
 			if (con->HasData())
 			{
 				con->SetLastRequstTime(now);
-				int ret = con->Write(writeThrougput / count);
+				int ret = con->Write(writeThrougput);
 				if (ret<0)
 				{
 					//std::cout << "Connection write error. Close\n";
@@ -121,7 +121,7 @@ void ConnectionQueueWorker::DoWork()
 		}
 		usleep(10);
 	}
-
+	std::cout << "Connection timeout\n";
 }
 
 void ConnectionQueueWorker::AddConnection(Connection* con)
