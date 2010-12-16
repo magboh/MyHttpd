@@ -72,7 +72,7 @@ File* FileHandler::CreateFile(const std::string& file, FileStatus &status)
         	status = FileHandler::FILESTATUS_NO_FILE;
         	break;
         default:
-        	status = FileHandler::FILESTATUS__INTERNAL_ERROR;
+        	status = FileHandler::FILESTATUS_INTERNAL_ERROR;
 		}
 	}
 

@@ -66,6 +66,8 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 		case FileHandler::FILESTATUS_NO_FILE:
 			response->SetStatus(Http::HTTP_NOT_FOUND);
 			break;
+
+		case FileHandler::FILESTATUS_INTERNAL_ERROR:
 		default:
 			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
 			break;

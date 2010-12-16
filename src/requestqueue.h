@@ -9,8 +9,8 @@
 #define REQUESTQUEUE_H_
 // The request queue will hold ALL request for all sites
 // Each request is handled in order by x number of requestqueueworker
-// All Requests added are condidered to be OWNED by the request queue.
-// Once added nothig must be changed in request
+// All Requests added are considered to be OWNED by the request queue.
+// Once added nothing must be changed in request
 
 // ALL Additions / Removals must be THREAD_SAFE !! use mutexes
 

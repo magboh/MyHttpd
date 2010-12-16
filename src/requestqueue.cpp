@@ -38,6 +38,7 @@ RequestQueue::~RequestQueue()
 
 /***
  * Used by RequestWorker to obtain a request to work with.
+ * OWnership of Request is transfered to caller.
  * @return The request is returned or NULL if we are in closing down mode
  */
 const Request* RequestQueue::GetNextRequest()
