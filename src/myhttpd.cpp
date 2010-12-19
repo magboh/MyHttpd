@@ -15,6 +15,7 @@
 #include "requestqueueworker.h"
 #include "connectionmanager.h"
 #include "connectionqueueworker.h"
+#include "acceptworker.h"
 #include "config/configreader.h"
 
 MyHttpd* MyHttpd::myhttpd = NULL;
@@ -74,10 +75,11 @@ int MyHttpd::Start()
 	mKeepRunning = true;
 	while (mKeepRunning)
 	{
-		for (size_t i=0; i<mSites.size() ; i++)
+/*		for (size_t i=0; i<mSites.size() ; i++)
 		{
 			mSites[i].HandleIncomming();
 		}
+*/
 		usleep(10);
 	}
 	std::cout << "\nShutting Down Now\n" ;
@@ -208,19 +210,23 @@ void MyHttpd::WaitForConnectionWorkers()
 void MyHttpd::StartSites(const ConfigReader* cr)
 {
 	ConnectionManager* cm = new ConnectionManager(400,mNrConnectionWorkers,mConnectionWorker);
-
+	mAcceptWorker = new AcceptWorker(cm);
 	const std::vector<SiteOptions> siteOpts = cr->GetSiteOptions();
 
 	for (size_t i=0 ; i< siteOpts.size();i++)
 	{
 
 		const SiteOptions& so = siteOpts[i];
-		Site s(&so,cm);
-		if (s.Setup())
+		Site* s = new Site(&so);
+		if (s->Setup())
 		{
 			std::cout << "Site Setup and added to list\n";
-			mSites.push_back(s);
+			mSites.push_back(*s);
+
+			mAcceptWorker->AddSite(s);
 		}
+
+		mAcceptWorker->Start();
 	}
 
 }

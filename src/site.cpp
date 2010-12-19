@@ -20,7 +20,7 @@
 #include "connectionmanager.h"
 #include "config/siteoptions.h"
 
-Site::Site(const SiteOptions* siteOptions, ConnectionManager* connectionManager)
+Site::Site(const SiteOptions* siteOptions)
 {
 	mPort = siteOptions->GetPort();
 	mAddress = siteOptions->GetIp4Address();
@@ -28,8 +28,6 @@ Site::Site(const SiteOptions* siteOptions, ConnectionManager* connectionManager)
 	mDefaultFile = siteOptions->GetDefaultFile();
 	mDocumentRoot = siteOptions->GetDocumentRoot();
 	mSocket = -1 ;
-	mConnectionManager = connectionManager;
-
 	mListenQueue = 400;
 }
 

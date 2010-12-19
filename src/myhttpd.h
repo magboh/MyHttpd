@@ -13,6 +13,7 @@ class RequestQueue;
 class ConnectionQueueWorker;
 class RequestQueueWorker;
 class ConfigReader;
+class AcceptWorker;
 
 class MyHttpd {
 public:
@@ -39,7 +40,7 @@ private:
 
 	ConnectionQueueWorker** mConnectionWorker;
 	RequestQueueWorker** mRequestWorker;
-
+	AcceptWorker* mAcceptWorker;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
 	void StartRequestWorkers();

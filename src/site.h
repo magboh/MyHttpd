@@ -17,12 +17,13 @@ class ConnectionManager;
 class Site
 {
 public:
-	Site(const SiteOptions* siteOptions , ConnectionManager* connectionManager );
+	Site(const SiteOptions* siteOptions );
 	virtual ~Site();
 
 	bool Setup();
 	void HandleIncomming();
 	const std::string & GetDocumentRoot() const;
+	int GetSocket() const { return mSocket ; } ;
 private:
 	int SetupSocket();
 
