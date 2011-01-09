@@ -28,6 +28,10 @@ ConnectionQueueWorker::	ConnectionQueueWorker(RequestQueue* reqQueue)
 	pthread_mutex_init(mMutex, NULL);
 
 	mKeepRunning = true;
+
+
+	mEpollSocket = epoll_create(1000);
+
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
@@ -64,6 +68,36 @@ void ConnectionQueueWorker::DoWork()
 		it = mList.begin();
 		end = mList.end();
 		pthread_mutex_unlock(mMutex);
+
+
+
+
+
+		 for (;;) {
+		        nfds = epoll_wait(mEpollSocket, events, MAX_EVENTS, 1);
+		        if (nfds == -1) {
+		            perror("epoll_pwait");
+		            exit(EXIT_FAILURE);
+		        }
+
+		        for (int n = 0; n < nfds; ++n)
+		        {
+		        	int sock = events[n].data.fd;
+		        	Site* site = mSiteMap[sock];
+		        	clientSock = accept(sock, (struct sockaddr *) &addr, &len);
+
+		        	if (clientSock != -1)
+		        	{
+
+		        		int flags = fcntl(clientSock, F_GETFL, 0);
+		        		fcntl(clientSock, F_SETFL, flags | O_NONBLOCK);
+		        		mConnectionManager->CreateConnection(clientSock,site);
+		            }
+
+		        }
+		    }
+
+
 
 
 		for(; (count >0) && (it!=end) ; it++)
@@ -128,6 +162,7 @@ void ConnectionQueueWorker::AddConnection(Connection* con)
 {
 	pthread_mutex_lock(mMutex);
 	mList.push_back(con);
+	mConMap[con->GetSocket()] = con ;
 	pthread_mutex_unlock(mMutex);
 }
 
@@ -135,3 +170,17 @@ void ConnectionQueueWorker::Stop()
 {
 	mKeepRunning = false;
 }
+
+void PollAdd(int socket)
+{
+
+	struct epoll_event ev;
+
+	epoll_ctl(mEpollSocket, EPOLL_CTL_ADD, socket, &ev) == -1) {
+}
+
+void PollDel(int socket)
+{
+	epoll_ctl(mEpollSocket, EPOLL_CTL_ADD, socket, &ev[i]) == -1) {
+}
+
