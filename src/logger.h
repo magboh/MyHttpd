@@ -8,11 +8,30 @@
 #ifndef LOGGER_H_
 #define LOGGER_H_
 
+#include <string>
+#include <sstream>
+
+
 class Logger
 {
 public:
-	Logger();
+	enum LogType{ LOG_DEBUG, LOG_INFO, LOG_ERROR , LOG_CRIT};
+
+	void Log(LogType type, const std::string & message);
+	void Log(LogType type, const std::stringstream & ss );
+
+	Logger(const std::string& fileName);
 	virtual ~Logger();
+
+private:
+	void Write(LogType type, const std::string & message);
+
+	pthread_mutex_t* mMutex;
 };
+
+
+extern Logger sAppLog;
+
+#define AppLog(t,m) sAppLog.Log(t,m)
 
 #endif /* LOGGER_H_ */
