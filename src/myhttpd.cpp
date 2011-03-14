@@ -51,12 +51,11 @@ MyHttpd::~MyHttpd() {
 
 int MyHttpd::Start()
 {
-	ConfigReader* cr = new ConfigReader();
+	ConfigReader cr;
 
-	if (!LoadConfig(cr))
+	if (!LoadConfig(&cr))
 	{
 		std::cout << "MyHttpd exiting due to problem loading configuration\n";
-		delete cr ;
 		return 0;
 	}
 
@@ -69,7 +68,7 @@ int MyHttpd::Start()
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
-	StartSites(cr);
+	StartSites(&cr);
 
 	mKeepRunning = true;
 	while (mKeepRunning)
