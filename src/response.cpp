@@ -5,9 +5,8 @@
  *      Author: magnus
  */
 
-#include <iostream>
 #include <sstream>
-#include "string.h"
+#include <string.h>
 
 #include "request.h"
 #include "response.h"
@@ -26,7 +25,7 @@ Response::~Response()
 {
 	if (mFile!=-1)
 	{
-		close(mFile);
+//		close(mFile);
 		mFile = -1;
 	}
 }

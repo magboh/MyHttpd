@@ -38,6 +38,7 @@ RequestQueue::~RequestQueue()
 
 /***
  * Used by RequestWorker to obtain a request to work with.
+ * OWnership of Request is transfered to caller.
  * @return The request is returned or NULL if we are in closing down mode
  */
 const Request* RequestQueue::GetNextRequest()
@@ -46,14 +47,14 @@ const Request* RequestQueue::GetNextRequest()
 
 	const Request *request = NULL;
 
-	assert(pthread_mutex_lock(mMutex)==0);
+	pthread_mutex_lock(mMutex);
 
 	while (1)
 	{
 		if (mReqQueue.empty())
 		{
 			if (mKeepRunning)
-				assert(pthread_cond_wait(mCondThread,mMutex)==0);
+				pthread_cond_wait(mCondThread,mMutex);
 			else
 				break; // closing down..
 		}
@@ -66,30 +67,30 @@ const Request* RequestQueue::GetNextRequest()
 		}
 	}
 
-	assert(pthread_mutex_unlock(mMutex)==0);
+	pthread_mutex_unlock(mMutex);
 	return request;
 }
 
 void RequestQueue::AddRequest(const Request* request)
 {
-	assert(pthread_mutex_lock(mMutex)==0);
+	pthread_mutex_lock(mMutex);
 	pthread_cond_broadcast(mCondThread);
 	mReqQueue.push(request);
 	mStats.mTotalNrInQueue++;
 	if (++mNrInQueue>mStats.mHighestInQueue)
 		mStats.mHighestInQueue=mNrInQueue;
 
-	assert(pthread_mutex_unlock(mMutex)==0);
+	pthread_mutex_unlock(mMutex);
 }
 
 
 void RequestQueue::Shutdown()
 {
-	assert(pthread_mutex_lock(mMutex)==0);
+	pthread_mutex_lock(mMutex);
 /* Awake the threads, and have them get a NULL reequest*/
 	mKeepRunning = false;
 	pthread_cond_broadcast(mCondThread);
-	assert(pthread_mutex_unlock(mMutex)==0);
+	pthread_mutex_unlock(mMutex);
 }
 
 void RequestQueue::PrintStats()

@@ -9,11 +9,8 @@
 
 int main(int argc, char** argv)
 {
-	MyHttpd* myHttpd = new MyHttpd();
+	MyHttpd myHttpd;
+	myHttpd.Start();
 
-	if (myHttpd)
-	{
-		myHttpd->Start();
-	}
 	return 0;
 }

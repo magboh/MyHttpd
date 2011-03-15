@@ -39,7 +39,7 @@ ConnectionManager::~ConnectionManager()
 
 void ConnectionManager::CreateConnection(int socket,const Site *site)
 {
-	std::cout << "Created new connection\n";
+	//std::cout << "Created new connection\n";
 	Connection* con= new Connection(socket,this,site);
 	mWorker[mCurrentThread++ % mNrWorkers]->AddConnection(con);
 	++mStats.nrTotalConnections;

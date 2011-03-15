@@ -18,7 +18,7 @@ public:
 	bool Join();
 	bool Stop();
 protected:
-	virtual void DoWork();
+	virtual void DoWork()=0;
 private:
 	static void* ThreadCallBack(void* arg);
 	pthread_t* mThread;

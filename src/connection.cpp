@@ -14,7 +14,6 @@
 #include <poll.h>
 #include <pthread.h>
 #include <sys/sendfile.h>
-#include <iostream>
 #include <poll.h>
 #include <time.h>
 

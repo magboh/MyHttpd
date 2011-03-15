@@ -5,7 +5,6 @@
  *      Author: magnus
  */
 
-#include <iostream>
 #include <stdlib.h>
 #include <signal.h>
 #include <pthread.h>
@@ -16,6 +15,8 @@
 #include "connectionmanager.h"
 #include "connectionqueueworker.h"
 #include "config/configreader.h"
+
+#include "logger.h"
 
 MyHttpd* MyHttpd::myhttpd = NULL;
 
@@ -51,12 +52,11 @@ MyHttpd::~MyHttpd() {
 
 int MyHttpd::Start()
 {
-	ConfigReader* cr = new ConfigReader();
+	ConfigReader cr;
 
-	if (!LoadConfig(cr))
+	if (!LoadConfig(&cr))
 	{
-		std::cout << "MyHttpd exiting due to problem loading configuration\n";
-		delete cr ;
+		AppLog(Logger::LOG_ERROR,"MyHttpd exiting due to problem loading configuration");
 		return 0;
 	}
 
@@ -69,7 +69,7 @@ int MyHttpd::Start()
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
-	StartSites(cr);
+	StartSites(&cr);
 
 	mKeepRunning = true;
 	while (mKeepRunning)
@@ -80,7 +80,9 @@ int MyHttpd::Start()
 		}
 		usleep(10);
 	}
-	std::cout << "\nShutting Down Now\n" ;
+
+	AppLog(Logger::LOG_INFO,"MyHttpd shutting down");
+
 	Stop();
 	return 0;
 }
@@ -128,12 +130,12 @@ bool MyHttpd::LoadConfig(ConfigReader* cr)
 	}
 	else if (ls == ConfigReader::BAD_FILE)
 	{
-		std::cout << "Error in config file\n";
+		AppLog(Logger::LOG_ERROR,"Error in config file");
 		ok=false;
 	}
 	else if (ls == ConfigReader::NO_FILE)
 	{
-		std::cout << "Problem accessing config file\n";
+		AppLog(Logger::LOG_ERROR,"Problem accessing config file");
 		ok=false;
 	}
 	return ok;
@@ -147,7 +149,7 @@ void MyHttpd::StartRequestQueue()
 
 void MyHttpd::StopRequestQueue()
 {
-	std::cout << "Shutting down Request Queue\n";
+	AppLog(Logger::LOG_DEBUG,"Shutting down Request Queue");
 	mRequestQueue->Shutdown();
 }
 
@@ -180,7 +182,7 @@ void MyHttpd::WaitForRequestWorkers()
 	{
 		if(mRequestWorker[i]->Join())
 		{
-			std::cout << "Request Worker shut down\n";
+			AppLog(Logger::LOG_DEBUG,"Request worker shut down");
 		}
 	}
 }
@@ -190,7 +192,7 @@ void MyHttpd::StopConnectionWorkers()
 	for(int i=0; i<mNrConnectionWorkers;i++)
 	{
 		mConnectionWorker[i]->Stop();
-		std::cout << "Connection Worker Stopped\n";
+		AppLog(Logger::LOG_DEBUG,"Shutting down Connection worker");
 	}
 }
 
@@ -200,7 +202,7 @@ void MyHttpd::WaitForConnectionWorkers()
 	{
 		if(mConnectionWorker[i]->Join())
 		{
-			std::cout << "Connection Worker shut down\n";
+			AppLog(Logger::LOG_DEBUG,"Connection worker shut down");
 		}
 	}
 }
@@ -218,7 +220,7 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 		Site s(&so,cm);
 		if (s.Setup())
 		{
-			std::cout << "Site Setup and added to list\n";
+			AppLog(Logger::LOG_DEBUG,"Site set up and added:" + s.GetDocumentRoot());
 			mSites.push_back(s);
 		}
 	}
