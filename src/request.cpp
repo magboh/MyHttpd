@@ -54,7 +54,7 @@ Request::~Request() {
  */
 bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 {
-	int parsePos=request->mParsePos;
+	unsigned int parsePos=request->mParsePos;
 	// ParseState == 0 is GET/POST line
 	const char* data = buffer->GetBuffer();
 	size_t size = buffer->GetUsage();
@@ -81,7 +81,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		assert(data[parsePos]==' ');
 		parsePos++;
 
-		int i=parsePos;
+		unsigned int i=parsePos;
 
 		for (;i<size;i++)
 		{
@@ -147,7 +147,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 	{
 		int headStart = parsePos;
 		int headEnd = parsePos;
-		for (int i=parsePos; i<=size-4; i++)
+		for (unsigned int i=parsePos; i<=size-4; i++)
 		{
 
 			if (strncmp("\r\n",(data+i),2)==0)

@@ -86,7 +86,7 @@ const char* ByteBuffer::GetBuffer() const
 	return mBuffer;
 }
 
-void ByteBuffer::Remove(int size)
+void ByteBuffer::Remove(unsigned int size)
 {
 	if (size >= mPosition)
 		Clear();
