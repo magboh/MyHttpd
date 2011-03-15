@@ -15,8 +15,6 @@
 // ALL Additions / Removals must be THREAD_SAFE !! use mutexes
 
 #include <queue>
-#include <vector>
-
 class Request;
 class RequestQueueWorker;
 
@@ -32,7 +30,7 @@ public:
 	void PrintStats();
 private:
 	RequestQueue(const RequestQueue &) {};
-	RequestQueue& operator=(const RequestQueue& p) {return *this;};
+	RequestQueue& operator=(const RequestQueue& rhs) { if (this==&rhs) return *this; return *this;};
 
 	std::queue <const Request*> mReqQueue;
 	pthread_mutex_t* mMutex;
