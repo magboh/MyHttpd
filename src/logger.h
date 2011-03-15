@@ -26,6 +26,9 @@ public:
 private:
 	void Write(LogType type, const std::string & message);
 
+	const std::string & GetTypeStr(LogType type);
+	std::string GetCurrentTime();
+
 	pthread_mutex_t* mMutex;
 };
 

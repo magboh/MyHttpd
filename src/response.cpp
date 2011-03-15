@@ -5,9 +5,8 @@
  *      Author: magnus
  */
 
-#include <iostream>
 #include <sstream>
-#include "string.h"
+#include <string.h>
 
 #include "request.h"
 #include "response.h"

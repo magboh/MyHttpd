@@ -7,12 +7,12 @@
 
 #include <string>
 #include <string.h>
-#include <iostream>
 #include <cassert>
 #include "request.h"
 #include "connection.h"
 #include "bytebuffer.h"
 #include "site.h"
+#include "logger.h"
 
 Request::Request(Connection* connection, const Site* site) {
 	// TODO Auto-generated constructor stub
@@ -60,7 +60,6 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		{
 			rt = Request::HTTP_POST;
 			parsePos+=4;
-			std::cout << "rparsePos=" << parsePos << "POST\n";
 		}
 
 		assert(data[parsePos]==' ');
@@ -76,14 +75,12 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 
 		if (i-parsePos > Request::MAX_URI_LENGTH)
 		{
-//			std::cout << "URI too LONG\n";
 			request->SetStatus(Http::HTTP_REQUEST_URI_TO_LONG);
 			return true;
 		}
 
 		std::string uri = std::string( data+parsePos, i-parsePos);
 		parsePos+= i-parsePos;
-//		std::cout << "parsePos=" << parsePos << " URI="<< uri <<"\n";
 
 
 		if (size > parsePos+9)
@@ -102,7 +99,6 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 			}
 			else
 			{
-	//			std::cout << "Bad version\n";
 				request->SetStatus(Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED);
 				return true;
 			}
@@ -112,7 +108,6 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 		else
 			return false;
 
-//		std::cout << "parsePos=" << parsePos << "version=" << Http::GetVersionString(version) << " \n";
 
 		if (size > parsePos+2)
 		{
@@ -158,7 +153,7 @@ bool Request::ParseRequest(Request* request,ByteBuffer* buffer)
 				else if (request->mHeader["Connection"].compare("close")==0 )
 					request->mKeepAlive = false;
 
-//				std::cout << "Requst:" << request->ToString();
+				AppLog(Logger::LOG_DEBUG,"Parsed request:" + request->ToString() );
 
 				return true;
 			}

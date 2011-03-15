@@ -6,7 +6,6 @@
  */
 
 #include <pthread.h>
-#include <iostream>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -18,6 +17,10 @@
 #include "connection.h"
 #include "connectionqueueworker.h"
 #include "requestqueue.h"
+
+#include "logger.h"
+
+
 
 ConnectionQueueWorker::	ConnectionQueueWorker(RequestQueue* reqQueue)
 {
@@ -36,6 +39,7 @@ ConnectionQueueWorker::~ConnectionQueueWorker()
 
 void ConnectionQueueWorker::RemoveConnection(Connection *con)
 {
+	AppLog(Logger::LOG_DEBUG,"ConnectionQueueWorker::RemoveConnection");
 	assert(con);
 	close( con->GetSocket() );
 	delete con;
@@ -105,7 +109,7 @@ void ConnectionQueueWorker::DoWork()
 
 			if (con !=0 && con->GetLastRequstTime() + timeout < now)
 			{
-				std::cout << "Connection timeout\n";
+				AppLog(Logger::LOG_DEBUG,"Connection time out");
 				RemoveConnection(con);
 				con=NULL;
 				it = mList.erase(it);
@@ -121,11 +125,12 @@ void ConnectionQueueWorker::DoWork()
 		}
 		usleep(10);
 	}
-	std::cout << "Connection timeout\n";
+	AppLog(Logger::LOG_DEBUG,"ConnectionQueueWorker leaving");
 }
 
 void ConnectionQueueWorker::AddConnection(Connection* con)
 {
+	AppLog(Logger::LOG_DEBUG,"ConnectionQueueWorker::AddConnection");
 	pthread_mutex_lock(mMutex);
 	mList.push_back(con);
 	pthread_mutex_unlock(mMutex);
@@ -133,5 +138,6 @@ void ConnectionQueueWorker::AddConnection(Connection* con)
 
 void ConnectionQueueWorker::Stop()
 {
+	AppLog(Logger::LOG_DEBUG,"ConnectionQueueWorker::Stop");
 	mKeepRunning = false;
 }
