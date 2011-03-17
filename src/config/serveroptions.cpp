@@ -36,52 +36,51 @@ ServerOptions::~ServerOptions()
 
 int ServerOptions::GetConnectionQueueSize() const
 {
-    return mConnectionQueueSize;
+	return mConnectionQueueSize;
 }
 
 int ServerOptions::GetNoIOWorkers() const
 {
-    return mNoIOWorkers;
+	return mNoIOWorkers;
 }
 
 int ServerOptions::GetNoRequstWorkers() const
 {
-    return mNoRequstWorkers;
+	return mNoRequstWorkers;
 }
 
 int ServerOptions::GetRequestBufferSize() const
 {
-    return mRequestBufferSize;
+	return mRequestBufferSize;
 }
 
 int ServerOptions::GetResponseBufferSize() const
 {
-    return mResponseBufferSize;
+	return mResponseBufferSize;
 }
 
 void ServerOptions::SetConnectionQueueSize(int connectionQueueSize)
 {
-    mConnectionQueueSize = connectionQueueSize;
+	mConnectionQueueSize=connectionQueueSize;
 }
 
 void ServerOptions::SetNoIOWorkers(int noIOWorkers)
 {
-	mNoIOWorkers = noIOWorkers;
+	mNoIOWorkers=noIOWorkers;
 }
 
 void ServerOptions::SetNoRequstWorkers(int noRequstWorkers)
 {
-    mNoRequstWorkers = noRequstWorkers;
+	mNoRequstWorkers=noRequstWorkers;
 }
 
 void ServerOptions::SetRequestBufferSize(int requestBufferSize)
 {
-    mRequestBufferSize = requestBufferSize;
+	mRequestBufferSize=requestBufferSize;
 }
 
 void ServerOptions::SetResponseBufferSize(int responseBufferSize)
 {
-    mResponseBufferSize = responseBufferSize;
+	mResponseBufferSize=responseBufferSize;
 }
-
 

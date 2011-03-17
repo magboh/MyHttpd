@@ -33,19 +33,19 @@
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
-	mRequestQueue = requestQueue;
-	mFilehandler = new FileHandler();
+	mRequestQueue=requestQueue;
+	mFilehandler=new FileHandler();
 }
 
 RequestQueueWorker::~RequestQueueWorker()
 {
 	if (mRequestQueue)
 		delete mRequestQueue;
-	mRequestQueue = 0;
+	mRequestQueue=0;
 
 	if (mFilehandler)
 		delete mFilehandler;
-	mFilehandler = 0 ;
+	mFilehandler=0;
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
@@ -53,25 +53,24 @@ void RequestQueueWorker::DoWork()
 {
 	const Request* request;
 	/* Handle request until Request queue is closed, IE. returns NULL*/
-	while( (request = mRequestQueue->GetNextRequest()))
+	while ((request=mRequestQueue->GetNextRequest()))
 	{
 		HandleRequest(request);
-		delete request ;
-		request = NULL;
+		delete request;
+		request=NULL;
 	}
 }
 
 void RequestQueueWorker::HandleRequest(const Request* request)
 {
-	Response* response  = Response::CreateResponse(request);
+	Response* response=Response::CreateResponse(request);
 
-	const std::string & root = request->GetSite()->GetDocumentRoot();
+	const std::string & root=request->GetSite()->GetDocumentRoot();
 
-	std::string filename =  root + request->GetUri();
+	std::string filename=root+request->GetUri();
 
-
-	FileHandler::FileStatus status ;
-	const File* file =  mFilehandler->GetFile(filename,status);
+	FileHandler::FileStatus status;
+	const File* file=mFilehandler->GetFile(filename, status);
 
 	if (file!=NULL)
 	{

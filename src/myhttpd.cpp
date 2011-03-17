@@ -34,7 +34,7 @@
 
 #include "logger.h"
 
-MyHttpd* MyHttpd::myhttpd = NULL;
+MyHttpd* MyHttpd::myhttpd=NULL;
 
 void handlerInt(int s);
 
@@ -46,13 +46,13 @@ void handlerInt(int s)
 MyHttpd::MyHttpd()
 {
 	// TODO Auto-generated constructor stub
-	myhttpd = this;
+	myhttpd=this;
 }
 
 MyHttpd::~MyHttpd()
 {
 
-	for (int i = 0; i < mNrRequestWorkers; i++)
+	for (int i=0; i<mNrRequestWorkers; i++ )
 	{
 		delete mRequestWorker[i];
 		delete[] mRequestWorker;
@@ -72,7 +72,7 @@ int MyHttpd::Start()
 	BlockSignals();
 
 	StartRequestQueue();
-	mConnectionManager =  new ConnectionManager(400, mRequestQueue);
+	mConnectionManager=new ConnectionManager(400, mRequestQueue);
 	StartRequestWorkers();
 	StartConnectionWorkers();
 
@@ -80,10 +80,10 @@ int MyHttpd::Start()
 	signal(SIGINT, handlerInt);
 	StartSites(&cr);
 
-	mKeepRunning = true;
+	mKeepRunning=true;
 	while (mKeepRunning)
 	{
-		for (size_t i = 0; i < mSites.size(); i++)
+		for (size_t i=0; i<mSites.size(); i++ )
 		{
 			mSites[i].HandleIncomming();
 		}
@@ -112,7 +112,7 @@ void MyHttpd::BlockSignals()
 
 void MyHttpd::SigINTHandler(int signal)
 {
-	mKeepRunning = false;
+	mKeepRunning=false;
 }
 
 void MyHttpd::Stop()
@@ -134,32 +134,31 @@ void MyHttpd::Stop()
 
 bool MyHttpd::LoadConfig(ConfigReader* cr)
 {
-	ConfigReader::LoadStatus ls = cr->Load(
-			"/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
-	bool ok = true;
-	if (ls == ConfigReader::LOAD_OK)
+	ConfigReader::LoadStatus ls=cr->Load("/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
+	bool ok=true;
+	if (ls==ConfigReader::LOAD_OK)
 	{
-		const ServerOptions& so = cr->GetServerOptions();
+		const ServerOptions& so=cr->GetServerOptions();
 
-		mNrConnectionWorkers = so.GetNoIOWorkers();
-		mNrRequestWorkers = so.GetNoRequstWorkers();
+		mNrConnectionWorkers=so.GetNoIOWorkers();
+		mNrRequestWorkers=so.GetNoRequstWorkers();
 	}
-	else if (ls == ConfigReader::BAD_FILE)
+	else if (ls==ConfigReader::BAD_FILE)
 	{
 		AppLog(Logger::ERROR,"Error in config file");
-		ok = false;
+		ok=false;
 	}
-	else if (ls == ConfigReader::NO_FILE)
+	else if (ls==ConfigReader::NO_FILE)
 	{
 		AppLog(Logger::ERROR,"Problem accessing config file");
-		ok = false;
+		ok=false;
 	}
 	return ok;
 }
 
 void MyHttpd::StartRequestQueue()
 {
-	mRequestQueue = new RequestQueue();
+	mRequestQueue=new RequestQueue();
 }
 
 void MyHttpd::StopRequestQueue()
@@ -170,17 +169,17 @@ void MyHttpd::StopRequestQueue()
 
 void MyHttpd::StartRequestWorkers()
 {
-	mRequestWorker = new RequestQueueWorker*[mNrRequestWorkers];
-	for (int i = 0; i < mNrRequestWorkers; i++)
+	mRequestWorker=new RequestQueueWorker*[mNrRequestWorkers];
+	for (int i=0; i<mNrRequestWorkers; i++ )
 	{
-		mRequestWorker[i] = new RequestQueueWorker(mRequestQueue);
+		mRequestWorker[i]=new RequestQueueWorker(mRequestQueue);
 		mRequestWorker[i]->Start();
 	}
 }
 
 void MyHttpd::WaitForRequestWorkers()
 {
-	for (int i = 0; i < mNrRequestWorkers; i++)
+	for (int i=0; i<mNrRequestWorkers; i++ )
 	{
 		if (mRequestWorker[i]->Join())
 		{
@@ -204,16 +203,14 @@ void MyHttpd::WaitForConnectionWorkers()
 	mConnectionManager->WaitForWorkers();
 }
 
-
 void MyHttpd::StartSites(const ConfigReader* cr)
 {
 
+	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
 
-	const std::vector<SiteOptions> siteOpts = cr->GetSiteOptions();
-
-	for (size_t i = 0; i < siteOpts.size(); i++)
+	for (size_t i=0; i<siteOpts.size(); i++ )
 	{
-		const SiteOptions& so = siteOpts[i];
+		const SiteOptions& so=siteOpts[i];
 		Site s(&so, mConnectionManager);
 		if (s.Setup())
 		{
@@ -226,7 +223,7 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 
 void MyHttpd::StopSites()
 {
-	for (unsigned int i=0;i<mSites.size();i++)
+	for (unsigned int i=0; i<mSites.size(); i++ )
 	{
 		mSites[i].Stop();
 	}

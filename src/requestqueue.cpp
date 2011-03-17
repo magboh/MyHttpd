@@ -30,15 +30,14 @@
 #include "request.h"
 #include "requestqueue.h"
 
-
 RequestQueue::RequestQueue()
 {
-	mMutex = new pthread_mutex_t;
+	mMutex=new pthread_mutex_t;
 	pthread_mutex_init(mMutex, NULL);
 
-	mCondThread = new pthread_cond_t;
-	pthread_cond_init (mCondThread, NULL);
-	mKeepRunning= true;
+	mCondThread=new pthread_cond_t;
+	pthread_cond_init(mCondThread, NULL);
+	mKeepRunning=true;
 
 	mStats.mHighestInQueue=0;
 	mStats.mTotalNrInQueue=0;
@@ -48,8 +47,8 @@ RequestQueue::~RequestQueue()
 {
 	delete mMutex;
 	delete mCondThread;
-	mMutex = NULL;
-	mCondThread = NULL;
+	mMutex=NULL;
+	mCondThread=NULL;
 }
 
 /***
@@ -61,7 +60,7 @@ const Request* RequestQueue::GetNextRequest()
 {
 	assert(mMutex);
 
-	const Request *request = NULL;
+	const Request *request=NULL;
 
 	pthread_mutex_lock(mMutex);
 
@@ -70,13 +69,17 @@ const Request* RequestQueue::GetNextRequest()
 		if (mReqQueue.empty())
 		{
 			if (mKeepRunning)
-				pthread_cond_wait(mCondThread,mMutex);
+			{
+				pthread_cond_wait(mCondThread, mMutex);
+			}
 			else
+			{
 				break; // closing down..
+			}
 		}
 		else
 		{
-			request = mReqQueue.front();
+			request=mReqQueue.front();
 			mReqQueue.pop();
 			mNrInQueue--;
 			break;
@@ -99,21 +102,19 @@ void RequestQueue::AddRequest(const Request* request)
 	pthread_mutex_unlock(mMutex);
 }
 
-
 void RequestQueue::Shutdown()
 {
 	pthread_mutex_lock(mMutex);
-/* Awake the threads, and have them get a NULL reequest*/
-	mKeepRunning = false;
+	/* Awake the threads, and have them get a NULL reequest*/
+	mKeepRunning=false;
 	pthread_cond_broadcast(mCondThread);
 	pthread_mutex_unlock(mMutex);
 }
 
 void RequestQueue::PrintStats()
 {
-	std:: cout << "---- Request Queue ----\n";
-	std:: cout << "Total number of requests: " <<  mStats.mTotalNrInQueue <<  "\n";
-	std:: cout << "Highest number of requests in queue: " <<  mStats.mHighestInQueue <<  "\n";
+	std::cout<<"---- Request Queue ----\n";
+	std::cout<<"Total number of requests: "<<mStats.mTotalNrInQueue<<"\n";
+	std::cout<<"Highest number of requests in queue: "<<mStats.mHighestInQueue<<"\n";
 }
-
 

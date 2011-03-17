@@ -29,21 +29,21 @@
 class Request;
 class Connection;
 class ByteBuffer;
-class Response : public Http
+class Response:public Http
 {
 public:
 	static Response* CreateResponse(const Request* request);
 	virtual ~Response();
 
-    void SetContentLength(unsigned int length);
-    unsigned int GetContentLength() const;
+	void SetContentLength(unsigned int length);
+	unsigned int GetContentLength() const;
 
-    int GetFile() const;
-    void SetFile(int fd);
+	int GetFile() const;
+	void SetFile(int fd);
 
-    bool GetKeepAlive() const;
+	bool GetKeepAlive() const;
 
-    int ToBuffer(ByteBuffer* buffer) const;
+	int ToBuffer(ByteBuffer* buffer) const;
 private:
 	Response();
 	unsigned int mContentLength;

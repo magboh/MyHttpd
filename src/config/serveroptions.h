@@ -29,16 +29,16 @@ class ServerOptions
 public:
 	ServerOptions();
 	virtual ~ServerOptions();
-    int GetConnectionQueueSize() const;
-    int GetNoIOWorkers() const;
-    int GetNoRequstWorkers() const;
-    int GetRequestBufferSize() const;
-    int GetResponseBufferSize() const;
-    void SetConnectionQueueSize(int connectionQueueSize);
-    void SetNoIOWorkers(int noIOWorkers);
-    void SetNoRequstWorkers(int noRequstWorkers);
-    void SetRequestBufferSize(int requestBufferSize);
-    void SetResponseBufferSize(int responseBufferSize);
+	int GetConnectionQueueSize() const;
+	int GetNoIOWorkers() const;
+	int GetNoRequstWorkers() const;
+	int GetRequestBufferSize() const;
+	int GetResponseBufferSize() const;
+	void SetConnectionQueueSize(int connectionQueueSize);
+	void SetNoIOWorkers(int noIOWorkers);
+	void SetNoRequstWorkers(int noRequstWorkers);
+	void SetRequestBufferSize(int requestBufferSize);
+	void SetResponseBufferSize(int responseBufferSize);
 
 private:
 	int mNoRequstWorkers;

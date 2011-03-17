@@ -21,7 +21,6 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-
 #ifndef REQUESTQUEUE_H_
 #define REQUESTQUEUE_H_
 // The request queue will hold ALL request for all sites
@@ -36,9 +35,9 @@ class Request;
 class RequestQueueWorker;
 
 /*!
-  \brief RequestQueue: Class responsible for queing Requests for the RequestQueuWorkers
-    This Class is thread safe.
-*/
+ \brief RequestQueue: Class responsible for queing Requests for the RequestQueuWorkers
+ This Class is thread safe.
+ */
 
 class RequestQueue
 {
@@ -64,7 +63,7 @@ private:
 	RequestQueue(const RequestQueue &); // No implementation
 	RequestQueue& operator=(const RequestQueue& rhs); // No implementation
 
-	std::queue <const Request*> mReqQueue;
+	std::queue<const Request*> mReqQueue;
 	pthread_mutex_t* mMutex;
 	pthread_cond_t* mCondThread;
 	bool mKeepRunning;

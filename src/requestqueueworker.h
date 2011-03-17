@@ -30,7 +30,7 @@ class RequestQueue;
 class FileHandler;
 // Worker is responsible to DELETE the request gotten from queue
 
-class RequestQueueWorker : public Thread
+class RequestQueueWorker:public Thread
 {
 public:
 	RequestQueueWorker(RequestQueue* requestQueue);

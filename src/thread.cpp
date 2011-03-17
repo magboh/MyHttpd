@@ -26,7 +26,7 @@
 
 Thread::Thread()
 {
-	mThread = new pthread_t;
+	mThread=new pthread_t;
 }
 
 Thread::~Thread()
@@ -37,13 +37,13 @@ Thread::~Thread()
 bool Thread::Join()
 {
 	void** arg=NULL;
-	pthread_join(*mThread,arg);
+	pthread_join(*mThread, arg);
 	return true;
 }
 
 void *Thread::ThreadCallBack(void *arg)
 {
-	((Thread*)arg)->DoWork();
+	((Thread*) arg)->DoWork();
 	return NULL;
 }
 
@@ -54,8 +54,7 @@ bool Thread::Stop()
 
 bool Thread::Start()
 {
-	pthread_create(mThread,NULL, Thread::ThreadCallBack,(void*)this);
+	pthread_create(mThread, NULL, Thread::ThreadCallBack, (void*) this);
 	return true;
 }
-
 

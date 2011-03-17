@@ -31,7 +31,8 @@ class ConnectionQueueWorker;
 class RequestQueueWorker;
 class ConfigReader;
 
-class MyHttpd {
+class MyHttpd
+{
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
@@ -67,7 +68,7 @@ private:
 
 	void StartSites(const ConfigReader* cr);
 	void StopSites();
-	std::vector <Site> mSites;
+	std::vector<Site> mSites;
 };
 
 #endif /* MYHTTPD_H_ */
