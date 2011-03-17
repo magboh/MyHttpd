@@ -39,6 +39,7 @@ public:
 	bool Setup();
 	void HandleIncomming();
 	const std::string & GetDocumentRoot() const;
+	void Stop();
 private:
 	int SetupSocket();
 

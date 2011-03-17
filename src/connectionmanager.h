@@ -25,33 +25,45 @@
 #define CONNECTIONMANAGER_H_
 
 
-#include <list>
+#include <vector>
 
 class ConnectionQueueWorker;
 class Site;
+class RequestQueue;
 
 class ConnectionManager
 {
 public:
-	ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers);
+	ConnectionManager(int maxConnections,RequestQueue* requestQueue);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket, const Site* site);
 	void PrintStats();
+	/**
+	 * Add a Worker to handle Connections.
+	 */
+	void AddWorker(int nr = 1);
+	/**
+	 * Tell all added Workers to stop.
+	 */
+	void ShutdownWorkers();
+	/**
+	 * Wait for all Workers to stop.
+	 * Caller thread blocked until all workers done.
+	 */
+	void WaitForWorkers();
 private:
 	static void* ThreadCallBack(void* arg);
 
 	int mNumConnections;
 	int mMaxConnections;
 
-	ConnectionQueueWorker** mConnectionWorker;
-
-	int mNrWorkers;
 	int mCurrentThread;
-	ConnectionQueueWorker** mWorker;
-
+	RequestQueue* mRequestQueue;
 	struct stats_t {
 		unsigned int nrTotalConnections;
 	} mStats;
+
+	std::vector <ConnectionQueueWorker*> mWorkerVector;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

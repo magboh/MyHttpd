@@ -25,6 +25,7 @@
 #define MYHTTPD_H_
 #include <vector>
 #include "site.h"
+#include "connectionmanager.h"
 class RequestQueue;
 class ConnectionQueueWorker;
 class RequestQueueWorker;
@@ -53,9 +54,9 @@ private:
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
 
-	ConnectionQueueWorker** mConnectionWorker;
 	RequestQueueWorker** mRequestWorker;
 
+	ConnectionManager* mConnectionManager;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
 	void StartRequestWorkers();
@@ -65,6 +66,7 @@ private:
 	void WaitForRequestWorkers();
 
 	void StartSites(const ConfigReader* cr);
+	void StopSites();
 	std::vector <Site> mSites;
 };
 

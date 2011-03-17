@@ -34,7 +34,7 @@
 #include "site.h"
 #include "connectionmanager.h"
 #include "config/siteoptions.h"
-
+#include "logger.h"
 Site::Site(const SiteOptions* siteOptions, ConnectionManager* connectionManager)
 {
 	mPort = siteOptions->GetPort();
@@ -115,4 +115,11 @@ int Site::SetupSocket()
 const std::string & Site::GetDocumentRoot() const
 {
 	return mDocumentRoot;
+}
+
+void Site::Stop()
+{
+	AppLog(Logger::INFO,"Stopping site:" + mDocumentRoot);
+	close(mSocket);
+	mSocket = -1 ;
 }
