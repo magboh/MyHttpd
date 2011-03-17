@@ -34,21 +34,36 @@
 class Request;
 class RequestQueueWorker;
 
+/*!
+ \brief RequestQueue: Class responsible for queing Requests for the RequestQueuWorkers
+ This Class is thread safe.
+ */
+
 class RequestQueue
 {
 public:
 
 	RequestQueue();
 	virtual ~RequestQueue();
+	/**
+	 * Adds a Request to the queue.
+	 * This method is thread-safe
+	 * @param request
+	 */
 	void AddRequest(const Request* request);
+
+	/**
+	 *
+	 * @return
+	 */
 	const Request* GetNextRequest();
 	void Shutdown();
 	void PrintStats();
 private:
-	RequestQueue(const RequestQueue &) {};
-	RequestQueue& operator=(const RequestQueue& rhs) { if (this==&rhs) return *this; return *this;};
+	RequestQueue(const RequestQueue &); // No implementation
+	RequestQueue& operator=(const RequestQueue& rhs); // No implementation
 
-	std::queue <const Request*> mReqQueue;
+	std::queue<const Request*> mReqQueue;
 	pthread_mutex_t* mMutex;
 	pthread_cond_t* mCondThread;
 	bool mKeepRunning;

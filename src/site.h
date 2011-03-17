@@ -33,12 +33,13 @@ class ConnectionManager;
 class Site
 {
 public:
-	Site(const SiteOptions* siteOptions , ConnectionManager* connectionManager );
+	Site(const SiteOptions* siteOptions, ConnectionManager* connectionManager);
 	virtual ~Site();
 
 	bool Setup();
 	void HandleIncomming();
 	const std::string & GetDocumentRoot() const;
+	void Stop();
 private:
 	int SetupSocket();
 
@@ -47,7 +48,7 @@ private:
 
 	std::string mDocumentRoot;
 	in_addr_t mAddress;
-	in_port_t mPort ;
+	in_port_t mPort;
 	size_t mListenQueue;
 	ConnectionManager* mConnectionManager;
 };

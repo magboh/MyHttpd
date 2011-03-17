@@ -27,14 +27,16 @@
 #include <string>
 #include <sstream>
 
-
 class Logger
 {
 public:
-	enum LogType{ LOG_DEBUG, LOG_INFO, LOG_ERROR , LOG_CRIT};
+	enum LogType
+	{
+		DEBUG, INFO, ERROR, CRIT
+	};
 
 	void Log(LogType type, const std::string & message);
-	void Log(LogType type, const std::stringstream & ss );
+	void Log(LogType type, const std::stringstream & ss);
 
 	Logger(const std::string& fileName);
 	virtual ~Logger();
@@ -47,7 +49,6 @@ private:
 
 	pthread_mutex_t* mMutex;
 };
-
 
 extern Logger sAppLog;
 

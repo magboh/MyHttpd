@@ -30,12 +30,20 @@
 class File
 {
 public:
-	int GetFd() const {return mFd;};
-	size_t GetSize() const {return mSize;};
+	int GetFd() const
+	{
+		return mFd;
+	}
+	;
+	size_t GetSize() const
+	{
+		return mSize;
+	}
+	;
 	File(int fd, size_t size)
 	{
-		mFd = fd ;
-		mSize = size;
+		mFd=fd;
+		mSize=size;
 	}
 private:
 	int mFd;
@@ -46,7 +54,10 @@ private:
 class FileHandler
 {
 public:
-	enum FileStatus {FILESTATUS_OK, FILESTATUS_NO_FILE,FILESTATUS_NOT_AUTHORIZED, FILESTATUS_INTERNAL_ERROR };
+	enum FileStatus
+	{
+		FILESTATUS_OK, FILESTATUS_NO_FILE, FILESTATUS_NOT_AUTHORIZED, FILESTATUS_INTERNAL_ERROR
+	};
 	FileHandler();
 	virtual ~FileHandler();
 
@@ -56,13 +67,13 @@ public:
 	 * @param status
 	 * @return
 	 */
-	const File* GetFile(const std::string& file , FileStatus &status);
+	const File* GetFile(const std::string& file, FileStatus &status);
 
 private:
 
 	File* CreateFile(const std::string& file, FileStatus &status);
 
-	std::map<std::string , File * > mFileMap;
+	std::map<std::string, File *> mFileMap;
 
 };
 

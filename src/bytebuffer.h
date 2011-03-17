@@ -38,7 +38,7 @@ public:
 	size_t GetSize() const;
 	const char* GetBuffer()  const;
 	size_t GetUsage() const;
-	void Remove(int size);
+	void Remove(unsigned int size);
 private:
 	char* mBuffer;
 	size_t mSize;

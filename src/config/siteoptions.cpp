@@ -37,32 +37,32 @@ SiteOptions::~SiteOptions()
 
 bool SiteOptions::GetAllowDirectoryBrowsing() const
 {
-    return mAllowDirectoryBrowsing;
+	return mAllowDirectoryBrowsing;
 }
 
 int SiteOptions::GetConnectionTimeout() const
 {
-    return mConnectionTimeout;
+	return mConnectionTimeout;
 }
 
 std::string SiteOptions::GetDefaultFile() const
 {
-    return mDefaultFile;
+	return mDefaultFile;
 }
 
 void SiteOptions::SetAllowDirectoryBrowsing(bool allowDirectoryBrowsing)
 {
-    mAllowDirectoryBrowsing = allowDirectoryBrowsing;
+	mAllowDirectoryBrowsing=allowDirectoryBrowsing;
 }
 
 void SiteOptions::SetConnectionTimeout(int connectionTimeout)
 {
-    mConnectionTimeout = connectionTimeout;
+	mConnectionTimeout=connectionTimeout;
 }
 
 void SiteOptions::SetDefaultFile(std::string defaultFile)
 {
-    mDefaultFile = defaultFile;
+	mDefaultFile=defaultFile;
 }
 
 in_addr_t SiteOptions::GetIp4Address() const
@@ -72,21 +72,18 @@ in_addr_t SiteOptions::GetIp4Address() const
 
 void SiteOptions::SetIp4Address(in_addr_t addr)
 {
-	mAddr= addr;
+	mAddr=addr;
 }
-
 
 void SiteOptions::SetPort(in_port_t port)
 {
-	mPort = port;
+	mPort=port;
 }
 
 in_port_t SiteOptions::GetPort() const
 {
 	return mPort;
 }
-
-
 
 const std::string & SiteOptions::GetDocumentRoot() const
 {
@@ -95,5 +92,5 @@ const std::string & SiteOptions::GetDocumentRoot() const
 
 void SiteOptions::SetDocumentRoot(const std::string & docRoot)
 {
-	mDocumentRoot = docRoot ;
+	mDocumentRoot=docRoot;
 }

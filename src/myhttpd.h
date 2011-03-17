@@ -25,12 +25,14 @@
 #define MYHTTPD_H_
 #include <vector>
 #include "site.h"
+#include "connectionmanager.h"
 class RequestQueue;
 class ConnectionQueueWorker;
 class RequestQueueWorker;
 class ConfigReader;
 
-class MyHttpd {
+class MyHttpd
+{
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
@@ -53,9 +55,9 @@ private:
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
 
-	ConnectionQueueWorker** mConnectionWorker;
 	RequestQueueWorker** mRequestWorker;
 
+	ConnectionManager* mConnectionManager;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
 	void StartRequestWorkers();
@@ -65,7 +67,8 @@ private:
 	void WaitForRequestWorkers();
 
 	void StartSites(const ConfigReader* cr);
-	std::vector <Site> mSites;
+	void StopSites();
+	std::vector<Site> mSites;
 };
 
 #endif /* MYHTTPD_H_ */

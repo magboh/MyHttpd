@@ -31,7 +31,7 @@
 class RequestQueue;
 class Connection;
 
-class ConnectionQueueWorker : public Thread
+class ConnectionQueueWorker:public Thread
 {
 public:
 	ConnectionQueueWorker(RequestQueue *requestWorker);
@@ -44,7 +44,7 @@ private:
 
 	void RemoveConnection(Connection* con);
 
-	std::list <Connection*> mList;
+	std::list<Connection*> mList;
 	pthread_mutex_t* mMutex;
 	bool mKeepRunning;
 	RequestQueue* mRequestQueue;
