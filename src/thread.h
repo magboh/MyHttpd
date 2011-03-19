@@ -37,7 +37,11 @@ protected:
 	virtual void DoWork()=0;
 private:
 	static void* ThreadCallBack(void* arg);
+
+	Thread(const Thread &);
+	Thread& operator=(const Thread &);
 	pthread_t* mThread;
 };
+
 
 #endif /* THREAD_H_ */
