@@ -36,13 +36,13 @@ Mutex::~Mutex()
 	// TODO Auto-generated destructor stub
 }
 
-Mutex::Lock()
+void Mutex::Lock()
 {
 
 }
 
 
-Mutex::UnLock()
+void Mutex::UnLock()
 {
 
 }
