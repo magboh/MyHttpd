@@ -54,8 +54,11 @@ public:
 	void AddRequest(const Request* request);
 
 	/**
-	 *
-	 * @return
+	 * Returns next Request to be handled from queue.
+	 * Caller takes ownership of the Request so Caller MUST delete it.
+	 * Caller waits if no Requests are available util request enter queue or Queue is closed
+	 * Return NULL means Queue closing. Do not call again
+	 * @return Next Request to handle or NULL if closing down Queue
 	 */
 	const Request* GetNextRequest();
 	void Shutdown();
