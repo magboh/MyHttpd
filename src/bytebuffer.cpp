@@ -67,6 +67,24 @@ bool ByteBuffer::Add(char *data, size_t size)
 	return bOk;
 }
 
+bool ByteBuffer::Add(size_t size)
+{
+	size_t spaceLeft=GetSpaceLeft();
+	bool bOk=true;
+
+	if (spaceLeft>=size)
+	{
+		mPosition+=size;
+	}
+	else
+	{
+		bOk=false;
+	}
+
+	return bOk;
+
+}
+
 size_t ByteBuffer::GetSize() const
 {
 	return mSize;
@@ -85,6 +103,12 @@ const char* ByteBuffer::GetBuffer() const
 {
 	return mBuffer;
 }
+
+char* ByteBuffer::GetBufferPtr()
+{
+	return mBuffer;
+}
+
 
 void ByteBuffer::Remove(unsigned int size)
 {

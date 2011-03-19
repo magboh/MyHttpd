@@ -95,16 +95,16 @@ Connection::ReadStatus_t Connection::Read(size_t size)
 		toRead=mReadBuffer->GetSpaceLeft();
 	}
 
-	char* tbuff=new char[toRead];
-	ssize_t len=read(mSocket,tbuff,toRead);
-	int err=errno;
+	int len=read(mSocket,mReadBuffer->GetBufferPtr(),toRead);
+	int err = errno;
 	if (len>0)
 	{
-		mReadBuffer->Add(tbuff,len);
+		mReadBuffer->Add(len);
 	}
 	else
 	{
 		switch (err)
+
 		{
 		case EAGAIN:
 			// No more data to read now
@@ -122,9 +122,6 @@ Connection::ReadStatus_t Connection::Read(size_t size)
 			break;
 		}
 	}
-
-	delete[] tbuff;
-
 	return status;
 }
 
@@ -139,6 +136,8 @@ int Connection::Write(size_t size)
 	int ret=0;
 	if (mWriteStatus==0)
 	{
+		mResponse->ToBuffer(mWriteBuffer);
+
 		if (size>mWriteBuffer->GetUsage())
 			toWrite=mWriteBuffer->GetUsage();
 
@@ -154,32 +153,38 @@ int Connection::Write(size_t size)
 		}
 	}
 
-	if (mWriteStatus==1)
+	if (mWriteStatus==1&&mResponse->GetFile()!=-1)
 	{
-		if (mResponse->GetFile()!=-1)
+		if (toWrite>mResponse->GetContentLength())
+			toWrite=mResponse->GetContentLength();
+
+		int len=0;
+		off_t offset=mWritten;
+		len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
+		if (len>0)
+			mWritten+=len;
+
+		if (len>0)
 		{
-			if (toWrite>mResponse->GetContentLength())
-				toWrite=mResponse->GetContentLength();
-
-			int len=0;
-			off_t offset=mWritten;
-
-			len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
-			if (len>0)
-				mWritten+=len;
-
-			if (mWritten==mResponse->GetContentLength())
-				mWriteStatus=2;
+			mWritten+=len;
 		}
-		else
+		if (mWritten==mResponse->GetContentLength())
+		{
 			mWriteStatus=2;
+		}
+	}
+	else
+	{
+		mWriteStatus=2;
 	}
 
 	// All written...
 	if (mWriteStatus==2)
 	{
 		if ((mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0)||mResponse->GetKeepAlive()==false)
+		{
 			SetCloseable(true);
+		}
 		ret=1;
 		mWriteBuffer->Clear();
 		mWritten=0;
@@ -209,10 +214,8 @@ void Connection::SetHasData(bool b)
  */
 void Connection::SetResponse(const Response* response)
 {
-	//std::cout << "Connection::SetResponse:\n";
 	assert(mResponse==NULL);
 	mResponse=response;
-	mResponse->ToBuffer(mWriteBuffer);
 }
 
 Request* Connection::GetRequest() const
