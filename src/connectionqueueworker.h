@@ -25,6 +25,8 @@
 #define CONNECTIONQUEUEWORKER_H_
 
 #include <list>
+#include <map>
+#include <sys/epoll.h>
 
 #include "thread.h"
 
@@ -41,7 +43,7 @@ public:
 	void Stop();
 private:
 
-	struct {
+	typedef struct {
 		Connection* con;
 		epoll_event event;
 	} EpollData_t;
