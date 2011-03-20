@@ -1,8 +1,24 @@
-/*
- * connection.cpp
+/***************************************************************************
+ *      MyHTTPd
  *
- *  Created on: Sep 21, 2010
- *      Author: magnus
+ *      Tue, 15 Mar 2011 22:16:12 +0100
+ *      Copyright 2011 Magnus Bohman
+ *      magnus.bohman@gmail.com
+ ***************************************************************************/
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
 #include <sys/types.h>
@@ -14,7 +30,6 @@
 #include <poll.h>
 #include <pthread.h>
 #include <sys/sendfile.h>
-#include <iostream>
 #include <poll.h>
 #include <time.h>
 
@@ -26,38 +41,39 @@
 #include "requestqueue.h"
 #include "bytebuffer.h"
 
-Connection::Connection(int socket,ConnectionManager* conectionMgr,const Site* site) {
-	mSocket = socket;
+Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site* site)
+{
+	mSocket=socket;
 
-	mReadBuffer = new ByteBuffer(4096);
-	mWriteBuffer = new ByteBuffer(4096);
+	mReadBuffer=new ByteBuffer(4096);
+	mWriteBuffer=new ByteBuffer(4096);
 
-	mConnectionManager =  conectionMgr;
-	mWantToRead = true;
-	mRequest = NULL;
-	mHasData = false;
-	mWriteStatus = 0 ;
-	mWritten = 0;
-	mResponse = NULL;
-	mCreated = time(NULL);
-	mLastRequest = mCreated ;
+	mConnectionManager=conectionMgr;
+	mWantToRead=true;
+	mRequest=NULL;
+	mHasData=false;
+	mWriteStatus=0;
+	mWritten=0;
+	mResponse=NULL;
+	mCreated=time(NULL);
+	mLastRequest=mCreated;
 	SetCloseable(false);
-	mSite= site;
+	mSite=site;
 }
 
 Connection::~Connection()
 {
-//	printf("Closing Connection\n");
+	//	printf("Closing Connection\n");
 	if (mReadBuffer)
 	{
 		delete mReadBuffer;
-		mReadBuffer = 0;
+		mReadBuffer=0;
 	}
 
 	if (mWriteBuffer)
 	{
 		delete mWriteBuffer;
-		mWriteBuffer = 0;
+		mWriteBuffer=0;
 	}
 
 	if (mRequest)
@@ -69,24 +85,22 @@ Connection::~Connection()
 
 bool Connection::Read(size_t size)
 {
-	size_t toRead = size;
-	bool done = false;
-	if (toRead > mReadBuffer->GetSpaceLeft())
+	size_t toRead=size;
+	bool done=false;
+	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
-		toRead = mReadBuffer->GetSpaceLeft();
+		toRead=mReadBuffer->GetSpaceLeft();
 	}
 
-	char* tbuff = new char[toRead];
-	int len = read(mSocket, tbuff , toRead);
+	char* tbuff=new char[toRead];
+	int len=read(mSocket, tbuff, toRead);
 
-	
-
-	if (len > 0)
+	if (len>0)
 	{
-		mReadBuffer->Add(tbuff,len);
+		mReadBuffer->Add(tbuff, len);
 
 		if (mRequest==NULL)
-			mRequest = new Request(this,mSite);
+			mRequest=new Request(this, mSite);
 
 		if (Request::ParseRequest(mRequest, mReadBuffer))
 		{
@@ -100,7 +114,7 @@ bool Connection::Read(size_t size)
 			case Http::HTTP_OK:
 			{
 				// Transfer ownership of request to RequestQueue..
-				done= true;
+				done=true;
 				break;
 			}
 
@@ -111,7 +125,7 @@ bool Connection::Read(size_t size)
 			}
 		}
 	}
-	delete [] tbuff;
+	delete[] tbuff;
 
 	return done;
 }
@@ -123,15 +137,15 @@ int Connection::GetSocket() const
 
 int Connection::Write(size_t size)
 {
-	size_t toWrite = size;
-	int ret = 0 ;
+	size_t toWrite=size;
+	int ret=0;
 	if (mWriteStatus==0)
 	{
-		if ( size > mWriteBuffer->GetUsage() )
-			toWrite = mWriteBuffer->GetUsage();
+		if (size>mWriteBuffer->GetUsage())
+			toWrite=mWriteBuffer->GetUsage();
 
-		const char* buffer = mWriteBuffer->GetBuffer();
-		int len = write(mSocket, buffer, toWrite);
+		const char* buffer=mWriteBuffer->GetBuffer();
+		int len=write(mSocket, buffer, toWrite);
 		if (len>=0)
 			mWritten+=len;
 
@@ -142,44 +156,43 @@ int Connection::Write(size_t size)
 		}
 	}
 
-	if (mWriteStatus == 1)
+	if (mWriteStatus==1)
 	{
 		if (mResponse->GetFile()!=-1)
 		{
-			if (toWrite > mResponse->GetContentLength() )
-				toWrite = mResponse->GetContentLength();
+			if (toWrite>mResponse->GetContentLength())
+				toWrite=mResponse->GetContentLength();
 
 			int len=0;
-			off_t offset = mWritten;
+			off_t offset=mWritten;
 
-			len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
+			len=sendfile(mSocket, mResponse->GetFile(), &offset, toWrite);
 			if (len>0)
 				mWritten+=len;
 
-			if (mWritten == mResponse->GetContentLength())
-				mWriteStatus = 2;
+			if (mWritten==mResponse->GetContentLength())
+				mWriteStatus=2;
 		}
 		else
-			mWriteStatus = 2;
+			mWriteStatus=2;
 	}
 
 	// All written...
-	if (mWriteStatus == 2)
+	if (mWriteStatus==2)
 	{
-		if ( (mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0) || mResponse->GetKeepAlive()==false )
+		if ((mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0)||mResponse->GetKeepAlive()==false)
 			SetCloseable(true);
-		ret = 1 ;
+		ret=1;
 		mWriteBuffer->Clear();
 		mWritten=0;
 		mWriteStatus=0;
 		delete mResponse;
 		mResponse=NULL;
-		mHasData = false ;
+		mHasData=false;
 	}
 
 	return ret;
 }
-
 
 bool Connection::HasData()
 {
@@ -188,7 +201,7 @@ bool Connection::HasData()
 
 void Connection::SetHasData(bool b)
 {
-	mHasData = b ;
+	mHasData=b;
 }
 
 /**
@@ -200,7 +213,7 @@ void Connection::SetResponse(const Response* response)
 {
 	//std::cout << "Connection::SetResponse:\n";
 	assert(mResponse==NULL);
-	mResponse = response;
+	mResponse=response;
 	mResponse->ToBuffer(mWriteBuffer);
 }
 
@@ -211,12 +224,12 @@ Request* Connection::GetRequest() const
 
 void Connection::SetRequest(Request* request)
 {
-	mRequest = request;
+	mRequest=request;
 }
 
 void Connection::SetLastRequstTime(time_t lastTime)
 {
-	mLastRequest = lastTime;
+	mLastRequest=lastTime;
 }
 
 time_t Connection::GetLastRequstTime() const
@@ -231,7 +244,6 @@ bool Connection::IsCloseable() const
 
 void Connection::SetCloseable(bool closeable)
 {
-	mCloseable = closeable;
+	mCloseable=closeable;
 }
-
 

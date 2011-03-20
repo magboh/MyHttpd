@@ -1,41 +1,69 @@
-/*
- * connectionmanager.h
+/***************************************************************************
+ *      MyHTTPd
  *
- *  Created on: Sep 20, 2010
- *      Author: magnus
+ *      Tue, 15 Mar 2011 22:16:12 +0100
+ *      Copyright 2011 Magnus Bohman
+ *      magnus.bohman@gmail.com
+ ***************************************************************************/
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
 #ifndef CONNECTIONMANAGER_H_
 #define CONNECTIONMANAGER_H_
 
 
-#include <list>
+#include <vector>
 
 class ConnectionQueueWorker;
 class Site;
+class RequestQueue;
 
 class ConnectionManager
 {
 public:
-	ConnectionManager(int maxConnections, int nrWorkers,ConnectionQueueWorker** workers);
+	ConnectionManager(int maxConnections,RequestQueue* requestQueue);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket, const Site* site);
 	void PrintStats();
+	/**
+	 * Add a Worker to handle Connections.
+	 */
+	void AddWorker(int nr = 1);
+	/**
+	 * Tell all added Workers to stop.
+	 */
+	void ShutdownWorkers();
+	/**
+	 * Wait for all Workers to stop.
+	 * Caller thread blocked until all workers done.
+	 */
+	void WaitForWorkers();
 private:
 	static void* ThreadCallBack(void* arg);
 
 	int mNumConnections;
 	int mMaxConnections;
 
-	ConnectionQueueWorker** mConnectionWorker;
-
-	int mNrWorkers;
 	int mCurrentThread;
-	ConnectionQueueWorker** mWorker;
-
+	RequestQueue* mRequestQueue;
 	struct stats_t {
 		unsigned int nrTotalConnections;
 	} mStats;
+
+	std::vector <ConnectionQueueWorker*> mWorkerVector;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

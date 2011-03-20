@@ -21,44 +21,57 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef CONNECTIONQUEUEWORKER_H_
-#define CONNECTIONQUEUEWORKER_H_
+#include <iostream>
+#include <pthread.h>
+#include "logger.h"
 
-#include <list>
+Logger sAppLog("myhttpd.log");
 
-#include "thread.h"
-
-class RequestQueue;
-class Connection;
-
-class ConnectionQueueWorker:public Thread
+Logger::Logger(const std::string& fileName)
 {
-public:
-	ConnectionQueueWorker(RequestQueue *requestWorker);
+	mMutex=new pthread_mutex_t;
+	pthread_mutex_init(mMutex, NULL);
+}
 
-	void AddConnection(Connection* con);
-	virtual ~ConnectionQueueWorker();
-	void Stop();
-private:
+Logger::~Logger()
+{
+	delete mMutex;
+	mMutex=0;
+}
 
-	struct {
-		Connection* con;
-		epoll_event event;
-	} EpollData_t;
+void Logger::Log(LogType type, const std::string & message)
+{
+	Write(type, message);
+}
 
-	virtual void DoWork();
+void Logger::Log(LogType type, const std::stringstream & ss)
+{
+	Write(type, ss.str());
+}
 
-	void RemoveConnection(Connection* con);
-	void PollAdd(int socket);
-	void PollDel(int socket);
-	std::list<Connection*> mList;
-	std::map <int, Connection*> mConMap;
+void Logger::Write(LogType type, const std::string & message)
+{
+	pthread_mutex_lock(mMutex);
+	std::cout<<GetCurrentTime()<<" : "<<GetTypeStr(type)<<" : "<<message<<"\n";
+	pthread_mutex_unlock(mMutex);
+}
 
-	pthread_mutex_t* mMutex;
-	bool mKeepRunning;
-	RequestQueue* mRequestQueue;
-	int mEpollSocket;
-	std::list <EpollData_t> mEpollData;
-};
+const std::string & Logger::GetTypeStr(LogType type)
+{
+	static std::string typNames[sizeof(LogType)]=
+	{ "DBG", "INF", "ERR", "CRI" };
+	return typNames[type];
+}
 
-#endif /* CONNECTIONQUEUEWORKER_H_ */
+std::string Logger::GetCurrentTime()
+{
+	time_t rawtime;
+	time(&rawtime);
+	char buff[100];
+
+	ctime_r(&rawtime, buff);
+
+	std::string s=std::string(buff);
+	s=s.substr(0, s.length()-1);
+	return s;
+}

@@ -1,16 +1,27 @@
-/*
- * requestqueueworker.cpp
+/***************************************************************************
+ *      MyHTTPd
  *
- *  Created on: Sep 25, 2010
- *      Author: magnus
+ *      Tue, 15 Mar 2011 22:16:12 +0100
+ *      Copyright 2011 Magnus Bohman
+ *      magnus.bohman@gmail.com
+ ***************************************************************************/
+/*
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
 #include <iostream>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 #include "request.h"
 #include "requestqueue.h"
@@ -18,14 +29,23 @@
 #include "response.h"
 #include "connection.h"
 #include "site.h"
+#include "filehandler.h"
 
 RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 {
-	mRequestQueue = requestQueue;
+	mRequestQueue=requestQueue;
+	mFilehandler=new FileHandler();
 }
 
 RequestQueueWorker::~RequestQueueWorker()
 {
+	if (mRequestQueue)
+		delete mRequestQueue;
+	mRequestQueue=0;
+
+	if (mFilehandler)
+		delete mFilehandler;
+	mFilehandler=0;
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
@@ -33,43 +53,43 @@ void RequestQueueWorker::DoWork()
 {
 	const Request* request;
 	/* Handle request until Request queue is closed, IE. returns NULL*/
-	while( (request = mRequestQueue->GetNextRequest()))
+	while ((request=mRequestQueue->GetNextRequest()))
 	{
 		HandleRequest(request);
-		delete request ;
-		request = NULL;
+		delete request;
+		request=NULL;
 	}
 }
 
 void RequestQueueWorker::HandleRequest(const Request* request)
 {
-	Response* response  = Response::CreateResponse(request);
+	Response* response=Response::CreateResponse(request);
 
-	const std::string & root = request->GetSite()->GetDocumentRoot();
+	const std::string & root=request->GetSite()->GetDocumentRoot();
 
-	std::string filename =  root + request->GetUri();
+	std::string filename=root+request->GetUri();
 
-	int fd = open(filename.c_str(),O_RDONLY);
-	int error = errno;
+	FileHandler::FileStatus status;
+	const File* file=mFilehandler->GetFile(filename, status);
 
-	if (fd != -1)
+	if (file!=NULL)
 	{
-		response->SetFile(fd);
-		struct stat fileStat;
-		fstat(fd,&fileStat);
-		response->SetContentLength(fileStat.st_size);
+		response->SetContentLength(file->GetSize());
+		response->SetFile(file->GetFd());
 		response->SetStatus(Http::HTTP_OK);
 	}
-	else /* Set fail */
+	else
 	{
-		switch (error)
+		switch (status)
 		{
-		case EACCES:
+		case FileHandler::FILESTATUS_NOT_AUTHORIZED:
 			response->SetStatus(Http::HTTP_NO_ACCESS);
 			break;
-		case ENOENT:
+		case FileHandler::FILESTATUS_NO_FILE:
 			response->SetStatus(Http::HTTP_NOT_FOUND);
 			break;
+
+		case FileHandler::FILESTATUS_INTERNAL_ERROR:
 		default:
 			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
 			break;

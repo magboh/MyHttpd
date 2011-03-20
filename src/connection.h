@@ -14,9 +14,10 @@ class ConnectionManager;
 class ByteBuffer;
 class Site;
 
-class Connection {
+class Connection
+{
 public:
-	Connection(int socket,ConnectionManager* conectionMgr,const Site* site);
+	Connection(int socket, ConnectionManager* conectionMgr, const Site* site);
 	virtual ~Connection();
 
 	/**
@@ -25,11 +26,11 @@ public:
 	 * @return
 	 */
 	bool Read(size_t size);
-/**
- *
- * @param size
- * @return 1 if all written 0 on more to write -1 if failure
- */
+	/**
+	 *
+	 * @param size
+	 * @return 1 if all written 0 on more to write -1 if failure
+	 */
 	int Write(size_t size);
 	int GetSocket() const;
 	bool WantToRead() const;

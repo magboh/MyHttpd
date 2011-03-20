@@ -21,55 +21,37 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef MYHTTPD_H_
-#define MYHTTPD_H_
-#include <vector>
-#include "site.h"
-#include "connectionmanager.h"
-class RequestQueue;
-class ConnectionQueueWorker;
-class RequestQueueWorker;
-class ConfigReader;
-class AcceptWorker;
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
-class MyHttpd
+#include <string>
+#include <sstream>
+
+class Logger
 {
 public:
-	MyHttpd();
-	virtual ~MyHttpd();
-	int Start();
-	void Stop();
-	void SigINTHandler(int signal);
+	enum LogType
+	{
+		DEBUG, INFO, ERROR, CRIT
+	};
 
-	void AllowSignals();
-	void BlockSignals();
+	void Log(LogType type, const std::string & message);
+	void Log(LogType type, const std::stringstream & ss);
 
-	bool LoadConfig(ConfigReader* cr);
+	Logger(const std::string& fileName);
+	virtual ~Logger();
 
-	static MyHttpd* myhttpd;
 private:
-	RequestQueue* mRequestQueue;
-	bool mKeepRunning;
-	int mNumConnections;
-	int mMaxConnections;
+	void Write(LogType type, const std::string & message);
 
-	int mNrConnectionWorkers;
-	int mNrRequestWorkers;
+	const std::string & GetTypeStr(LogType type);
+	std::string GetCurrentTime();
 
-	RequestQueueWorker** mRequestWorker;
-	AcceptWorker* mAcceptWorker;
-	ConnectionManager* mConnectionManager;
-	void StartRequestQueue();
-	void StartConnectionWorkers();
-	void StartRequestWorkers();
-	void StopRequestQueue();
-	void StopConnectionWorkers();
-	void WaitForConnectionWorkers();
-	void WaitForRequestWorkers();
-
-	void StartSites(const ConfigReader* cr);
-	void StopSites();
-	std::vector<Site> mSites;
+	pthread_mutex_t* mMutex;
 };
 
-#endif /* MYHTTPD_H_ */
+extern Logger sAppLog;
+
+#define AppLog(t,m) sAppLog.Log(t,m)
+
+#endif /* LOGGER_H_ */

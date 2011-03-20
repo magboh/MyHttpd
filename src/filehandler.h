@@ -21,55 +21,60 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef MYHTTPD_H_
-#define MYHTTPD_H_
-#include <vector>
-#include "site.h"
-#include "connectionmanager.h"
-class RequestQueue;
-class ConnectionQueueWorker;
-class RequestQueueWorker;
-class ConfigReader;
-class AcceptWorker;
+#ifndef FILEHANDLER_H_
+#define FILEHANDLER_H_
 
-class MyHttpd
+#include <string>
+#include <map>
+
+class File
 {
 public:
-	MyHttpd();
-	virtual ~MyHttpd();
-	int Start();
-	void Stop();
-	void SigINTHandler(int signal);
-
-	void AllowSignals();
-	void BlockSignals();
-
-	bool LoadConfig(ConfigReader* cr);
-
-	static MyHttpd* myhttpd;
+	int GetFd() const
+	{
+		return mFd;
+	}
+	;
+	size_t GetSize() const
+	{
+		return mSize;
+	}
+	;
+	File(int fd, size_t size)
+	{
+		mFd=fd;
+		mSize=size;
+	}
 private:
-	RequestQueue* mRequestQueue;
-	bool mKeepRunning;
-	int mNumConnections;
-	int mMaxConnections;
-
-	int mNrConnectionWorkers;
-	int mNrRequestWorkers;
-
-	RequestQueueWorker** mRequestWorker;
-	AcceptWorker* mAcceptWorker;
-	ConnectionManager* mConnectionManager;
-	void StartRequestQueue();
-	void StartConnectionWorkers();
-	void StartRequestWorkers();
-	void StopRequestQueue();
-	void StopConnectionWorkers();
-	void WaitForConnectionWorkers();
-	void WaitForRequestWorkers();
-
-	void StartSites(const ConfigReader* cr);
-	void StopSites();
-	std::vector<Site> mSites;
+	int mFd;
+	size_t mSize;
+	int mRefCount;
 };
 
-#endif /* MYHTTPD_H_ */
+class FileHandler
+{
+public:
+	enum FileStatus
+	{
+		FILESTATUS_OK, FILESTATUS_NO_FILE, FILESTATUS_NOT_AUTHORIZED, FILESTATUS_INTERNAL_ERROR
+	};
+	FileHandler();
+	virtual ~FileHandler();
+
+	/**
+	 *
+	 * @param file
+	 * @param status
+	 * @return
+	 */
+	const File* GetFile(const std::string& file, FileStatus &status);
+
+private:
+
+	File* CreateFile(const std::string& file, FileStatus &status);
+
+	std::map<std::string, File *> mFileMap;
+
+};
+
+#endif /* FILEHANDLER_H_ */
