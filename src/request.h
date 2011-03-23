@@ -36,7 +36,7 @@ class Site;
 class Request:public Http
 {
 public:
-	Request(Connection* connection, const Site* site);
+	Request(Connection* connection, const Site& site);
 	virtual ~Request();
 	enum ParseReturn
 	{
@@ -52,7 +52,7 @@ public:
 	const std::string & GetUri() const;
 	RequestType GetHttpType() const;
 
-	const Site* GetSite() const;
+	const Site& GetSite() const;
 
 	Connection *GetConnection() const;
 	void SetConnection(Connection *mConnection);
@@ -72,7 +72,7 @@ private:
 	int mParseState;
 	size_t mParsePos;
 	std::map<std::string, std::string> mHeader;
-	const Site* mSite;
+	const Site& mSite;
 };
 
 #endif /* REQUEST_H_ */

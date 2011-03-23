@@ -37,9 +37,12 @@ public:
 	virtual ~Site();
 
 	bool Setup();
-	void HandleIncomming();
 	const std::string & GetDocumentRoot() const;
-	int GetSocket() const { return mSocket ; } ;
+	int GetSocket() const
+	{
+		return mSocket;
+	}
+	;
 	void Stop();
 private:
 	int SetupSocket();

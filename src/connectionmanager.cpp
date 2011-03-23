@@ -32,6 +32,7 @@
 #include "connectionqueueworker.h"
 #include "site.h"
 #include "requestqueue.h"
+#include "ioworker.h"
 #include "logger.h"
 
 ConnectionManager::ConnectionManager(int maxConnections, RequestQueue* requestQueue)
@@ -48,9 +49,14 @@ ConnectionManager::~ConnectionManager()
 
 }
 
-void ConnectionManager::CreateConnection(int socket, const Site *site)
+void ConnectionManager::CreateConnection(int socket, const Site& site)
 {
-	mWorkerVector[mCurrentThread++%mWorkerVector.size()]->AddConnection(new Connection(socket, this, site));
+	mIoWorker->AddConnection(new Connection(socket, this, site));
+}
+
+void ConnectionManager::HandleConnection(Connection* con)
+{
+	mWorkerVector[mCurrentThread++%mWorkerVector.size()]->HandleConnection(con);
 	++mStats.nrTotalConnections;
 }
 
@@ -60,7 +66,7 @@ void ConnectionManager::PrintStats()
 	std::cout<<"Total Connections: "<<mStats.nrTotalConnections<<"\n";
 }
 
-void ConnectionManager::AddWorker(int nr)
+void ConnectionManager::AddConnectionWorker(int nr)
 {
 	for (int i=0; i<nr; i++ )
 	{
@@ -70,6 +76,17 @@ void ConnectionManager::AddWorker(int nr)
 		AppLog(Logger::DEBUG,"Connection worker added");
 	}
 }
+void ConnectionManager::AddIoWorker(int nr)
+{
+	for (int i=0; i<nr; i++ )
+	{
+		mIoWorker = new IoWorker(*this);
+		mIoWorker->Start();
+		AppLog(Logger::DEBUG,"IO worker added");
+	}
+}
+
+void AddIoWorker(int nr = 1);
 
 void ConnectionManager::ShutdownWorkers()
 {

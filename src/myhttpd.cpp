@@ -84,11 +84,11 @@ int MyHttpd::Start()
 	mKeepRunning=true;
 	while (mKeepRunning)
 	{
-/*		for (size_t i=0; i<mSites.size() ; i++)
-		{
-			mSites[i].HandleIncomming();
-		}
-*/
+		/*		for (size_t i=0; i<mSites.size() ; i++)
+		 {
+		 mSites[i].HandleIncomming();
+		 }
+		 */
 		usleep(10);
 	}
 
@@ -192,7 +192,8 @@ void MyHttpd::WaitForRequestWorkers()
 
 void MyHttpd::StartConnectionWorkers()
 {
-	mConnectionManager->AddWorker(mNrConnectionWorkers);
+	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
+	mConnectionManager->AddIoWorker(1);
 }
 
 void MyHttpd::StopConnectionWorkers()
@@ -207,30 +208,29 @@ void MyHttpd::WaitForConnectionWorkers()
 
 void MyHttpd::StartSites(const ConfigReader* cr)
 {
-	mAcceptWorker = new AcceptWorker(cm);
 	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
 
+	mAcceptWorker=new AcceptWorker(mConnectionManager);
 	for (size_t i=0; i<siteOpts.size(); i++ )
 	{
 		const SiteOptions& so=siteOpts[i];
-		Site s(&so, mConnectionManager);
+		Site *s=new Site(&so, mConnectionManager);
 		if (s->Setup())
 		{
-			AppLog(Logger::DEBUG,"Site set up and added:" + s.GetDocumentRoot());
-			mSites.push_back(*s);
-
+			AppLog(Logger::DEBUG,"Site set up and added:" + s->GetDocumentRoot());
+			mSites.push_back(s);
 			mAcceptWorker->AddSite(s);
 		}
 
-		mAcceptWorker->Start();
 	}
 
+	mAcceptWorker->Start();
 }
 
 void MyHttpd::StopSites()
 {
 	for (unsigned int i=0; i<mSites.size(); i++ )
 	{
-		mSites[i].Stop();
+		mSites[i]->Stop();
 	}
 }

@@ -38,29 +38,36 @@ class ConnectionQueueWorker:public Thread
 public:
 	ConnectionQueueWorker(RequestQueue *requestWorker);
 
-	void AddConnection(Connection* con);
+	void HandleConnection(Connection* con);
 	virtual ~ConnectionQueueWorker();
 	void Stop();
 private:
 
-	typedef struct {
-		Connection* con;
-		epoll_event event;
-	} EpollData_t;
-
 	virtual void DoWork();
 
 	void RemoveConnection(Connection* con);
-	void PollAdd(int socket);
-	void PollDel(int socket);
-	std::list<Connection*> mList;
-	std::map <int, Connection*> mConMap;
 
 	pthread_mutex_t* mMutex;
+
+	/**
+	 * thread runs while true
+	 */
 	bool mKeepRunning;
+
+	/**
+	 *
+	 */
 	RequestQueue* mRequestQueue;
+
+	/**
+	 * used as the epoll() socket
+	 */
 	int mEpollSocket;
-	std::list <EpollData_t> mEpollData;
+
+	/**
+	 * List of Connections this worker handles
+	 */
+	std::list<Connection*> mList;
 };
 
 #endif /* CONNECTIONQUEUEWORKER_H_ */

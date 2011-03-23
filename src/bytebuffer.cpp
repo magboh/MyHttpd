@@ -46,7 +46,7 @@ size_t ByteBuffer::GetSpaceLeft() const
 
 bool ByteBuffer::Add(const char *data, size_t size)
 {
-	return Add((char *) data, size);
+	return Add((char *) data,size);
 }
 
 bool ByteBuffer::Add(char *data, size_t size)
@@ -56,7 +56,7 @@ bool ByteBuffer::Add(char *data, size_t size)
 
 	if (spaceLeft>=size)
 	{
-		memcpy(mBuffer+mPosition, data, size);
+		memcpy(mBuffer+mPosition,data,size);
 		mPosition+=size;
 	}
 	else
@@ -77,7 +77,7 @@ size_t ByteBuffer::GetUsage() const
 }
 void ByteBuffer::Clear()
 {
-	memset(mBuffer, 0x00, mSize-1);
+	memset(mBuffer,0x00,mSize-1);
 	mPosition=0;
 }
 
@@ -92,7 +92,7 @@ void ByteBuffer::Remove(unsigned int size)
 		Clear();
 	else
 	{
-		memcpy(mBuffer, mBuffer+size, mPosition-size);
+		memcpy(mBuffer,mBuffer+size,mPosition-size);
 		mPosition-=size;
 	}
 

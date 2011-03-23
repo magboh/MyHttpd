@@ -65,12 +65,12 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 {
 	Response* response=Response::CreateResponse(request);
 
-	const std::string & root=request->GetSite()->GetDocumentRoot();
+	const std::string & root=request->GetSite().GetDocumentRoot();
 
 	std::string filename=root+request->GetUri();
 
 	FileHandler::FileStatus status;
-	const File* file=mFilehandler->GetFile(filename, status);
+	const File* file=mFilehandler->GetFile(filename,status);
 
 	if (file!=NULL)
 	{

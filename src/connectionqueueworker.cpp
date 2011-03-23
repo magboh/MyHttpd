@@ -71,52 +71,24 @@ void ConnectionQueueWorker::DoWork()
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
 	int writeThrougput=4096;
-	int count=0;
+
 	std::list<Connection*>::iterator it;
-	std::list<Connection*>::iterator end;
+
 	Connection* con;
+	Connection* lastCon;
 	const int timeout=30;
+
 	while (mKeepRunning)
 	{
 		time_t now=time(NULL);
 
 		pthread_mutex_lock(mMutex);
-		count=mList.size();
 		it=mList.begin();
-		end=mList.end();
+		lastCon=mList.back();
 		pthread_mutex_unlock(mMutex);
 
 
-
-
-		 for (;;) {
-		        nfds = epoll_wait(mEpollSocket, events, MAX_EVENTS, 1);
-		        if (nfds == -1) {
-		            perror("epoll_pwait");
-		            exit(EXIT_FAILURE);
-		        }
-
-		        for (int n = 0; n < nfds; ++n)
-		        {
-		        	int sock = events[n].data.fd;
-		        	Site* site = mSiteMap[sock];
-		        	clientSock = accept(sock, (struct sockaddr *) &addr, &len);
-
-		        	if (clientSock != -1)
-		        	{
-
-		        		int flags = fcntl(clientSock, F_GETFL, 0);
-		        		fcntl(clientSock, F_SETFL, flags | O_NONBLOCK);
-		        		mConnectionManager->CreateConnection(clientSock,site);
-		            }
-
-		        }
-		    }
-
-
-
-
-		for (; (count>0)&&(it!=end); it++ )
+		while(it!=mList.end())
 		{
 			con=*it;
 			if (con->Read(readThrougput))
@@ -167,18 +139,22 @@ void ConnectionQueueWorker::DoWork()
 				it=mList.erase(it);
 			}
 
+			if (*it == lastCon) // Last "safe" connection
+			{
+				break;
+			}
+			it++;
 		}
 		usleep(10);
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
 
-void ConnectionQueueWorker::AddConnection(Connection* con)
+void ConnectionQueueWorker::HandleConnection(Connection* con)
 {
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::AddConnection");
+	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
 	pthread_mutex_lock(mMutex);
 	mList.push_back(con);
-	mConMap[con->GetSocket()] = con ;
 	pthread_mutex_unlock(mMutex);
 }
 
@@ -187,17 +163,3 @@ void ConnectionQueueWorker::Stop()
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::Stop");
 	mKeepRunning=false;
 }
-
-void PollAdd(int socket)
-{
-
-	struct epoll_event ev;
-
-	epoll_ctl(mEpollSocket, EPOLL_CTL_ADD, socket, &ev) == -1) {
-}
-
-void PollDel(int socket)
-{
-	epoll_ctl(mEpollSocket, EPOLL_CTL_ADD, socket, &ev[i]) == -1) {
-}
-

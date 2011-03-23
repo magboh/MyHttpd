@@ -17,7 +17,7 @@ class Site;
 class Connection
 {
 public:
-	Connection(int socket, ConnectionManager* conectionMgr, const Site* site);
+	Connection(int socket, ConnectionManager* conectionMgr, const Site& site);
 	virtual ~Connection();
 
 	/**
@@ -55,7 +55,6 @@ private:
 	ConnectionManager* mConnectionManager;
 	Request* mRequest;
 	bool mWantToRead;
-
 	const Response* mResponse;
 	bool mHasData;
 	char mWriteStatus;
@@ -63,7 +62,7 @@ private:
 	time_t mCreated;
 	time_t mLastRequest;
 	bool mCloseable;
-	const Site* mSite;
+	const Site& mSite;
 };
 
 #endif /* CONNECTION_H_ */

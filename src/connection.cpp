@@ -41,7 +41,8 @@
 #include "requestqueue.h"
 #include "bytebuffer.h"
 
-Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site* site)
+Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site) :
+	mSite(site)
 {
 	mSocket=socket;
 
@@ -58,7 +59,6 @@ Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site* 
 	mCreated=time(NULL);
 	mLastRequest=mCreated;
 	SetCloseable(false);
-	mSite=site;
 }
 
 Connection::~Connection()
@@ -93,16 +93,16 @@ bool Connection::Read(size_t size)
 	}
 
 	char* tbuff=new char[toRead];
-	int len=read(mSocket, tbuff, toRead);
+	int len=read(mSocket,tbuff,toRead);
 
 	if (len>0)
 	{
-		mReadBuffer->Add(tbuff, len);
+		mReadBuffer->Add(tbuff,len);
 
 		if (mRequest==NULL)
-			mRequest=new Request(this, mSite);
+			mRequest=new Request(this,mSite);
 
-		if (Request::ParseRequest(mRequest, mReadBuffer))
+		if (Request::ParseRequest(mRequest,mReadBuffer))
 		{
 			switch (mRequest->GetStatus())
 			{
@@ -145,7 +145,7 @@ int Connection::Write(size_t size)
 			toWrite=mWriteBuffer->GetUsage();
 
 		const char* buffer=mWriteBuffer->GetBuffer();
-		int len=write(mSocket, buffer, toWrite);
+		int len=write(mSocket,buffer,toWrite);
 		if (len>=0)
 			mWritten+=len;
 
@@ -166,7 +166,7 @@ int Connection::Write(size_t size)
 			int len=0;
 			off_t offset=mWritten;
 
-			len=sendfile(mSocket, mResponse->GetFile(), &offset, toWrite);
+			len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
 			if (len>0)
 				mWritten+=len;
 

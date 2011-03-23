@@ -57,20 +57,6 @@ bool Site::Setup()
 	return true;
 }
 
-void Site::HandleIncomming()
-{
-	struct sockaddr_in addr;
-	socklen_t len=sizeof(addr);
-
-	int clientSock=accept(mSocket, (struct sockaddr *) &addr, &len);
-	if (clientSock>0)
-	{
-		int flags=fcntl(clientSock, F_GETFL, 0);
-		fcntl(clientSock, F_SETFL, flags|O_NONBLOCK);
-		mConnectionManager->CreateConnection(clientSock, this);
-	}
-}
-
 int Site::SetupSocket()
 {
 	int domain=AF_INET;
