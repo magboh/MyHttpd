@@ -23,7 +23,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/fcntl.h>
@@ -56,13 +56,13 @@ void AcceptWorker::DoWork()
 
 	struct epoll_event events[MAX_EVENTS];
 
-	int clientSock, nfds;
+
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
 
 	for (;;)
 	{
-		nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,-1);
+		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,-1);
 		if (nfds==-1)
 		{
 			AppLog(Logger::ERROR,"epoll_wait() failed");
@@ -71,11 +71,10 @@ void AcceptWorker::DoWork()
 		{
 			Site* site=static_cast<Site*> (events[n].data.ptr);
 			int sock = site->GetSocket();
-			std::cout<<"\n sock="<<sock<<" nfds="<<nfds << " fd=" << events[n].data.fd;
 			if ((events[n].events&(EPOLLIN|EPOLLPRI))==events[n].events)
 			{
 
-				clientSock=accept(sock,(struct sockaddr *) &addr,&len);
+				int clientSock=accept(sock,(struct sockaddr *) &addr,&len);
 
 				if (clientSock!=-1)
 				{
@@ -101,10 +100,17 @@ void AcceptWorker::AddSite(Site* site)
 	struct epoll_event ev;
 	ev.data.ptr=(void*) site;
 	ev.events = EPOLLIN;
-	std::cout<<"\n sock="<<site->GetSocket();
+
 	if (epoll_ctl(mEpollSocket,EPOLL_CTL_ADD,site->GetSocket(),&ev))
 	{
 		perror("AcceptWorker::AddSite()");
 	}
 }
 
+void AcceptWorker::DeleteSite(Site* site)
+{
+	if (epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,site->GetSocket(),NULL))
+	{
+		perror("AcceptWorker::AddSite()");
+	}
+}

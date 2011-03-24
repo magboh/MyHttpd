@@ -42,6 +42,7 @@ public:
 	AcceptWorker(ConnectionManager* connectionManager);
 	virtual ~AcceptWorker();
 	void AddSite(Site* site);
+	void DeleteSite(Site* site);
 private:
 	virtual void DoWork();
 
