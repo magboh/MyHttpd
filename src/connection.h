@@ -32,11 +32,18 @@ public:
 	 * @return 1 if all written 0 on more to write -1 if failure
 	 */
 	int Write(size_t size);
+
+	/**
+	 * Parses data stored in mReadBuffer. Creates mRequests is needed
+	 * @return true if request ready to be processed
+	 */
+	bool Parse();
 	int GetSocket() const;
 	bool WantToRead() const;
 	bool HasData();
 	void SetHasData(bool b);
 	void SetResponse(const Response* response);
+
 	Request* GetRequest() const;
 	void SetRequest(Request* request);
 

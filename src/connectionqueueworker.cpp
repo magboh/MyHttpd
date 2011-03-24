@@ -41,13 +41,10 @@ ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue* reqQueue)
 	mKeepRunning=true;
 	mRequestQueue=reqQueue;
 	mMutex=new pthread_mutex_t;
-	pthread_mutex_init(mMutex, NULL);
+	pthread_mutex_init(mMutex,NULL);
 
 	mKeepRunning=true;
-
-
-	mEpollSocket = epoll_create(1000);
-
+	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
@@ -87,20 +84,20 @@ void ConnectionQueueWorker::DoWork()
 		lastCon=mList.back();
 		pthread_mutex_unlock(mMutex);
 
-
-		while(it!=mList.end())
+		while (it!=mList.end())
 		{
 			con=*it;
 			if (con->Read(readThrougput))
 			{
-				mRequestQueue->AddRequest(con->GetRequest());
-				con->SetRequest(NULL);
-				con->SetLastRequstTime(now);
+				if (con->Parse())
+				{
+					mRequestQueue->AddRequest(con->GetRequest());
+					con->SetRequest(NULL);
+				}
 			}
 
 			if (con->HasData())
 			{
-				con->SetLastRequstTime(now);
 				int ret=con->Write(writeThrougput);
 				if (ret<0)
 				{
@@ -110,7 +107,6 @@ void ConnectionQueueWorker::DoWork()
 				}
 				else if (ret==1)
 				{
-
 					if (con->IsCloseable())
 					{
 						RemoveConnection(con);
@@ -124,28 +120,22 @@ void ConnectionQueueWorker::DoWork()
 				}
 			}
 
-			if (con!=0&&con->GetLastRequstTime()+timeout<now)
-			{
-				AppLog(Logger::DEBUG,"Connection time out");
-				RemoveConnection(con);
-				con=NULL;
-				it=mList.erase(it);
-			}
 
-			if (!mKeepRunning&&con->GetRequest()!=NULL)
-			{
-				RemoveConnection(con);
-				con=NULL;
-				it=mList.erase(it);
-			}
-
-			if (*it == lastCon) // Last "safe" connection
+			if (*it==lastCon) // Last "safe" connection
 			{
 				break;
 			}
+			else
+			{
+				it=mList.erase(it);
+				RemoveConnection(con);
+
+			}
+
 			it++;
+
 		}
-		usleep(10);
+
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }

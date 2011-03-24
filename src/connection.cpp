@@ -21,6 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,6 +33,7 @@
 #include <sys/sendfile.h>
 #include <poll.h>
 #include <time.h>
+#include <errno.h>
 
 #include "site.h"
 #include "request.h"
@@ -86,7 +88,7 @@ Connection::~Connection()
 bool Connection::Read(size_t size)
 {
 	size_t toRead=size;
-	bool done=false;
+	bool done = true ;
 	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
 		toRead=mReadBuffer->GetSpaceLeft();
@@ -94,37 +96,29 @@ bool Connection::Read(size_t size)
 
 	char* tbuff=new char[toRead];
 	int len=read(mSocket,tbuff,toRead);
-
+	int err=errno;
 	if (len>0)
 	{
 		mReadBuffer->Add(tbuff,len);
-
-		if (mRequest==NULL)
-			mRequest=new Request(this,mSite);
-
-		if (Request::ParseRequest(mRequest,mReadBuffer))
+	}
+	else
+	{
+		switch (err)
 		{
-			switch (mRequest->GetStatus())
-			{
+		case EAGAIN:
+			// No more data to read now
+			// remove connection from worker. Add again to IoWorker
+			break;
 
-			case Http::HTTP_REQUEST_URI_TO_LONG:
-			case Http::HTTP_REQUEST_TO_LARGE:
-			case Http::HTTP_BAD_REQUEST:
-			case Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED:
-			case Http::HTTP_OK:
-			{
-				// Transfer ownership of request to RequestQueue..
-				done=true;
-				break;
-			}
+		case EINTR: // Not sure what do do here.. Probably retry read
+			break;
 
-			default:
-				assert(false); // SHOULD NOT BE HERE
-				break;
-
-			}
+		default:
+			// All other cases remove connection. And hope for the best..
+			break;
 		}
 	}
+
 	delete[] tbuff;
 
 	return done;
@@ -247,3 +241,11 @@ void Connection::SetCloseable(bool closeable)
 	mCloseable=closeable;
 }
 
+bool Connection::Parse()
+{
+	if (mRequest==NULL)
+	{
+		mRequest=new Request(this,mSite);
+	}
+	return Request::ParseRequest(mRequest,mReadBuffer);
+}
