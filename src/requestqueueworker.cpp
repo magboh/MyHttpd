@@ -39,10 +39,6 @@ RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
 
 RequestQueueWorker::~RequestQueueWorker()
 {
-	if (mRequestQueue)
-		delete mRequestQueue;
-	mRequestQueue=0;
-
 	if (mFilehandler)
 		delete mFilehandler;
 	mFilehandler=0;
