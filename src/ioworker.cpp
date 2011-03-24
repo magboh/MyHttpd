@@ -38,13 +38,9 @@ void IoWorker::DoWork()
 
 	struct epoll_event events[MAX_EVENTS];
 
-	int clientSock, nfds;
-	struct sockaddr_in addr;
-	socklen_t len=sizeof(addr);
-
 	for (;;)
 	{
-		nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,1);
+		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,1);
 		if (nfds==-1)
 		{
 			perror("IoWorker::DoWork() epoll_pwait");
@@ -66,8 +62,7 @@ void IoWorker::AddConnection(Connection* con)
 {
 	AppLog(Logger::DEBUG,"IoWorker::AddConnection");
 	struct epoll_event ev;
-
-	ev.events=EPOLLIN;
+	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
 	ev.data.fd=con->GetSocket();
 	ev.data.ptr=(void*) con;
 
