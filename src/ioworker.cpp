@@ -52,14 +52,13 @@ void IoWorker::DoWork()
 			Connection* con=static_cast<Connection*> (events[n].data.ptr);
 			// Tell Connection Manager to handle IO for this connection
 
-			if(events[n].events&EPOLLIN)
+			if (events[n].events&EPOLLIN)
 				mConnectionManager.HandleConnection(con);
 		}
 	}
 	close(mPollSocket);
 	mPollSocket=-1;
 }
-
 
 void IoWorker::AddConnection(Connection* con)
 {

@@ -56,7 +56,6 @@ void AcceptWorker::DoWork()
 
 	struct epoll_event events[MAX_EVENTS];
 
-
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
 
@@ -70,7 +69,7 @@ void AcceptWorker::DoWork()
 		for (int n=0;n<nfds;++n)
 		{
 			Site* site=static_cast<Site*> (events[n].data.ptr);
-			int sock = site->GetSocket();
+			int sock=site->GetSocket();
 			if ((events[n].events&(EPOLLIN|EPOLLPRI))==events[n].events)
 			{
 
@@ -99,7 +98,7 @@ void AcceptWorker::AddSite(Site* site)
 {
 	struct epoll_event ev;
 	ev.data.ptr=(void*) site;
-	ev.events = EPOLLIN;
+	ev.events=EPOLLIN;
 
 	if (epoll_ctl(mEpollSocket,EPOLL_CTL_ADD,site->GetSocket(),&ev))
 	{
