@@ -31,6 +31,7 @@ Logger::Logger(const std::string& fileName)
 {
 	mMutex=new pthread_mutex_t;
 	pthread_mutex_init(mMutex, NULL);
+	mLogLevel = INFO;
 }
 
 Logger::~Logger()
@@ -51,9 +52,12 @@ void Logger::Log(LogType type, const std::stringstream & ss)
 
 void Logger::Write(LogType type, const std::string & message)
 {
-	pthread_mutex_lock(mMutex);
-	std::cout<<GetCurrentTime()<<" : "<<GetTypeStr(type)<<" : "<<message<<"\n";
-	pthread_mutex_unlock(mMutex);
+	if (type >= mLogLevel)
+	{
+		pthread_mutex_lock(mMutex);
+		std::cout<<GetCurrentTime() << ":" << pthread_self()  << ":"<<GetTypeStr(type)<<":"<< message<<"\n";
+		pthread_mutex_unlock(mMutex);
+	}
 }
 
 const std::string & Logger::GetTypeStr(LogType type)
@@ -74,4 +78,15 @@ std::string Logger::GetCurrentTime()
 	std::string s=std::string(buff);
 	s=s.substr(0, s.length()-1);
 	return s;
+}
+
+
+void Logger::SetLogLevel(LogType type)
+{
+	mLogLevel = type ;
+}
+
+Logger::LogType Logger::GetLogLevel(LogType type) const
+{
+	return mLogLevel;
 }

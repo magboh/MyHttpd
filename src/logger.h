@@ -40,7 +40,8 @@ public:
 
 	Logger(const std::string& fileName);
 	virtual ~Logger();
-
+	void SetLogLevel(LogType type);
+	LogType GetLogLevel(LogType type) const;
 private:
 	void Write(LogType type, const std::string & message);
 
@@ -48,6 +49,7 @@ private:
 	std::string GetCurrentTime();
 
 	pthread_mutex_t* mMutex;
+	LogType mLogLevel;
 };
 
 extern Logger sAppLog;
