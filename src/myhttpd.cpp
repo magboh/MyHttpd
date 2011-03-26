@@ -73,7 +73,7 @@ int MyHttpd::Start()
 	BlockSignals();
 
 	StartRequestQueue();
-	mConnectionManager=new ConnectionManager(400, mRequestQueue);
+	mConnectionManager=new ConnectionManager(400, *mRequestQueue);
 	StartRequestWorkers();
 	StartConnectionWorkers();
 

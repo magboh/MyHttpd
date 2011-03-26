@@ -17,7 +17,8 @@ class Site;
 class Connection
 {
 public:
-	Connection(int socket, ConnectionManager* conectionMgr, const Site& site);
+	enum ReadStatus_t {READ_STATUS_OK,READ_STATUS_ERROR,READ_STATUS_AGAIN,READ_STATUS_DONE};
+	Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr);
 	virtual ~Connection();
 
 	/**
@@ -25,7 +26,7 @@ public:
 	 * @param size amount of data to read from socket
 	 * @return
 	 */
-	bool Read(size_t size);
+	ReadStatus_t Read(size_t size);
 	/**
 	 *
 	 * @param size
@@ -53,6 +54,19 @@ public:
 	bool IsCloseable() const;
 	void SetCloseable(bool closeable);
 
+	bool HasDataPending() {
+		return mPendingData;
+	}
+
+	void SetDataPending(bool pending)
+	{
+		mPendingData=pending;
+	}
+
+	unsigned char GetThreadNr() const
+	{
+		return mTreadNr;
+	}
 private:
 	int mSocket;
 
@@ -69,7 +83,9 @@ private:
 	time_t mCreated;
 	time_t mLastRequest;
 	bool mCloseable;
+	bool mPendingData;
 	const Site& mSite;
+	unsigned char mTreadNr;
 };
 
 #endif /* CONNECTION_H_ */

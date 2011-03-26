@@ -36,10 +36,11 @@ class Connection;
 class ConnectionManager
 {
 public:
-	ConnectionManager(int maxConnections,RequestQueue* requestQueue);
+	ConnectionManager(int maxConnections,RequestQueue& requestQueue);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket, const Site& site);
 	void HandleConnection(Connection* con);
+	void AddConnection(Connection* con);
 	void PrintStats();
 	/**
 	 * Add a Worker to handle Connections.
@@ -68,7 +69,7 @@ private:
 	int mMaxConnections;
 
 	int mCurrentThread;
-	RequestQueue* mRequestQueue;
+	RequestQueue& mRequestQueue;
 	struct stats_t {
 		unsigned int nrTotalConnections;
 	} mStats;

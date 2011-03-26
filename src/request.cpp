@@ -160,7 +160,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				request->mParsePos=0;
 				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
-
+				request->mKeepAlive=false;
 				if (request->mHeader["Connection"].compare("keep-alive")==0)
 					request->mKeepAlive=true;
 				else if (request->mHeader["Connection"].compare("close")==0)

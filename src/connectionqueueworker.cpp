@@ -31,25 +31,26 @@
 #include <cassert>
 
 #include "connection.h"
+#include "connectionmanager.h"
 #include "connectionqueueworker.h"
 #include "requestqueue.h"
 
 #include "logger.h"
 
-ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue* reqQueue)
+ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
+	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
 {
 	mKeepRunning=true;
-	mRequestQueue=reqQueue;
 	mMutex=new pthread_mutex_t;
 	pthread_mutex_init(mMutex,NULL);
 
-	mKeepRunning=true;
 	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
 {
 	pthread_mutex_destroy(mMutex);
+	delete mMutex;
 	mMutex=0;
 }
 
@@ -72,70 +73,79 @@ void ConnectionQueueWorker::DoWork()
 	std::list<Connection*>::iterator it;
 
 	Connection* con;
-	Connection* lastCon;
-	const int timeout=30;
-
 	while (mKeepRunning)
 	{
-		time_t now=time(NULL);
-
 		pthread_mutex_lock(mMutex);
-		it=mList.begin();
-		lastCon=mList.back();
+		mList.merge(mAddList);
 		pthread_mutex_unlock(mMutex);
 
+		it=mList.begin();
+		usleep(20);
 		while (it!=mList.end())
 		{
-			con=*it;
-			if (con->Read(readThrougput))
+			enum State
 			{
-				if (con->Parse())
+				REMOVE, WAIT, CONTINUE
+			};
+			State state=CONTINUE;
+
+			con=*it;
+
+			if (!con->HasDataPending())
+			{
+				Connection::ReadStatus_t readStatus=con->Read(readThrougput);
+
+				if (readStatus==Connection::READ_STATUS_OK)
 				{
-					mRequestQueue->AddRequest(con->GetRequest());
-					con->SetRequest(NULL);
+					if (con->Parse())
+					{
+						mRequestQueue.AddRequest(con->GetRequest());
+						con->SetDataPending(true);
+						con->SetRequest(NULL);
+						state=WAIT;
+					}
 				}
+				else if (readStatus==Connection::READ_STATUS_DONE)
+				{
+					state=WAIT;
+				}
+				else
+					state=REMOVE;
 			}
 
 			if (con->HasData())
 			{
 				int ret=con->Write(writeThrougput);
-				if (ret<0)
+				state=CONTINUE;
+
+				if (ret==1)
 				{
-					RemoveConnection(con);
-					con=NULL;
-					it=mList.erase(it);
-				}
-				else if (ret==1)
-				{
+					state=WAIT;
+					con->SetDataPending(false);
+
 					if (con->IsCloseable())
-					{
-						RemoveConnection(con);
-						con=NULL;
-						it=mList.erase(it);
-					}
-					else
-					{
-					}
-
+						state=REMOVE;
 				}
 			}
-
-
-			if (*it==lastCon) // Last "safe" connection
+			else if (con->HasDataPending())
 			{
-				break;
+				state=CONTINUE;
 			}
-			else
+			switch (state)
 			{
+			case REMOVE:
 				it=mList.erase(it);
 				RemoveConnection(con);
-
+				break;
+			case WAIT:
+				it=mList.erase(it);
+				mConnectionManager.AddConnection(con);
+				break;
+			case CONTINUE:
+				it++;
+				break;
 			}
-
-			it++;
-
 		}
-
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
@@ -144,7 +154,7 @@ void ConnectionQueueWorker::HandleConnection(Connection* con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
 	pthread_mutex_lock(mMutex);
-	mList.push_back(con);
+	mAddList.push_back(con);
 	pthread_mutex_unlock(mMutex);
 }
 

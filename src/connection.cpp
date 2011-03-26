@@ -43,8 +43,8 @@
 #include "requestqueue.h"
 #include "bytebuffer.h"
 
-Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site) :
-	mSite(site)
+Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site,unsigned char threadNr) :
+	mSocket(socket), mConnectionManager(conectionMgr),mSite(site), mTreadNr(threadNr)
 {
 	mSocket=socket;
 
@@ -85,17 +85,18 @@ Connection::~Connection()
 		delete mResponse;
 }
 
-bool Connection::Read(size_t size)
+Connection::ReadStatus_t Connection::Read(size_t size)
 {
 	size_t toRead=size;
-	bool done = true ;
+	ReadStatus_t status = READ_STATUS_OK;
+
 	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
 		toRead=mReadBuffer->GetSpaceLeft();
 	}
 
 	char* tbuff=new char[toRead];
-	int len=read(mSocket,tbuff,toRead);
+	ssize_t len=read(mSocket,tbuff,toRead);
 	int err=errno;
 	if (len>0)
 	{
@@ -108,20 +109,23 @@ bool Connection::Read(size_t size)
 		case EAGAIN:
 			// No more data to read now
 			// remove connection from worker. Add again to IoWorker
+			status = READ_STATUS_DONE;
 			break;
 
 		case EINTR: // Not sure what do do here.. Probably retry read
+			status = READ_STATUS_AGAIN;
 			break;
 
 		default:
 			// All other cases remove connection. And hope for the best..
+			status = READ_STATUS_ERROR;
 			break;
 		}
 	}
 
 	delete[] tbuff;
 
-	return done;
+	return status;
 }
 
 int Connection::GetSocket() const

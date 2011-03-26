@@ -32,11 +32,12 @@
 
 class RequestQueue;
 class Connection;
+class ConnectionManager;
 
 class ConnectionQueueWorker:public Thread
 {
 public:
-	ConnectionQueueWorker(RequestQueue *requestWorker);
+	ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
 
 	void HandleConnection(Connection* con);
 	virtual ~ConnectionQueueWorker();
@@ -57,8 +58,8 @@ private:
 	/**
 	 *
 	 */
-	RequestQueue* mRequestQueue;
-
+	RequestQueue& mRequestQueue;
+	ConnectionManager& mConnectionManager;
 	/**
 	 * used as the epoll() socket
 	 */
@@ -68,6 +69,11 @@ private:
 	 * List of Connections this worker handles
 	 */
 	std::list<Connection*> mList;
+
+	/**
+	 * List of Connections newly added. Not just added to mList
+	 */
+	std::list<Connection*> mAddList;
 };
 
 #endif /* CONNECTIONQUEUEWORKER_H_ */
