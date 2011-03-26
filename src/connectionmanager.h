@@ -30,18 +30,29 @@
 class ConnectionQueueWorker;
 class Site;
 class RequestQueue;
+class IoWorker;
+class Connection;
 
 class ConnectionManager
 {
 public:
-	ConnectionManager(int maxConnections,RequestQueue* requestQueue);
+	ConnectionManager(int maxConnections,RequestQueue& requestQueue);
 	virtual ~ConnectionManager();
-	void CreateConnection(int socket, const Site* site);
+	void CreateConnection(int socket, const Site& site);
+	void HandleConnection(Connection* con);
+	void AddConnection(Connection* con);
 	void PrintStats();
 	/**
 	 * Add a Worker to handle Connections.
 	 */
-	void AddWorker(int nr = 1);
+	void AddConnectionWorker(int nr = 1);
+
+
+	/**
+	 * Add a IO Worker to handle Connection socket stats.
+	 */
+	void AddIoWorker(int nr = 1);
+
 	/**
 	 * Tell all added Workers to stop.
 	 */
@@ -58,12 +69,13 @@ private:
 	int mMaxConnections;
 
 	int mCurrentThread;
-	RequestQueue* mRequestQueue;
+	RequestQueue& mRequestQueue;
 	struct stats_t {
 		unsigned int nrTotalConnections;
 	} mStats;
 
 	std::vector <ConnectionQueueWorker*> mWorkerVector;
+	IoWorker* mIoWorker;
 };
 
 #endif /* CONNECTIONMANAGER_H_ */

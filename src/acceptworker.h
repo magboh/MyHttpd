@@ -21,59 +21,33 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef CONNECTIONQUEUEWORKER_H_
-#define CONNECTIONQUEUEWORKER_H_
+#ifndef ACCEPTWORKER_H_
+#define ACCEPTWORKER_H_
 
-#include <list>
 #include <map>
-#include <sys/epoll.h>
-
 #include "thread.h"
 
-class RequestQueue;
-class Connection;
+/**
+ * The AcceptWorker class handles all accepts on all site's sockets.
+ * First call AddSite() for all sites in system
+ * Then call HandleIncomming(): This is run in its own thread
+ */
+
+class Site;
 class ConnectionManager;
 
-class ConnectionQueueWorker:public Thread
+class AcceptWorker: public Thread
 {
 public:
-	ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
-
-	void HandleConnection(Connection* con);
-	virtual ~ConnectionQueueWorker();
-	void Stop();
+	AcceptWorker(ConnectionManager* connectionManager);
+	virtual ~AcceptWorker();
+	void AddSite(Site* site);
+	void DeleteSite(Site* site);
 private:
-
 	virtual void DoWork();
 
-	void RemoveConnection(Connection* con);
-
-	pthread_mutex_t* mMutex;
-
-	/**
-	 * thread runs while true
-	 */
-	bool mKeepRunning;
-
-	/**
-	 *
-	 */
-	RequestQueue& mRequestQueue;
-	ConnectionManager& mConnectionManager;
-	/**
-	 * used as the epoll() socket
-	 */
 	int mEpollSocket;
-
-	/**
-	 * List of Connections this worker handles
-	 */
-	std::list<Connection*> mList;
-
-	/**
-	 * List of Connections newly added. Not just added to mList
-	 */
-	std::list<Connection*> mAddList;
+	ConnectionManager* mConnectionManager;
 };
 
-#endif /* CONNECTIONQUEUEWORKER_H_ */
+#endif /* ACCEPTWORKER_H_ */

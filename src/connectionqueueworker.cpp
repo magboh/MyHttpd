@@ -31,24 +31,26 @@
 #include <cassert>
 
 #include "connection.h"
+#include "connectionmanager.h"
 #include "connectionqueueworker.h"
 #include "requestqueue.h"
 
 #include "logger.h"
 
-ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue* reqQueue)
+ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
+	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
 {
 	mKeepRunning=true;
-	mRequestQueue=reqQueue;
 	mMutex=new pthread_mutex_t;
-	pthread_mutex_init(mMutex, NULL);
+	pthread_mutex_init(mMutex,NULL);
 
-	mKeepRunning=true;
+	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
 {
 	pthread_mutex_destroy(mMutex);
+	delete mMutex;
 	mMutex=0;
 }
 
@@ -67,83 +69,92 @@ void ConnectionQueueWorker::DoWork()
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
 	int writeThrougput=4096;
-	int count=0;
+
 	std::list<Connection*>::iterator it;
-	std::list<Connection*>::iterator end;
+
 	Connection* con;
-	const int timeout=30;
 	while (mKeepRunning)
 	{
-		time_t now=time(NULL);
-
 		pthread_mutex_lock(mMutex);
-		count=mList.size();
-		it=mList.begin();
-		end=mList.end();
+		mList.merge(mAddList);
 		pthread_mutex_unlock(mMutex);
 
-		for (; (count>0)&&(it!=end); it++ )
+		it=mList.begin();
+		usleep(20);
+		while (it!=mList.end())
 		{
-			con=*it;
-			if (con->Read(readThrougput))
+			enum State
 			{
-				mRequestQueue->AddRequest(con->GetRequest());
-				con->SetRequest(NULL);
-				con->SetLastRequstTime(now);
+				REMOVE, WAIT, CONTINUE
+			};
+			State state=CONTINUE;
+
+			con=*it;
+
+			if (!con->HasDataPending())
+			{
+				Connection::ReadStatus_t readStatus=con->Read(readThrougput);
+
+				if (readStatus==Connection::READ_STATUS_OK)
+				{
+					if (con->Parse())
+					{
+						mRequestQueue.AddRequest(con->GetRequest());
+						con->SetDataPending(true);
+						con->SetRequest(NULL);
+						state=WAIT;
+					}
+				}
+				else if (readStatus==Connection::READ_STATUS_DONE)
+				{
+					state=WAIT;
+				}
+				else
+					state=REMOVE;
 			}
 
 			if (con->HasData())
 			{
-				con->SetLastRequstTime(now);
 				int ret=con->Write(writeThrougput);
-				if (ret<0)
+				state=CONTINUE;
+
+				if (ret==1)
 				{
-					RemoveConnection(con);
-					con=NULL;
-					it=mList.erase(it);
-				}
-				else if (ret==1)
-				{
+					state=WAIT;
+					con->SetDataPending(false);
 
 					if (con->IsCloseable())
-					{
-						RemoveConnection(con);
-						con=NULL;
-						it=mList.erase(it);
-					}
-					else
-					{
-					}
-
+						state=REMOVE;
 				}
 			}
-
-			if (con!=0&&con->GetLastRequstTime()+timeout<now)
+			else if (con->HasDataPending())
 			{
-				AppLog(Logger::DEBUG,"Connection time out");
-				RemoveConnection(con);
-				con=NULL;
-				it=mList.erase(it);
+				state=CONTINUE;
 			}
-
-			if (!mKeepRunning&&con->GetRequest()!=NULL)
+			switch (state)
 			{
-				RemoveConnection(con);
-				con=NULL;
+			case REMOVE:
 				it=mList.erase(it);
+				RemoveConnection(con);
+				break;
+			case WAIT:
+				it=mList.erase(it);
+				mConnectionManager.AddConnection(con);
+				break;
+			case CONTINUE:
+				it++;
+				break;
 			}
-
 		}
-		usleep(10);
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
 
-void ConnectionQueueWorker::AddConnection(Connection* con)
+void ConnectionQueueWorker::HandleConnection(Connection* con)
 {
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::AddConnection");
+	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
 	pthread_mutex_lock(mMutex);
-	mList.push_back(con);
+	mAddList.push_back(con);
 	pthread_mutex_unlock(mMutex);
 }
 

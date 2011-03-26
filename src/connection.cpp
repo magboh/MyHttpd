@@ -21,6 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -32,6 +33,7 @@
 #include <sys/sendfile.h>
 #include <poll.h>
 #include <time.h>
+#include <errno.h>
 
 #include "site.h"
 #include "request.h"
@@ -41,7 +43,8 @@
 #include "requestqueue.h"
 #include "bytebuffer.h"
 
-Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site* site)
+Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site,unsigned char threadNr) :
+	mSocket(socket), mConnectionManager(conectionMgr),mSite(site), mTreadNr(threadNr)
 {
 	mSocket=socket;
 
@@ -58,7 +61,6 @@ Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site* 
 	mCreated=time(NULL);
 	mLastRequest=mCreated;
 	SetCloseable(false);
-	mSite=site;
 }
 
 Connection::~Connection()
@@ -83,51 +85,47 @@ Connection::~Connection()
 		delete mResponse;
 }
 
-bool Connection::Read(size_t size)
+Connection::ReadStatus_t Connection::Read(size_t size)
 {
 	size_t toRead=size;
-	bool done=false;
+	ReadStatus_t status = READ_STATUS_OK;
+
 	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
 		toRead=mReadBuffer->GetSpaceLeft();
 	}
 
 	char* tbuff=new char[toRead];
-	int len=read(mSocket, tbuff, toRead);
-
+	ssize_t len=read(mSocket,tbuff,toRead);
+	int err=errno;
 	if (len>0)
 	{
-		mReadBuffer->Add(tbuff, len);
-
-		if (mRequest==NULL)
-			mRequest=new Request(this, mSite);
-
-		if (Request::ParseRequest(mRequest, mReadBuffer))
+		mReadBuffer->Add(tbuff,len);
+	}
+	else
+	{
+		switch (err)
 		{
-			switch (mRequest->GetStatus())
-			{
+		case EAGAIN:
+			// No more data to read now
+			// remove connection from worker. Add again to IoWorker
+			status = READ_STATUS_DONE;
+			break;
 
-			case Http::HTTP_REQUEST_URI_TO_LONG:
-			case Http::HTTP_REQUEST_TO_LARGE:
-			case Http::HTTP_BAD_REQUEST:
-			case Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED:
-			case Http::HTTP_OK:
-			{
-				// Transfer ownership of request to RequestQueue..
-				done=true;
-				break;
-			}
+		case EINTR: // Not sure what do do here.. Probably retry read
+			status = READ_STATUS_AGAIN;
+			break;
 
-			default:
-				assert(false); // SHOULD NOT BE HERE
-				break;
-
-			}
+		default:
+			// All other cases remove connection. And hope for the best..
+			status = READ_STATUS_ERROR;
+			break;
 		}
 	}
+
 	delete[] tbuff;
 
-	return done;
+	return status;
 }
 
 int Connection::GetSocket() const
@@ -145,7 +143,7 @@ int Connection::Write(size_t size)
 			toWrite=mWriteBuffer->GetUsage();
 
 		const char* buffer=mWriteBuffer->GetBuffer();
-		int len=write(mSocket, buffer, toWrite);
+		int len=write(mSocket,buffer,toWrite);
 		if (len>=0)
 			mWritten+=len;
 
@@ -166,7 +164,7 @@ int Connection::Write(size_t size)
 			int len=0;
 			off_t offset=mWritten;
 
-			len=sendfile(mSocket, mResponse->GetFile(), &offset, toWrite);
+			len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
 			if (len>0)
 				mWritten+=len;
 
@@ -247,3 +245,11 @@ void Connection::SetCloseable(bool closeable)
 	mCloseable=closeable;
 }
 
+bool Connection::Parse()
+{
+	if (mRequest==NULL)
+	{
+		mRequest=new Request(this,mSite);
+	}
+	return Request::ParseRequest(mRequest,mReadBuffer);
+}

@@ -32,15 +32,17 @@
 #include "connectionqueueworker.h"
 #include "site.h"
 #include "requestqueue.h"
+#include "ioworker.h"
 #include "logger.h"
 
-ConnectionManager::ConnectionManager(int maxConnections, RequestQueue* requestQueue)
+ConnectionManager::ConnectionManager(int maxConnections, RequestQueue& requestQueue) :
+	mRequestQueue(requestQueue)
 {
 	mMaxConnections=maxConnections;
 	mNumConnections=0;
 	mCurrentThread=0;
 	mStats.nrTotalConnections=0;
-	mRequestQueue=requestQueue;
+
 }
 
 ConnectionManager::~ConnectionManager()
@@ -48,10 +50,22 @@ ConnectionManager::~ConnectionManager()
 
 }
 
-void ConnectionManager::CreateConnection(int socket, const Site *site)
+void ConnectionManager::CreateConnection(int socket, const Site& site)
 {
-	mWorkerVector[mCurrentThread++%mWorkerVector.size()]->AddConnection(new Connection(socket, this, site));
 	++mStats.nrTotalConnections;
+	mIoWorker->AddConnection(new Connection(socket,this,site,mCurrentThread++%mWorkerVector.size()));
+}
+
+void ConnectionManager::AddConnection(Connection* con)
+{
+	AppLog(Logger::DEBUG,"ConnectionManager AddConnection()");
+	mIoWorker->ModConnection(con);
+}
+
+void ConnectionManager::HandleConnection(Connection* con)
+{
+	AppLog(Logger::DEBUG,"ConnectionManager HandleConnection()");
+	mWorkerVector[con->GetThreadNr()]->HandleConnection(con);
 }
 
 void ConnectionManager::PrintStats()
@@ -60,14 +74,23 @@ void ConnectionManager::PrintStats()
 	std::cout<<"Total Connections: "<<mStats.nrTotalConnections<<"\n";
 }
 
-void ConnectionManager::AddWorker(int nr)
+void ConnectionManager::AddConnectionWorker(int nr)
 {
-	for (int i=0; i<nr; i++ )
+	for (int i=0;i<nr;i++)
 	{
-		ConnectionQueueWorker* cqw=new ConnectionQueueWorker(mRequestQueue);
+		ConnectionQueueWorker* cqw=new ConnectionQueueWorker(mRequestQueue,*this);
 		cqw->Start();
 		mWorkerVector.push_back(cqw);
 		AppLog(Logger::DEBUG,"Connection worker added");
+	}
+}
+void ConnectionManager::AddIoWorker(int nr)
+{
+	for (int i=0;i<nr;i++)
+	{
+		mIoWorker=new IoWorker(*this);
+		mIoWorker->Start();
+		AppLog(Logger::DEBUG,"IO worker added");
 	}
 }
 
@@ -75,7 +98,7 @@ void ConnectionManager::ShutdownWorkers()
 {
 	AppLog(Logger::DEBUG,"ConnectionManager Shutdown workers");
 
-	for (unsigned int i=0; i<mWorkerVector.size(); i++ )
+	for (unsigned int i=0;i<mWorkerVector.size();i++)
 	{
 		mWorkerVector[i]->Stop();
 	}
@@ -84,7 +107,7 @@ void ConnectionManager::ShutdownWorkers()
 void ConnectionManager::WaitForWorkers()
 {
 	AppLog(Logger::DEBUG,"ConnectionManager Waiting for workers");
-	for (unsigned int i=0; i<mWorkerVector.size(); i++ )
+	for (unsigned int i=0;i<mWorkerVector.size();i++)
 	{
 		mWorkerVector[i]->Join();
 		AppLog(Logger::DEBUG,"Connection worker shut down");
