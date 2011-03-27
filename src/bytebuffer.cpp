@@ -104,9 +104,9 @@ const char* ByteBuffer::GetBuffer() const
 	return mBuffer;
 }
 
-char* ByteBuffer::GetBufferPtr()
+char* ByteBuffer::GetCurrentBufferPtr()
 {
-	return mBuffer;
+	return mBuffer+mPosition;
 }
 
 

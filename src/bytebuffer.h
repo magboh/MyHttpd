@@ -37,7 +37,7 @@ public:
 	size_t GetSpaceLeft() const;
 	size_t GetSize() const;
 	const char* GetBuffer()  const;
-	char* GetBufferPtr();
+	char* GetCurrentBufferPtr();
 	size_t GetUsage() const;
 	void Remove(unsigned int size);
 

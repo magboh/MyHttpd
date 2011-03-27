@@ -95,7 +95,7 @@ Connection::ReadStatus_t Connection::Read(size_t size)
 		toRead=mReadBuffer->GetSpaceLeft();
 	}
 
-	int len=read(mSocket,mReadBuffer->GetBufferPtr(),toRead);
+	ssize_t len=read(mSocket,mReadBuffer->GetCurrentBufferPtr(),toRead);
 	int err = errno;
 	if (len>0)
 	{
