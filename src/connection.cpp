@@ -88,10 +88,10 @@ Connection::~Connection()
 
 }
 
-Connection::ReadStatus_t Connection::Read(size_t size)
+Connection::Status_t Connection::Read(size_t size)
 {
 	size_t toRead=size;
-	ReadStatus_t status=READ_STATUS_OK;
+	Status_t status=READ_STATUS_OK;
 
 	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
@@ -112,16 +112,16 @@ Connection::ReadStatus_t Connection::Read(size_t size)
 		case EAGAIN:
 			// No more data to read now
 			// remove connection from worker. Add again to IoWorker
-			status=READ_STATUS_DONE;
+			status=STATUS_AGAIN;
 			break;
 
 		case EINTR: // Not sure what do do here.. Probably retry read
-			status=READ_STATUS_AGAIN;
+			status=STATUS_INTERUPT;
 			break;
 
 		default:
 			// All other cases remove connection. And hope for the best..
-			status=READ_STATUS_ERROR;
+			status=STATUS_ERROR;
 			break;
 		}
 	}
@@ -133,9 +133,11 @@ int Connection::GetSocket() const
 	return mSocket;
 }
 
-int Connection::Write(size_t size)
+Status_t Connection::Write(size_t size)
 {
 	size_t toWrite=size;
+	Status_t status=STATUS_OK;
+
 	int ret=0;
 	if (mWriteStatus==0)
 	{
@@ -193,7 +195,7 @@ int Connection::Write(size_t size)
 		mHasData=false;
 	}
 
-	return ret;
+	return status;
 }
 
 bool Connection::HasData()

@@ -36,20 +36,18 @@
 #include "requestqueue.h"
 
 #include "logger.h"
+#include "mutex.h"
 
 ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
 	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
 {
 	mKeepRunning=true;
-	mMutex=new pthread_mutex_t;
-	pthread_mutex_init(mMutex,NULL);
-
+	mMutex=new Mutex();
 	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionQueueWorker::~ConnectionQueueWorker()
 {
-	pthread_mutex_destroy(mMutex);
 	delete mMutex;
 	mMutex=0;
 }
@@ -74,9 +72,9 @@ void ConnectionQueueWorker::DoWork()
 	Connection* con;
 	while (mKeepRunning)
 	{
-		pthread_mutex_lock(mMutex);
+		mMutex->Lock();
 		mList.merge(mAddList);
-		pthread_mutex_unlock(mMutex);
+		mMutex->Lock();
 
 		it=mList.begin();
 		usleep(20);
@@ -84,29 +82,29 @@ void ConnectionQueueWorker::DoWork()
 		{
 			enum State
 			{
-				REMOVE, WAIT, CONTINUE
+				REMOVE, KEEP, NO_ACTION
 			};
-			State state=CONTINUE;
+			State state=NO_ACTION;
 
 			con=*it;
 
 			if (1)
 			{
-				Connection::ReadStatus_t readStatus=con->Read(readThrougput);
+				Connection::Status_t readStatus=con->Read(readThrougput);
 
-				if (readStatus==Connection::READ_STATUS_OK)
+				if (readStatus==Connection::STATUS_OK)
 				{
 					if (con->Parse())
 					{
 						mRequestQueue.AddRequest(con->GetRequest());
 						con->SetDataPending(true);
 						con->SetRequest(NULL);
-						state=WAIT;
+						state=KEEP;
 					}
 				}
-				else if (readStatus==Connection::READ_STATUS_DONE)
+				else if (readStatus==Connection::STATUS_AGAIN||readStatus==Connection::STATUS_INTERUPT)
 				{
-					state=WAIT;
+					state=KEEP;
 				}
 				else
 					state=REMOVE;
@@ -119,7 +117,7 @@ void ConnectionQueueWorker::DoWork()
 
 				if (ret==1)
 				{
-					state=WAIT;
+					state=KEEP;
 					con->SetDataPending(false);
 
 					if (con->IsCloseable())
@@ -128,19 +126,21 @@ void ConnectionQueueWorker::DoWork()
 			}
 			else if (con->HasDataPending())
 			{
-				state=CONTINUE;
+				state=NO_ACTION;
 			}
+
+			// Determine what to do with current con, depending on state
 			switch (state)
 			{
 			case REMOVE:
 				it=mList.erase(it);
 				RemoveConnection(con);
 				break;
-			case WAIT:
+			case KEEP:
 				it=mList.erase(it);
 				mConnectionManager.AddConnection(con);
 				break;
-			case CONTINUE:
+			case NO_ACTION:
 				it++;
 				break;
 			}
@@ -152,9 +152,9 @@ void ConnectionQueueWorker::DoWork()
 void ConnectionQueueWorker::HandleConnection(Connection* con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
-	pthread_mutex_lock(mMutex);
+	mMutex->Lock();
 	mAddList.push_back(con);
-	pthread_mutex_unlock(mMutex);
+	mMutex->UnLock();
 }
 
 void ConnectionQueueWorker::Stop()

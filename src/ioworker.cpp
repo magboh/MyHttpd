@@ -51,14 +51,13 @@ IoWorker::~IoWorker()
 
 void IoWorker::DoWork()
 {
-#define MAX_EVENTS 100
-#define START_NR_SOCKETS 1000
-
+	const int MAX_EVENTS=100;
+	const int EPOLL_WAIT=-1;
 	struct epoll_event events[MAX_EVENTS];
 
-	while(mKeepRunning)
+	while (mKeepRunning)
 	{
-		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,500);
+		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,EPOLL_WAIT);
 		if (nfds==-1)
 		{
 			perror("IoWorker::DoWork() epoll_pwait");
@@ -67,10 +66,16 @@ void IoWorker::DoWork()
 		{
 			Connection* con=static_cast<Connection*> (events[n].data.ptr);
 			// Tell Connection Manager to handle IO for this connection
-			if ((events[n].events&EPOLLIN)==events[n].events)
-				mConnectionManager.HandleConnection(con);
-			else if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
+
+			if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
+			{
+				epoll_ctl(mPollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 				delete con;
+			}
+			else if ((events[n].events&EPOLLIN)==events[n].events)
+			{
+				mConnectionManager.HandleConnection(con);
+			}
 		}
 	}
 	close(mPollSocket);

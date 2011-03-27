@@ -22,27 +22,27 @@
  */
 
 #include <pthread.h>
-
+#include <cassert>
 #include "mutex.h"
 
 Mutex::Mutex()
 {
-	// TODO Auto-generated constructor stub
-
+	mMutex=new pthread_mutex_t;
+	pthread_mutex_init(mMutex,NULL);
 }
 
 Mutex::~Mutex()
 {
-	// TODO Auto-generated destructor stub
+	pthread_mutex_destroy(mMutex);
+	delete mMutex;
 }
 
 void Mutex::Lock()
 {
-
+	pthread_mutex_lock(mMutex);
 }
-
 
 void Mutex::UnLock()
 {
-
+	pthread_mutex_unlock(mMutex);
 }

@@ -84,6 +84,7 @@ void ConnectionManager::AddConnectionWorker(int nr)
 		AppLog(Logger::DEBUG,"Connection worker added");
 	}
 }
+
 void ConnectionManager::AddIoWorker(int nr)
 {
 	for (int i=0;i<nr;i++)

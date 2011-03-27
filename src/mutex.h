@@ -31,11 +31,11 @@ public:
 	virtual ~Mutex();
 
 	/***
-	 *
+	 * Current thread is stopped until it gets a lock
 	 */
 	void Lock();
 	/***
-	 *
+	 * Release lock
 	 */
 	void UnLock();
 private:

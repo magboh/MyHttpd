@@ -33,7 +33,7 @@
 class RequestQueue;
 class Connection;
 class ConnectionManager;
-
+class Mutex;
 class ConnectionQueueWorker:public Thread
 {
 public:
@@ -47,8 +47,6 @@ private:
 	virtual void DoWork();
 
 	void RemoveConnection(Connection* con);
-
-	pthread_mutex_t* mMutex;
 
 	/**
 	 * thread runs while true
@@ -74,6 +72,8 @@ private:
 	 * List of Connections newly added. Not just added to mList
 	 */
 	std::list<Connection*> mAddList;
+
+	Mutex* mMutex;
 };
 
 #endif /* CONNECTIONQUEUEWORKER_H_ */

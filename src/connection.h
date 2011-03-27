@@ -17,7 +17,7 @@ class Site;
 class Connection
 {
 public:
-	enum ReadStatus_t {READ_STATUS_OK,READ_STATUS_ERROR,READ_STATUS_AGAIN,READ_STATUS_DONE};
+	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT};
 	Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr);
 	virtual ~Connection();
 
@@ -26,13 +26,13 @@ public:
 	 * @param size amount of data to read from socket
 	 * @return
 	 */
-	ReadStatus_t Read(size_t size);
+	Status_t Read(size_t size);
 	/**
 	 *
 	 * @param size
 	 * @return 1 if all written 0 on more to write -1 if failure
 	 */
-	int Write(size_t size);
+	Status_t Write(size_t size);
 
 	/**
 	 * Parses data stored in mReadBuffer. Creates mRequests is needed
