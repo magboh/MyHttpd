@@ -30,8 +30,8 @@ Logger sAppLog("myhttpd.log");
 Logger::Logger(const std::string& fileName)
 {
 	mMutex=new pthread_mutex_t;
-	pthread_mutex_init(mMutex, NULL);
-	mLogLevel = INFO;
+	pthread_mutex_init(mMutex,NULL);
+	mLogLevel=INFO;
 }
 
 Logger::~Logger()
@@ -42,22 +42,26 @@ Logger::~Logger()
 
 void Logger::Log(LogType type, const std::string & message)
 {
-	Write(type, message);
+	if (type>=mLogLevel)
+	{
+		Write(type,message);
+	}
 }
 
 void Logger::Log(LogType type, const std::stringstream & ss)
 {
-	Write(type, ss.str());
+	if (type>=mLogLevel)
+	{
+		Write(type,ss.str());
+	}
 }
 
 void Logger::Write(LogType type, const std::string & message)
 {
-	if (type >= mLogLevel)
-	{
-		pthread_mutex_lock(mMutex);
-		std::cout<<GetCurrentTime() << ":" << pthread_self()  << ":"<<GetTypeStr(type)<<":"<< message<<"\n";
-		pthread_mutex_unlock(mMutex);
-	}
+	pthread_mutex_lock(mMutex);
+	std::cout<<GetCurrentTime()<<":"<<pthread_self()<<":"<<GetTypeStr(type)<<":"<<message<<"\n";
+	pthread_mutex_unlock(mMutex);
+
 }
 
 const std::string & Logger::GetTypeStr(LogType type)
@@ -73,17 +77,16 @@ std::string Logger::GetCurrentTime()
 	time(&rawtime);
 	char buff[100];
 
-	ctime_r(&rawtime, buff);
+	ctime_r(&rawtime,buff);
 
 	std::string s=std::string(buff);
-	s=s.substr(0, s.length()-1);
+	s=s.substr(0,s.length()-1);
 	return s;
 }
 
-
 void Logger::SetLogLevel(LogType type)
 {
-	mLogLevel = type ;
+	mLogLevel=type;
 }
 
 Logger::LogType Logger::GetLogLevel(LogType type) const

@@ -47,17 +47,14 @@ void handlerInt(int s)
 MyHttpd::MyHttpd()
 {
 	// TODO Auto-generated constructor stub
+	sAppLog.SetLogLevel(Logger::DEBUG);
 	myhttpd=this;
 }
 
 MyHttpd::~MyHttpd()
 {
-
-	for (int i=0; i<mNrRequestWorkers; i++ )
-	{
-		delete mRequestWorker[i];
-		delete[] mRequestWorker;
-	}
+	delete mConnectionManager;
+	delete mRequestQueue;
 }
 
 int MyHttpd::Start()
@@ -73,12 +70,12 @@ int MyHttpd::Start()
 	BlockSignals();
 
 	StartRequestQueue();
-	mConnectionManager=new ConnectionManager(400, *mRequestQueue);
+	mConnectionManager=new ConnectionManager(400,*mRequestQueue);
 	StartRequestWorkers();
 	StartConnectionWorkers();
 
 	AllowSignals();
-	signal(SIGINT, handlerInt);
+	signal(SIGINT,handlerInt);
 	StartSites(&cr);
 
 	mKeepRunning=true;
@@ -102,14 +99,14 @@ void MyHttpd::AllowSignals()
 {
 	sigset_t set;
 	sigfillset(&set);
-	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+	pthread_sigmask(SIG_UNBLOCK,&set,NULL);
 }
 
 void MyHttpd::BlockSignals()
 {
 	sigset_t set;
 	sigfillset(&set);
-	pthread_sigmask(SIG_BLOCK, &set, NULL);
+	pthread_sigmask(SIG_BLOCK,&set,NULL);
 }
 
 void MyHttpd::SigINTHandler(int signal)
@@ -171,23 +168,12 @@ void MyHttpd::StopRequestQueue()
 
 void MyHttpd::StartRequestWorkers()
 {
-	mRequestWorker=new RequestQueueWorker*[mNrRequestWorkers];
-	for (int i=0; i<mNrRequestWorkers; i++ )
-	{
-		mRequestWorker[i]=new RequestQueueWorker(mRequestQueue);
-		mRequestWorker[i]->Start();
-	}
+	mRequestQueue->AddWorker(mNrRequestWorkers);
 }
 
 void MyHttpd::WaitForRequestWorkers()
 {
-	for (int i=0; i<mNrRequestWorkers; i++ )
-	{
-		if (mRequestWorker[i]->Join())
-		{
-			AppLog(Logger::DEBUG,"Request worker shut down");
-		}
-	}
+	mRequestQueue->WaitForWorkers();
 }
 
 void MyHttpd::StartConnectionWorkers()
@@ -210,11 +196,11 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 {
 	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
 
-	mAcceptWorker=new AcceptWorker(mConnectionManager);
-	for (size_t i=0; i<siteOpts.size(); i++ )
+	mAcceptWorker=new AcceptWorker(*mConnectionManager);
+	for (size_t i=0;i<siteOpts.size();i++)
 	{
 		const SiteOptions& so=siteOpts[i];
-		Site *s=new Site(&so, mConnectionManager);
+		Site *s=new Site(&so,mConnectionManager);
 		if (s->Setup())
 		{
 			AppLog(Logger::DEBUG,"Site set up and added:" + s->GetDocumentRoot());
@@ -229,8 +215,13 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 
 void MyHttpd::StopSites()
 {
-	for (unsigned int i=0; i<mSites.size(); i++ )
+	for (unsigned int i=0;i<mSites.size();i++)
 	{
 		mSites[i]->Stop();
+		delete mSites[i];
 	}
+
+	mAcceptWorker->Stop();
+	delete mAcceptWorker;
+	mAcceptWorker = 0;
 }

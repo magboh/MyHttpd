@@ -39,7 +39,7 @@ class ConnectionManager;
 class AcceptWorker: public Thread
 {
 public:
-	AcceptWorker(ConnectionManager* connectionManager);
+	AcceptWorker(ConnectionManager& connectionManager);
 	virtual ~AcceptWorker();
 	void AddSite(Site* site);
 	void DeleteSite(Site* site);
@@ -47,7 +47,7 @@ private:
 	virtual void DoWork();
 
 	int mEpollSocket;
-	ConnectionManager* mConnectionManager;
+	ConnectionManager& mConnectionManager;
 };
 
 #endif /* ACCEPTWORKER_H_ */

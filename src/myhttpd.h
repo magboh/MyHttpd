@@ -27,11 +27,8 @@
 #include "site.h"
 
 class RequestQueue;
-class ConnectionQueueWorker;
-class RequestQueueWorker;
 class ConfigReader;
 class AcceptWorker;
-
 class MyHttpd
 {
 public:
@@ -56,7 +53,6 @@ private:
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
 
-	RequestQueueWorker** mRequestWorker;
 	AcceptWorker* mAcceptWorker;
 	ConnectionManager* mConnectionManager;
 	void StartRequestQueue();

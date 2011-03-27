@@ -30,7 +30,8 @@
 #include "site.h"
 #include "logger.h"
 
-Request::Request(Connection* connection, const Site& site) : mSite(site)
+Request::Request(Connection* connection, const Site& site) :
+	mSite(site)
 {
 	// TODO Auto-generated constructor stub
 	mHost="";
@@ -67,13 +68,13 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 		Http::Version version=Http::HTTP_VERSION_1_1;
 		RequestType rt=Request::HTTP_GET;
 
-		if (strncmp(data, "GET", 3)==0)
+		if (strncmp(data,"GET",3)==0)
 		{
 			rt=Request::HTTP_GET;
 			parsePos+=3;
 			//			std::cout << "ParsePos=" << parsePos << "GET\n";
 		}
-		else if (strncmp(data, "POST", 4)==0)
+		else if (strncmp(data,"POST",4)==0)
 		{
 			rt=Request::HTTP_POST;
 			parsePos+=4;
@@ -84,7 +85,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 
 		unsigned int i=parsePos;
 
-		for (; i<size; i++ )
+		for (;i<size;i++)
 		{
 			if (data[i]==' ')
 				break;
@@ -96,19 +97,19 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 			return true;
 		}
 
-		std::string uri=std::string(data+parsePos, i-parsePos);
+		std::string uri=std::string(data+parsePos,i-parsePos);
 		parsePos+=i-parsePos;
 
 		if (size>parsePos+9)
 		{
 			assert(data[parsePos]==' ');
 			parsePos++;
-			if (strncmp("HTTP/1.1", data+parsePos, 8)==0)
+			if (strncmp("HTTP/1.1",data+parsePos,8)==0)
 			{
 				version=Http::HTTP_VERSION_1_1;
 				parsePos+=8;
 			}
-			else if (strncmp("HTTP/1.0", data+parsePos, 8)==0)
+			else if (strncmp("HTTP/1.0",data+parsePos,8)==0)
 			{
 				version=Http::HTTP_VERSION_1_0;
 				parsePos+=8;
@@ -145,17 +146,17 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 	{
 		int headStart=parsePos;
 		int headEnd=parsePos;
-		for (unsigned int i=parsePos; i<=size-4; i++ )
+		for (unsigned int i=parsePos;i<=size-4;i++)
 		{
 
-			if (strncmp("\r\n", (data+i), 2)==0)
+			if (strncmp("\r\n",(data+i),2)==0)
 			{
-				request->mHeader[std::string(data+headStart, headEnd-headStart-1)]=std::string(data+headEnd+1, i-headEnd-1);
+				request->mHeader[std::string(data+headStart,headEnd-headStart-1)]=std::string(data+headEnd+1,i-headEnd-1);
 				headStart=i+2;
 				headEnd=headStart;
 			}
 
-			if (strncmp("\r\n\r\n", (data+i), 4)==0)
+			if (strncmp("\r\n\r\n",(data+i),4)==0)
 			{
 				request->mParsePos=0;
 				request->SetStatus(Http::HTTP_OK);
@@ -166,7 +167,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				else if (request->mHeader["Connection"].compare("close")==0)
 					request->mKeepAlive=false;
 
-				AppLog(Logger::DEBUG,"Parsed request:" + request->ToString() );
+				AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
 
 				return true;
 			}
@@ -186,11 +187,11 @@ const std::string Request::ToString() const
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
 
-	std::map<std::string, std::string>::const_iterator i=mHeader.begin();
+	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
-	for (; i!=mHeader.end(); ++i )
+	for (;it!=mHeader.end();++it)
 	{
-		str+=":"+i->first+":"+i->second+":::\n";
+		str+=it->first+":"+it->second+"\n";
 	}
 	return str;
 }

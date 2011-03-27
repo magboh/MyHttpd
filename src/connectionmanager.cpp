@@ -98,10 +98,12 @@ void ConnectionManager::ShutdownWorkers()
 {
 	AppLog(Logger::DEBUG,"ConnectionManager Shutdown workers");
 
-	for (unsigned int i=0;i<mWorkerVector.size();i++)
+	for (size_t i=0;i<mWorkerVector.size();i++)
 	{
 		mWorkerVector[i]->Stop();
 	}
+
+	mIoWorker->Stop();
 }
 
 void ConnectionManager::WaitForWorkers()
@@ -110,6 +112,9 @@ void ConnectionManager::WaitForWorkers()
 	for (unsigned int i=0;i<mWorkerVector.size();i++)
 	{
 		mWorkerVector[i]->Join();
+		delete mWorkerVector[i];
 		AppLog(Logger::DEBUG,"Connection worker shut down");
 	}
+
+	delete mIoWorker;
 }
