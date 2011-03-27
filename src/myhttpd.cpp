@@ -47,17 +47,14 @@ void handlerInt(int s)
 MyHttpd::MyHttpd()
 {
 	// TODO Auto-generated constructor stub
+	sAppLog.SetLogLevel(Logger::DEBUG);
 	myhttpd=this;
 }
 
 MyHttpd::~MyHttpd()
 {
-
-	for (int i=0;i<mNrRequestWorkers;i++)
-	{
-		delete mRequestWorker[i];
-		delete[] mRequestWorker;
-	}
+	delete mConnectionManager;
+	delete mRequestQueue;
 }
 
 int MyHttpd::Start()
@@ -171,23 +168,12 @@ void MyHttpd::StopRequestQueue()
 
 void MyHttpd::StartRequestWorkers()
 {
-	mRequestWorker=new RequestQueueWorker*[mNrRequestWorkers];
-	for (int i=0;i<mNrRequestWorkers;i++)
-	{
-		mRequestWorker[i]=new RequestQueueWorker(mRequestQueue);
-		mRequestWorker[i]->Start();
-	}
+	mRequestQueue->AddWorker(mNrRequestWorkers);
 }
 
 void MyHttpd::WaitForRequestWorkers()
 {
-	for (int i=0;i<mNrRequestWorkers;i++)
-	{
-		if (mRequestWorker[i]->Join())
-		{
-			AppLog(Logger::DEBUG,"Request worker shut down");
-		}
-	}
+	mRequestQueue->WaitForWorkers();
 }
 
 void MyHttpd::StartConnectionWorkers()
@@ -210,7 +196,7 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 {
 	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
 
-	mAcceptWorker=new AcceptWorker(mConnectionManager);
+	mAcceptWorker=new AcceptWorker(*mConnectionManager);
 	for (size_t i=0;i<siteOpts.size();i++)
 	{
 		const SiteOptions& so=siteOpts[i];
@@ -232,5 +218,10 @@ void MyHttpd::StopSites()
 	for (unsigned int i=0;i<mSites.size();i++)
 	{
 		mSites[i]->Stop();
+		delete mSites[i];
 	}
+
+	mAcceptWorker->Stop();
+	delete mAcceptWorker;
+	mAcceptWorker = 0;
 }

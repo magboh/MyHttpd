@@ -23,12 +23,14 @@
 
 #include <pthread.h>
 #include <cassert>
-#include <iostream>
 #include <errno.h>
 #include <stdio.h>
+#include <list>
 
 #include "request.h"
 #include "requestqueue.h"
+#include "logger.h"
+#include "requestqueueworker.h"
 
 RequestQueue::RequestQueue()
 {
@@ -45,7 +47,9 @@ RequestQueue::RequestQueue()
 
 RequestQueue::~RequestQueue()
 {
+	pthread_mutex_destroy(mMutex);
 	delete mMutex;
+	pthread_cond_destroy(mCondThread);
 	delete mCondThread;
 	mMutex=NULL;
 	mCondThread=NULL;
@@ -113,8 +117,29 @@ void RequestQueue::Shutdown()
 
 void RequestQueue::PrintStats()
 {
-	std::cout<<"---- Request Queue ----\n";
-	std::cout<<"Total number of requests: "<<mStats.mTotalNrInQueue<<"\n";
-	std::cout<<"Highest number of requests in queue: "<<mStats.mHighestInQueue<<"\n";
 }
 
+
+
+void RequestQueue::AddWorker(int nr)
+{
+	for (int i=0;i<nr;i++)
+	{
+		AppLog(Logger::DEBUG,"RequestQueue Worker added");
+		RequestQueueWorker* rqw = new RequestQueueWorker(this);
+		rqw->Start();
+		mWorkerList.push_back(rqw);
+	}
+}
+
+
+void RequestQueue::WaitForWorkers()
+{
+	std::list<RequestQueueWorker*>::iterator it = mWorkerList.begin();
+	for (;it!=mWorkerList.end();it++)
+	{
+		(*it)->Join();
+		delete *it;
+		it=mWorkerList.erase(it);
+	}
+}

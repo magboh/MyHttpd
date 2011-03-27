@@ -36,10 +36,11 @@
 
 #include "logger.h"
 
-AcceptWorker::AcceptWorker(ConnectionManager* connectionManager)
+AcceptWorker::AcceptWorker(ConnectionManager& connectionManager) :
+	mConnectionManager(connectionManager)
 {
-	mConnectionManager=connectionManager;
-	if ((mEpollSocket=epoll_create(100))!=0)
+
+	if ((mEpollSocket=epoll_create(100))==-1)
 	{
 		AppLog(Logger::CRIT,"Unable to create epoll socket");
 	}
@@ -64,8 +65,10 @@ void AcceptWorker::DoWork()
 		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,-1);
 		if (nfds==-1)
 		{
+			perror("AcceptWorker::DoWork() epoll_wait:");
 			AppLog(Logger::ERROR,"epoll_wait() failed");
 		}
+
 		for (int n=0;n<nfds;++n)
 		{
 			Site* site=static_cast<Site*> (events[n].data.ptr);
@@ -79,7 +82,7 @@ void AcceptWorker::DoWork()
 				{
 					int flags=fcntl(clientSock,F_GETFL,0);
 					fcntl(clientSock,F_SETFL,flags|O_NONBLOCK);
-					mConnectionManager->CreateConnection(clientSock,*site);
+					mConnectionManager.CreateConnection(clientSock,*site);
 				}
 				else
 					perror("Accept():");

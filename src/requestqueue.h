@@ -31,6 +31,7 @@
 // ALL Additions / Removals must be THREAD_SAFE !! use mutexes
 
 #include <queue>
+#include <list>
 class Request;
 class RequestQueueWorker;
 
@@ -59,6 +60,9 @@ public:
 	const Request* GetNextRequest();
 	void Shutdown();
 	void PrintStats();
+
+	void AddWorker(int nr=1);
+	void WaitForWorkers();
 private:
 	RequestQueue(const RequestQueue &); // No implementation
 	RequestQueue& operator=(const RequestQueue& rhs); // No implementation
@@ -73,6 +77,7 @@ private:
 		unsigned long mTotalNrInQueue;
 		unsigned long mHighestInQueue;
 	} mStats;
+	std::list <RequestQueueWorker*> mWorkerList;
 };
 
 #endif /* REQUESTQUEUE_H_ */

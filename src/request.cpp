@@ -167,7 +167,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				else if (request->mHeader["Connection"].compare("close")==0)
 					request->mKeepAlive=false;
 
-				AppLog(Logger::DEBUG,"Parsed request:" + request->ToString() );
+				AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
 
 				return true;
 			}
@@ -187,11 +187,11 @@ const std::string Request::ToString() const
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
 
-	std::map<std::string, std::string>::const_iterator i=mHeader.begin();
+	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
-	for (;i!=mHeader.end();++i)
+	for (;it!=mHeader.end();++it)
 	{
-		str+=":"+i->first+":"+i->second+":::\n";
+		str+=it->first+":"+it->second+"\n";
 	}
 	return str;
 }
