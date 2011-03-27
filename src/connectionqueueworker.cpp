@@ -57,7 +57,6 @@ ConnectionQueueWorker::~ConnectionQueueWorker()
 void ConnectionQueueWorker::RemoveConnection(Connection *con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
-	close(con->GetSocket());
 	delete con;
 }
 
@@ -91,7 +90,7 @@ void ConnectionQueueWorker::DoWork()
 
 			con=*it;
 
-			if (!con->HasDataPending())
+			if (1)
 			{
 				Connection::ReadStatus_t readStatus=con->Read(readThrougput);
 

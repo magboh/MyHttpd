@@ -83,6 +83,9 @@ Connection::~Connection()
 
 	if (mResponse)
 		delete mResponse;
+
+	close(mSocket);
+
 }
 
 Connection::ReadStatus_t Connection::Read(size_t size)
@@ -164,10 +167,6 @@ int Connection::Write(size_t size)
 		if (len>0)
 			mWritten+=len;
 
-		if (len>0)
-		{
-			mWritten+=len;
-		}
 		if (mWritten==mResponse->GetContentLength())
 		{
 			mWriteStatus=2;

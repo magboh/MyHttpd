@@ -186,7 +186,8 @@ const std::string Request::ToString() const
 	str+=" "+mUri+" ";
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
-
+	str+="Close Connection:";
+	str+= (GetKeepAlive()? "keep-alive\n" : "close\n");
 	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
 	for (;it!=mHeader.end();++it)

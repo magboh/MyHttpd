@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sstream>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -40,6 +41,7 @@ IoWorker::IoWorker(ConnectionManager& connectionManager) :
 	mConnectionManager(connectionManager)
 {
 	mPollSocket=epoll_create(1000);
+	mKeepRunning=true;
 }
 
 IoWorker::~IoWorker()
@@ -54,22 +56,21 @@ void IoWorker::DoWork()
 
 	struct epoll_event events[MAX_EVENTS];
 
-	for (;;)
+	while(mKeepRunning)
 	{
-		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,-1);
+		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,500);
 		if (nfds==-1)
 		{
 			perror("IoWorker::DoWork() epoll_pwait");
 		}
-		AppLog(Logger::DEBUG,"IoWorker::DoWork");
 		for (int n=0;n<nfds;++n)
 		{
-
 			Connection* con=static_cast<Connection*> (events[n].data.ptr);
 			// Tell Connection Manager to handle IO for this connection
-
-			if (events[n].events&EPOLLIN)
+			if ((events[n].events&EPOLLIN)==events[n].events)
 				mConnectionManager.HandleConnection(con);
+			else if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
+				delete con;
 		}
 	}
 	close(mPollSocket);
@@ -104,3 +105,8 @@ void IoWorker::ModConnection(Connection* con)
 	}
 }
 
+void IoWorker::Stop()
+{
+	AppLog(Logger::DEBUG,"IoWorker::Stop");
+	mKeepRunning=false;
+}
