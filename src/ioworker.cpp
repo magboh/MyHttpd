@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <sstream>
 
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -34,7 +34,7 @@
 #include <poll.h>
 #include <time.h>
 #include <errno.h>
-
+#include <sstream>
 #include "site.h"
 #include "request.h"
 #include "response.h"
@@ -42,7 +42,7 @@
 #include "connectionmanager.h"
 #include "requestqueue.h"
 #include "bytebuffer.h"
-
+#include "logger.h"
 Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr) :
 	mSocket(socket), mConnectionManager(conectionMgr), mSite(site), mTreadNr(threadNr)
 {
@@ -91,7 +91,7 @@ Connection::~Connection()
 Connection::Status_t Connection::Read(size_t size)
 {
 	size_t toRead=size;
-	Status_t status=READ_STATUS_OK;
+	Status_t status=STATUS_OK;
 
 	if (toRead>mReadBuffer->GetSpaceLeft())
 	{
@@ -99,31 +99,22 @@ Connection::Status_t Connection::Read(size_t size)
 	}
 
 	ssize_t len=read(mSocket,mReadBuffer->GetCurrentBufferPtr(),toRead);
-	int err = errno;
+	int err=errno;
+
 	if (len>0)
 	{
+		std::stringstream ss;
+		ss<<"Bytes Read:" << len ;
+		AppLog(Logger::DEBUG,ss);
 		mReadBuffer->Add(len);
+	}
+	else if (len==0)
+	{
+		status=STATUS_AGAIN;
 	}
 	else
 	{
-		switch (err)
-
-		{
-		case EAGAIN:
-			// No more data to read now
-			// remove connection from worker. Add again to IoWorker
-			status=STATUS_AGAIN;
-			break;
-
-		case EINTR: // Not sure what do do here.. Probably retry read
-			status=STATUS_INTERUPT;
-			break;
-
-		default:
-			// All other cases remove connection. And hope for the best..
-			status=STATUS_ERROR;
-			break;
-		}
+		status=ErrnoToStatus(err);
 	}
 	return status;
 }
@@ -133,12 +124,11 @@ int Connection::GetSocket() const
 	return mSocket;
 }
 
-Status_t Connection::Write(size_t size)
+Connection::Status_t Connection::Write(size_t size)
 {
 	size_t toWrite=size;
 	Status_t status=STATUS_OK;
 
-	int ret=0;
 	if (mWriteStatus==0)
 	{
 		mResponse->ToBuffer(mWriteBuffer);
@@ -147,46 +137,62 @@ Status_t Connection::Write(size_t size)
 			toWrite=mWriteBuffer->GetUsage();
 
 		const char* buffer=mWriteBuffer->GetBuffer();
-		int len=write(mSocket,buffer,toWrite);
+		ssize_t len=write(mSocket,buffer,toWrite);
+		int err=errno;
+
 		if (len>=0)
+		{
 			mWritten+=len;
 
-		if (mWritten==mWriteBuffer->GetUsage())
+			if (mWritten==mWriteBuffer->GetUsage())
+			{
+				mWriteStatus=1;
+				mWritten=0;
+				status=STATUS_DONE;
+			}
+		}
+		else
 		{
-			mWriteStatus=1;
-			mWritten=0;
+			status=ErrnoToStatus(err);
 		}
 	}
 
 	if (mWriteStatus==1&&mResponse->GetFile()!=-1)
 	{
 		if (toWrite>mResponse->GetContentLength())
-			toWrite=mResponse->GetContentLength();
-
-		int len=0;
-		off_t offset=mWritten;
-		len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
-		if (len>0)
-			mWritten+=len;
-
-		if (mWritten==mResponse->GetContentLength())
 		{
-			mWriteStatus=2;
+			toWrite=mResponse->GetContentLength();
 		}
-	}
-	else
-	{
-		mWriteStatus=2;
+
+		ssize_t len=0;
+		off_t offset=mWritten;
+
+		len=sendfile(mSocket,mResponse->GetFile(),&offset,toWrite);
+		int err=errno;
+
+		if (len>0)
+		{
+			mWritten+=len;
+			status = STATUS_OK;
+			if (mWritten==mResponse->GetContentLength())
+			{
+				mWriteStatus=2;
+				status=STATUS_DONE;
+			}
+		}
+		else
+		{
+			status=ErrnoToStatus(err);
+		}
 	}
 
 	// All written...
-	if (mWriteStatus==2)
+	if (mWriteStatus==2||status==STATUS_ERROR||status==STATUS_DONE)
 	{
 		if ((mResponse->GetHttpVersion()==Http::HTTP_VERSION_1_0)||mResponse->GetKeepAlive()==false)
 		{
 			SetCloseable(true);
 		}
-		ret=1;
 		mWriteBuffer->Clear();
 		mWritten=0;
 		mWriteStatus=0;
@@ -256,4 +262,25 @@ bool Connection::Parse()
 		mRequest=new Request(this,mSite);
 	}
 	return Request::ParseRequest(mRequest,mReadBuffer);
+}
+
+Connection::Status_t Connection::ErrnoToStatus(int error)
+{
+	Status_t status=STATUS_ERROR;
+	switch (error)
+	{
+	case EAGAIN:
+		// No more data to read now
+		// remove connection from worker. Add again to IoWorker
+		status=STATUS_AGAIN;
+		break;
+	case EINTR: // Not sure what do do here.. Probably retry read
+		status=STATUS_INTERUPT;
+		break;
+	default:
+		// All other cases remove connection. And hope for the best..
+		status=STATUS_ERROR;
+		break;
+	}
+	return status;
 }

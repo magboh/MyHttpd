@@ -17,7 +17,7 @@ class Site;
 class Connection
 {
 public:
-	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT};
+	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE};
 	Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr);
 	virtual ~Connection();
 
@@ -68,6 +68,9 @@ public:
 		return mTreadNr;
 	}
 private:
+
+	Status_t ErrnoToStatus(int error);
+
 	int mSocket;
 
 	ByteBuffer* mReadBuffer;

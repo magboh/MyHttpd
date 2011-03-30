@@ -29,6 +29,7 @@
 #include <fcntl.h>
 #include <list>
 #include <cassert>
+#include <sstream>
 
 #include "connection.h"
 #include "connectionmanager.h"
@@ -74,7 +75,7 @@ void ConnectionQueueWorker::DoWork()
 	{
 		mMutex->Lock();
 		mList.merge(mAddList);
-		mMutex->Lock();
+		mMutex->UnLock();
 
 		it=mList.begin();
 		usleep(20);
@@ -82,10 +83,10 @@ void ConnectionQueueWorker::DoWork()
 		{
 			enum State
 			{
-				REMOVE, KEEP, NO_ACTION
+				REMOVE, WAIT_FOR_IO, NO_ACTION
 			};
 			State state=NO_ACTION;
-
+			State oldstate = state;
 			con=*it;
 
 			if (1)
@@ -99,12 +100,12 @@ void ConnectionQueueWorker::DoWork()
 						mRequestQueue.AddRequest(con->GetRequest());
 						con->SetDataPending(true);
 						con->SetRequest(NULL);
-						state=KEEP;
+						state=WAIT_FOR_IO;
 					}
 				}
 				else if (readStatus==Connection::STATUS_AGAIN||readStatus==Connection::STATUS_INTERUPT)
 				{
-					state=KEEP;
+					state=WAIT_FOR_IO;
 				}
 				else
 					state=REMOVE;
@@ -112,17 +113,26 @@ void ConnectionQueueWorker::DoWork()
 
 			if (con->HasData())
 			{
-				int ret=con->Write(writeThrougput);
-				state=CONTINUE;
-
-				if (ret==1)
+				Connection::Status_t status=con->Write(writeThrougput);
+				if (status==Connection::STATUS_DONE)
 				{
-					state=KEEP;
+					state=WAIT_FOR_IO;
 					con->SetDataPending(false);
 
 					if (con->IsCloseable())
 						state=REMOVE;
 				}
+				else if (status==Connection::STATUS_OK||
+						status==Connection::STATUS_AGAIN||
+						status==Connection::STATUS_INTERUPT)
+				{
+					state=NO_ACTION;
+				}
+				else
+				{
+					state=REMOVE;
+				}
+
 			}
 			else if (con->HasDataPending())
 			{
@@ -130,13 +140,14 @@ void ConnectionQueueWorker::DoWork()
 			}
 
 			// Determine what to do with current con, depending on state
+
 			switch (state)
 			{
 			case REMOVE:
 				it=mList.erase(it);
 				RemoveConnection(con);
 				break;
-			case KEEP:
+			case WAIT_FOR_IO:
 				it=mList.erase(it);
 				mConnectionManager.AddConnection(con);
 				break;
