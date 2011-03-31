@@ -68,73 +68,77 @@ void ConnectionQueueWorker::DoWork()
 	// This should be TrafficShaped to be throughput per second
 	int writeThrougput=4096;
 
-	std::list<Connection*>::iterator it;
-
-	Connection* con;
 	while (mKeepRunning)
 	{
 		mMutex->Lock();
 		mList.merge(mAddList);
 		mMutex->UnLock();
 
-		it=mList.begin();
+		std::list<Connection*>::iterator it=mList.begin();
 		usleep(20);
 		while (it!=mList.end())
 		{
+			Connection* con=*it;
+
 			enum State
 			{
 				REMOVE, WAIT_FOR_IO, NO_ACTION
 			};
 			State state=NO_ACTION;
-			State oldstate = state;
-			con=*it;
-
-			if (1)
+			Connection::Status_t status=con->Read(readThrougput);
+			switch (status)
 			{
-				Connection::Status_t readStatus=con->Read(readThrougput);
-
-				if (readStatus==Connection::STATUS_OK)
+			case Connection::STATUS_OK:
+			{
+				if (con->Parse())
 				{
-					if (con->Parse())
-					{
-						mRequestQueue.AddRequest(con->GetRequest());
-						con->SetDataPending(true);
-						con->SetRequest(NULL);
-						state=WAIT_FOR_IO;
-					}
-				}
-				else if (readStatus==Connection::STATUS_AGAIN||readStatus==Connection::STATUS_INTERUPT)
-				{
+					mRequestQueue.AddRequest(con->GetRequest());
+					con->SetDataPending(true);
+					con->SetRequest(NULL);
 					state=WAIT_FOR_IO;
 				}
-				else
-					state=REMOVE;
+				break;
 			}
-
+			case Connection::STATUS_AGAIN:
+			case Connection::STATUS_INTERUPT:
+			{
+				state=WAIT_FOR_IO;
+				break;
+			}
+			default:
+			{
+				state=REMOVE;
+			}
+			}
 			if (con->HasData())
 			{
+				con->SetDataPending(false);
 				Connection::Status_t status=con->Write(writeThrougput);
-				if (status==Connection::STATUS_DONE)
+				switch (status)
+				{
+				case Connection::STATUS_DONE:
 				{
 					state=WAIT_FOR_IO;
-					con->SetDataPending(false);
-
 					if (con->IsCloseable())
 						state=REMOVE;
+					break;
 				}
-				else if (status==Connection::STATUS_OK||
-						status==Connection::STATUS_AGAIN||
-						status==Connection::STATUS_INTERUPT)
+				case Connection::STATUS_OK:
+				case Connection::STATUS_AGAIN:
+				case Connection::STATUS_INTERUPT:
 				{
 					state=NO_ACTION;
+					break;
 				}
-				else
+				case Connection::STATUS_ERROR:
 				{
 					state=REMOVE;
+					break;
 				}
-
+				}
 			}
-			else if (con->HasDataPending())
+
+			if (con->HasDataPending())
 			{
 				state=NO_ACTION;
 			}
