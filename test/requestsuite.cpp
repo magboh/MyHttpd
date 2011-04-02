@@ -28,7 +28,7 @@ void RequestSuite::TestBADRequest() {
 RequestSuite::RequestSuite() {
 	TEST_ADD(RequestSuite::TestManyGoodGets);
 	//	TEST_ADD(RequestSuite::TestManyGoodGets);
-	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
+//	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
 
 	sAppLog.SetLogLevel(Logger::DEBUG);
 }
@@ -42,7 +42,6 @@ void RequestSuite::TestRequestConnectionKeepAlive() {
 
 	Site site(&so, NULL);
 
-	Request* r = new Request(NULL, site);
 	const int NR = 7;
 	const char *gs[] = {
 			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n",
@@ -63,17 +62,19 @@ void RequestSuite::TestRequestConnectionKeepAlive() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
+		Request *r = new Request(NULL, site);
+
 		buf->Clear();
 		buf->Add(data[i].getstring, strlen(data[i].getstring));
 		bool result = Request::ParseRequest(r, buf);
 		TEST_ASSERT(result);
 		TEST_ASSERT(r->GetStatus() == Http::HTTP_OK);
-		std::cout << "clossss:" << r->GetKeepAlive() << " "
-				<< data[i].keepalive << "\n";
+	//	std::cout << "clossss:" << r.GetKeepAlive() << " "
+		//		<< data[i].keepalive << "\n";
 		TEST_ASSERT(r->GetKeepAlive() == data[i].keepalive);
+		delete r;
 	}
 	delete buf;
-	delete r;
 }
 
 void RequestSuite::TestManyGoodGets() {
@@ -83,7 +84,6 @@ void RequestSuite::TestManyGoodGets() {
 
 	Site site(&so, NULL);
 	const int NR = 11;
-	Request* r = new Request(NULL, site);
 
 	const char *getstring[NR] = {
 			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n",
@@ -93,23 +93,24 @@ void RequestSuite::TestManyGoodGets() {
 			"GET /good.html HTTP/1.0\r\n\r\n",
 			"GET /good.html HTTP/1.0\r\n\r\n",
 			"GET / HTTP/1.1\r\n\r\n",
-			"GET / HTTP/1.0\r\n\r\n"
-			"GET /last.html HTTP/1.0\r\n\r\n"
-			"GET /last.html HTTP/1.0\r\n\r\n"
+			"GET / HTTP/1.0\r\n\r\n",
+			"GET /last.html HTTP/1.0\r\n\r\n",
+			"GET /last.html HTTP/1.0\r\n\r\n",
 			"GET /last.html HTTP/1.0\r\n\r\n"
 	};
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		std::cout << "getstring[" << i << "]=" << getstring[i];
+		Request *r  = new Request(NULL, site);
+		//std::cout << "getstring[" << i << "]=" << getstring[i];
 
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
 		TEST_ASSERT(result);
 		TEST_ASSERT(r->GetStatus() == Http::HTTP_OK);
+		delete r;
 	}
-	std::cout << "\n";
+//	std::cout << "\n";
 	delete buf;
-	delete r;
 }
