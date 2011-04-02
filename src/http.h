@@ -43,6 +43,7 @@ public:
 		HTTP_REQUEST_TO_LARGE=413,
 		HTTP_REQUEST_URI_TO_LONG=414,
 		HTTP_INTERNAL_SERVER_ERROR=500,
+		HTTP_NOT_IMPLEMENTED=501,
 		HTTP_REQUEST_VERSION_NOT_SUPPORTED=505
 	};
 
@@ -70,8 +71,8 @@ public:
 		static const std::string str413="HTTP REQUEST TOO LARGE";
 		static const std::string str414="HTTP URI TOO LONG";
 		static const std::string str500="INTERNAL SERVER ERROR";
+		static const std::string str501="NOT IMPLEMENTED";
 		static const std::string str505="HTTP VERSION NOT SUPPORTED";
-		static const std::string str="GNU GNU GNU";
 		switch (status)
 		{
 		case HTTP_OK:
@@ -95,12 +96,15 @@ public:
 		case HTTP_INTERNAL_SERVER_ERROR:
 			return str500;
 			break;
+		case HTTP_NOT_IMPLEMENTED:
+			return str501;
+			break;
 		case HTTP_REQUEST_VERSION_NOT_SUPPORTED:
 			return str505;
 			break;
 
 		default:
-			return str;
+			return str500;
 		}
 
 	}

@@ -59,6 +59,7 @@ public:
 	bool GetKeepAlive() const;
 
 private:
+	Request(const Request &);
 	enum
 	{
 		MAX_URI_LENGTH=2048

@@ -57,39 +57,28 @@ Request::~Request()
 bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 {
 	unsigned int parsePos=request->mParsePos;
-	// ParseState == 0 is GET/POST line
 	const char* data=buffer->GetBuffer();
 	size_t size=buffer->GetUsage();
-	if (size<18)
-		return false;
-	//	std::cout << "parsePos=" << parsePos << " size=" << size <<"\n";
+
 	if (request->mParseState==0)
 	{
 		Http::Version version=Http::HTTP_VERSION_1_1;
 		RequestType rt=Request::HTTP_GET;
 
-		if (strncmp(data,"GET",3)==0)
+		if (strncmp(data,"GET ",4)==0)
 		{
 			rt=Request::HTTP_GET;
-			parsePos+=3;
-			//			std::cout << "ParsePos=" << parsePos << "GET\n";
-		}
-		else if (strncmp(data,"POST",4)==0)
-		{
-			rt=Request::HTTP_POST;
 			parsePos+=4;
 		}
-
-		assert(data[parsePos]==' ');
-		parsePos++;
+		else
+		{
+			request->SetStatus(Http::HTTP_NOT_FOUND);
+			return true;
+		}
 
 		unsigned int i=parsePos;
-
-		for (;i<size;i++)
-		{
-			if (data[i]==' ')
-				break;
-		}
+		while(i<size && data[i]!=' ')
+			i++;
 
 		if (i-parsePos>Request::MAX_URI_LENGTH)
 		{
@@ -99,30 +88,41 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 
 		std::string uri=std::string(data+parsePos,i-parsePos);
 		parsePos+=i-parsePos;
-
+		bool versionOk=true;
 		if (size>parsePos+9)
 		{
 			assert(data[parsePos]==' ');
 			parsePos++;
-			if (strncmp("HTTP/1.1",data+parsePos,8)==0)
+
+			if (strncmp("HTTP/1.",data+parsePos,7)==0)
 			{
-				version=Http::HTTP_VERSION_1_1;
 				parsePos+=8;
-			}
-			else if (strncmp("HTTP/1.0",data+parsePos,8)==0)
-			{
-				version=Http::HTTP_VERSION_1_0;
-				parsePos+=8;
+				switch (data[parsePos])
+				{
+				case '1':
+					version=HTTP_VERSION_1_1;
+					break;
+				case '0':
+					version=HTTP_VERSION_1_0;
+					break;
+				default:
+					versionOk=false;
+				}
 			}
 			else
 			{
+				versionOk=false;
+				request->SetHttpVersion(Http::HTTP_VERSION_1_0);
 				request->SetStatus(Http::HTTP_REQUEST_VERSION_NOT_SUPPORTED);
 				return true;
 			}
 
 		}
 		else
+		{
+			versionOk=false;
 			return false;
+		}
 
 		if (size>parsePos+2)
 		{
@@ -162,11 +162,15 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				request->SetStatus(Http::HTTP_OK);
 				buffer->Remove(i+4);
 				request->mKeepAlive=true;
-				if (request->mHeader["Connection"].compare("keep-alive")==0)
-					request->mKeepAlive=true;
-				else if (request->mHeader["Connection"].compare("close")==0)
-					request->mKeepAlive=false;
-
+				std::map<std::string, std::string>::iterator it=request->mHeader.find("Connection");
+				if (it!=request->mHeader.end())
+				{
+					std::string & header=it->second;
+					if (header.compare("keep-alive")==0)
+						request->mKeepAlive=true;
+					else if (header.compare("close")==0)
+						request->mKeepAlive=false;
+				}
 				AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
 
 				return true;
@@ -186,8 +190,8 @@ const std::string Request::ToString() const
 	str+=" "+mUri+" ";
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
-	str+="Close Connection:";
-	str+= (GetKeepAlive()? "keep-alive\n" : "close\n");
+	str+="keep-alive:";
+	str+=(GetKeepAlive() ? "yes\n" : "no\n");
 	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
 	for (;it!=mHeader.end();++it)
