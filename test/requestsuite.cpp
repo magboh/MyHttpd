@@ -1,82 +1,115 @@
+#include <string>
+#include <string.h>
+#include <iostream>
+
 #include "requestsuite.h"
 #include "../src/request.h"
 #include "../src/bytebuffer.h"
+#include "../src/site.h"
+#include "../src/logger.h"
+#include "../src/config/siteoptions.h"
 
-#include <string>
-#include <string.h>
-
-void RequestSuite::TestGood1()
-{
-  Request* r = new Request(NULL);
-  ByteBuffer* buf = new ByteBuffer(2000);
-  char *txt ="GET /good.html HTTP/1.1\r\n\r\n";
-		  buf->Add(txt,strlen(txt));
-  Request::ParseReturn pr= Request::ParseRequest(r,buf);
-  TEST_ASSERT(pr == Request::REQUEST_OK);
-  delete buf;
-  delete r;
+void RequestSuite::TestGood1() {
+	Site site(NULL, NULL);
+	Request* r = new Request(NULL, site);
+	ByteBuffer* buf = new ByteBuffer(2000);
+	char *txt = "GET /good.html HTTP/1.1\r\n\r\n";
+	buf->Add(txt, strlen(txt));
+	bool result = Request::ParseRequest(r, buf);
+	TEST_ASSERT(result);
+	delete buf;
+	delete r;
 }
 
-void RequestSuite::TestGood2()
-{
-  Request* r = new Request(NULL);
-  ByteBuffer* buf = new ByteBuffer(2000);
-  char *txt ="GET /good.html HTTP/1.1\r\nHost:bohman.mine.nu\r\n\r\n";
-		  buf->Add(txt,strlen(txt));
-  Request::ParseReturn pr= Request::ParseRequest(r,buf);
-  TEST_ASSERT(pr == Request::REQUEST_OK);
-  delete buf;
-  delete r;
-}
-void RequestSuite::TestBADRequest()
-{
-	  TEST_ASSERT(true);
-}
-void RequestSuite::TestHalf()
-{
-  Request* r = new Request(NULL);
-  ByteBuffer* buf = new ByteBuffer(2000);
-  char *txt ="GET /testhalf.html HTTP/1.1\r\nHost:bohman.mine.nu\r\n\r\n";
-  int len = strlen(txt);
-
-  int i=0;
-  for (i;i < len-1; i++)
-  {
-	  buf->Add(txt+i,1);
-	  Request::ParseReturn pr= Request::ParseRequest(r,buf);
-	  TEST_ASSERT(pr == Request::REQUEST_UNFINISHED);
-  }
-  buf->Add(txt+i,1);
-  Request::ParseReturn pr= Request::ParseRequest(r,buf);
-  TEST_ASSERT(pr == Request::REQUEST_OK);
-
-
-  delete buf;
-  delete r;
+void RequestSuite::TestBADRequest() {
+	TEST_ASSERT(true);
 }
 
-void RequestSuite::TestVersionNotSupported()
-{
-	  Request* r = new Request(NULL);
-	  ByteBuffer* buf = new ByteBuffer(2000);
-	  char *txt ="GET /versionnotsupported.html HTTP/2.1\n\r";
-			  buf->Add(txt,strlen(txt));
+RequestSuite::RequestSuite() {
+	TEST_ADD(RequestSuite::TestManyGoodGets);
+	//	TEST_ADD(RequestSuite::TestManyGoodGets);
+	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
 
-	  TEST_ASSERT(pr == Request::REQUEST_HTPP_VERSION_NOT_SUPPORTED);
-	  delete buf;
-	  delete r;
+	sAppLog.SetLogLevel(Logger::DEBUG);
 }
 
-
-RequestSuite::RequestSuite()
-{
-/*  TEST_ADD(RequestSuite::TestGood1);
-  TEST_ADD(RequestSuite::TestGood2);
-  TEST_ADD(RequestSuite::TestBADRequest);
-  TEST_ADD(RequestSuite::TestVersionNotSupported);*/
-  TEST_ADD(RequestSuite::TestHalf);
-
+RequestSuite::~RequestSuite() {
 }
-RequestSuite:: ~RequestSuite()
-{
+
+void RequestSuite::TestRequestConnectionKeepAlive() {
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so, NULL);
+
+	Request* r = new Request(NULL, site);
+	const int NR = 7;
+	const char *gs[] = {
+			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n",
+			"GET /good.html HTTP/1.1\r\nConnection: close\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\nConnection: keep-alive\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\n\r\n" };
+	typedef struct {
+		const char * getstring;
+		bool keepalive;
+	} test_data_t;
+
+	test_data_t data[NR] =
+			{ { gs[0], true }, { gs[1], false }, { gs[2], true }, { gs[3],
+					false }, { gs[4], true }, { gs[5], true },{ gs[6], true } };
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		buf->Clear();
+		buf->Add(data[i].getstring, strlen(data[i].getstring));
+		bool result = Request::ParseRequest(r, buf);
+		TEST_ASSERT(result);
+		TEST_ASSERT(r->GetStatus() == Http::HTTP_OK);
+		std::cout << "clossss:" << r->GetKeepAlive() << " "
+				<< data[i].keepalive << "\n";
+		TEST_ASSERT(r->GetKeepAlive() == data[i].keepalive);
+	}
+	delete buf;
+	delete r;
+}
+
+void RequestSuite::TestManyGoodGets() {
+
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so, NULL);
+	const int NR = 11;
+	Request* r = new Request(NULL, site);
+
+	const char *getstring[NR] = {
+			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n",
+			"GET /good.html HTTP/1.1\r\nConnection: close\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\nConnection: keep-alive\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\n\r\n",
+			"GET /good.html HTTP/1.0\r\n\r\n",
+			"GET / HTTP/1.1\r\n\r\n",
+			"GET / HTTP/1.0\r\n\r\n"
+			"GET /last.html HTTP/1.0\r\n\r\n"
+			"GET /last.html HTTP/1.0\r\n\r\n"
+			"GET /last.html HTTP/1.0\r\n\r\n"
+	};
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		std::cout << "getstring[" << i << "]=" << getstring[i];
+
+		buf->Clear();
+		buf->Add(getstring[i], strlen(getstring[i]));
+		bool result = Request::ParseRequest(r, buf);
+		TEST_ASSERT(result);
+		TEST_ASSERT(r->GetStatus() == Http::HTTP_OK);
+	}
+	std::cout << "\n";
+	delete buf;
+	delete r;
 }

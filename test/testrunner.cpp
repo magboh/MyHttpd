@@ -31,26 +31,27 @@ void Testrunner::RunTests()
 	ts.add(auto_ptr<Test::Suite>(new RequestSuite));
 
 	Test::HtmlOutput *out=  new Test::HtmlOutput();
-	Test::TextOutput *textout = new Test::TextOutput(Test::TextOutput::Terse, cout ) ;
+	Test::TextOutput *textout = new Test::TextOutput(Test::TextOutput::Verbose, cout ) ;
 
 //	out->Output();
 
-	ts.run(*out, true);
+	//ts.run(*out, true);
+
 	ts.run(*textout,true);
-	ofstream* file = new std::ofstream();
+	//ofstream* file = new std::ofstream();
 	string timestr;
 	timestr = GetCurrentTime();
 	for(unsigned int i=0;i<timestr.length();i++) {
 		if (timestr[i]==' ' || timestr[i]==':' )
 			timestr[i]='_';
 	}
-	string filename = "results/test_"+ timestr + ".html";
-	file->open(filename.c_str() , ios::out);
+	//string filename = "results/test_"+ timestr + ".html";
+	//file->open(filename.c_str() , ios::out);
 
-	out->generate(*file, true, "MyHTTPD Tests");
-	file->close();
+	//out->generate(*file, true, "MyHTTPD Tests");
+	//file->close();
 
-	delete file;
+	//delete file;
 	delete out;
 }
 

@@ -19,6 +19,9 @@ public:
 
 	void TestHalf();
 
+	void TestManyGoodGets();
+	void TestRequestConnectionKeepAlive();
+
 };
 
 #endif /* MATHTESTSUITE_H_ */
