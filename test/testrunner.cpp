@@ -77,18 +77,18 @@ std::string Testrunner::GetCurrentTime()
 int
 main(int argc, char* argv[])
 {
-  try
+/*  try
     {
 
-
+*/
 		Testrunner *tr = new Testrunner();
 		tr->RunTests();
 		delete tr ;
-	}
+/*	}
 	catch (...)
-	{
+	{*/
 		cout << "unexpected exception encountered\n";
 		return -1;
-	}
+	//}
 	return 0;
 }
