@@ -73,6 +73,7 @@ public:
 		static const std::string str500="INTERNAL SERVER ERROR";
 		static const std::string str501="NOT IMPLEMENTED";
 		static const std::string str505="HTTP VERSION NOT SUPPORTED";
+		static const std::string strUnhandled="UNHANDLED INTERNAL SERVER ERROR ";
 		switch (status)
 		{
 		case HTTP_OK:
@@ -102,11 +103,8 @@ public:
 		case HTTP_REQUEST_VERSION_NOT_SUPPORTED:
 			return str505;
 			break;
-
-		default:
-			return str500;
 		}
-
+		return strUnhandled;
 	}
 
 	Http()

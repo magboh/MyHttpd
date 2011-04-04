@@ -45,7 +45,7 @@ public:
 	static bool ParseRequest(Request* request, ByteBuffer* buffer);
 	enum RequestType
 	{
-		HTTP_GET, HTTP_POST
+		HTTP_UNDEF=0,HTTP_GET, HTTP_POST
 	};
 
 	const std::string ToString() const;
@@ -74,6 +74,9 @@ private:
 	size_t mParsePos;
 	std::map<std::string, std::string> mHeader;
 	const Site& mSite;
+
+	static size_t ParseRequestLine(Request* request, const char* data, size_t size);
+	static bool ParseRequestHeaders(Request* request, const char* data, size_t size,size_t& position);
 };
 
 #endif /* REQUEST_H_ */
