@@ -29,6 +29,8 @@ RequestSuite::RequestSuite() {
 
 	TEST_ADD(RequestSuite::TestManyGoodGets);
 	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
+	TEST_ADD(RequestSuite::TestEvilRequests);
+	TEST_ADD(RequestSuite::TestMandatoryHeaderMissing);
 	sAppLog.SetLogLevel(Logger::DEBUG);
 
 }
@@ -43,22 +45,24 @@ void RequestSuite::TestRequestConnectionKeepAlive() {
 	Site site(&so, NULL);
 
 	const int NR = 6;
-	const char *gs[] = {
-			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n",
-			"GET /good.html HTTP/1.1\r\nConnection: close\r\n\r\n",
-			"GET /good.html HTTP/1.1\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\nConnection:   \t keep-alive\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\n\r\n"
-	};
+	const char
+			*gs[] =
+					{
+							"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\nHost: localhost:8080\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nConnection: close\r\nHost: localhost:8080\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nHost: localhost:8080\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection:   \t keep-alive\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\n\r\n" };
 
 	typedef struct {
 		const char * getstring;
 		bool keepalive;
 	} test_data_t;
 
-	test_data_t data[NR] =
-			{ { gs[0], true }, { gs[1], false }, { gs[2], true }, { gs[3],true }, { gs[4], false }, { gs[5], false } };
+	test_data_t data[NR] = { { gs[0], true }, { gs[1], false },
+			{ gs[2], true }, { gs[3], true }, { gs[4], false },
+			{ gs[5], false } };
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
@@ -82,25 +86,26 @@ void RequestSuite::TestManyGoodGets() {
 	Site site(&so, NULL);
 	const int NR = 13;
 
-	const char *getstring[NR] = {
-			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\nHost: localhost\r\n\r\n",
-			"GET /good.html HTTP/1.1\r\nConnection: close\r\nHost: localhost\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\nConnection: keep-alive\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\n\r\n",
-			"GET /good.html HTTP/1.0\r\n\r\n",
-			"GET / HTTP/1.1\r\n\r\n",
-			"GET / HTTP/1.0\r\n\r\n",
-			"GET /last.html HTTP/1.0\r\n\r\n",
-			"GET /last.html HTTP/1.0\r\n\r\n",
-			"GET /last.html HTTP/1.0\r\n\r\n",
-			"GET /last.html HTTP/1.1\r\nConnection:        \t close\r\n\r\n",
-			"GET /last.html HTTP/1.0\r\nConnection:        \t close\r\n\r\n"
-	};
+	const char
+			*getstring[NR] =
+					{
+							"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\nHost: \t   localhost:80\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nConnection: close\r\nHost:    localhost:81\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection: keep-alive\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\n\r\n",
+							"GET / HTTP/1.1\r\nHost: localhost:8080\r\n\r\n",
+							"GET / HTTP/1.0\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\nHost: localhost:8080\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\n\r\n",
+							"GET /last.html HTTP/1.1\r\nHost: localhost:8080\r\nConnection:        \t close\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\nConnection:        \t close\r\n\r\n" };
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r  = new Request(NULL, site);
+		Request *r = new Request(NULL, site);
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
@@ -109,4 +114,55 @@ void RequestSuite::TestManyGoodGets() {
 		delete r;
 	}
 	delete buf;
+}
+
+void RequestSuite::TestEvilRequests() {
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so, NULL);
+	const int NR = 3;
+
+	const char
+			*getstring[NR] =
+					{
+							",                                                                                          \r\n",
+							"\r\n\r\n\r\n", "\0" };
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		Request *r = new Request(NULL, site);
+		buf->Clear();
+		buf->Add(getstring[i], strlen(getstring[i]));
+		bool result = Request::ParseRequest(r, buf);
+		TEST_ASSERT(result==false);
+		TEST_ASSERT(r->GetStatus() != Http::HTTP_OK);
+		delete r;
+	}
+	delete buf;
+
+}
+
+void RequestSuite::TestMandatoryHeaderMissing() {
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so, NULL);
+	const int NR = 1;
+
+	const char *getstring[NR] = {
+			"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\n\r\n", };
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		Request *r = new Request(NULL, site);
+		buf->Clear();
+		buf->Add(getstring[i], strlen(getstring[i]));
+		bool result = Request::ParseRequest(r, buf);
+		TEST_ASSERT(result==true);
+		TEST_ASSERT(r->GetStatus() == Http::HTTP_BAD_REQUEST);
+		delete r;
+	}
+	delete buf;
+
 }
