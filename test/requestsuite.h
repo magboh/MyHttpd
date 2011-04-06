@@ -11,12 +11,6 @@ public:
 	RequestSuite();
 	virtual ~RequestSuite();
 
-	void TestGood1();
-	void TestGood2();
-	void TestBADRequest();
-	void TestSimpleGet();
-	void TestVersionNotSupported();
-
 	void TestHalf();
 
 	// Resturns 200

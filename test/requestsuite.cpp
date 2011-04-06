@@ -9,28 +9,14 @@
 #include "../src/logger.h"
 #include "../src/config/siteoptions.h"
 
-void RequestSuite::TestGood1() {
-	Site site(NULL, NULL);
-	Request* r = new Request(NULL, site);
-	ByteBuffer* buf = new ByteBuffer(2000);
-	char *txt = "GET /good.html HTTP/1.1\r\n\r\n";
-	buf->Add(txt, strlen(txt));
-	bool result = Request::ParseRequest(r, buf);
-	TEST_ASSERT(result);
-	delete buf;
-	delete r;
-}
-
-void RequestSuite::TestBADRequest() {
-	TEST_ASSERT(true);
-}
-
 RequestSuite::RequestSuite() {
 
 	TEST_ADD(RequestSuite::TestManyGoodGets);
 	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
 	TEST_ADD(RequestSuite::TestEvilRequests);
 	TEST_ADD(RequestSuite::TestMandatoryHeaderMissing);
+	TEST_ADD(RequestSuite::TestMultilineHeaders);
+
 	sAppLog.SetLogLevel(Logger::DEBUG);
 
 }
@@ -161,6 +147,32 @@ void RequestSuite::TestMandatoryHeaderMissing() {
 		bool result = Request::ParseRequest(r, buf);
 		TEST_ASSERT(result==true);
 		TEST_ASSERT(r->GetStatus() == Http::HTTP_BAD_REQUEST);
+		delete r;
+	}
+	delete buf;
+
+}
+
+
+void RequestSuite::TestMultilineHeaders() {
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so, NULL);
+	const int NR = 2;
+
+	const char *getstring[NR] = {
+			"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n\r\n",
+			"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n Gnu2\r\n\r\n", };
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		Request *r = new Request(NULL, site);
+		buf->Clear();
+		buf->Add(getstring[i], strlen(getstring[i]));
+		bool result = Request::ParseRequest(r, buf);
+		TEST_ASSERT(result==true);
+		TEST_ASSERT(r->GetStatus() == Http::HTTP_OK);
 		delete r;
 	}
 	delete buf;
