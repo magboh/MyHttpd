@@ -61,38 +61,44 @@ void RequestQueueWorker::HandleRequest(const Request* request)
 {
 	Response* response=Response::CreateResponse(request);
 
-	const std::string & root=request->GetSite().GetDocumentRoot();
-
-	std::string filename=root+request->GetUri();
-
-	FileHandler::FileStatus status;
-	const File* file=mFilehandler->GetFile(filename,status);
-
-	if (file!=NULL)
+	if (request->GetStatus()==Http::HTTP_OK)
 	{
-		response->SetContentLength(file->GetSize());
-		response->SetFile(file->GetFd());
-		response->SetStatus(Http::HTTP_OK);
+		const std::string & root=request->GetSite().GetDocumentRoot();
+
+		std::string filename=root+request->GetUri();
+
+		FileHandler::FileStatus status;
+		const File* file=mFilehandler->GetFile(filename,status);
+
+		if (file!=NULL)
+		{
+			response->SetContentLength(file->GetSize());
+			response->SetFile(file->GetFd());
+			response->SetStatus(Http::HTTP_OK);
+		}
+		else
+		{
+			switch (status)
+			{
+			case FileHandler::FILESTATUS_NOT_AUTHORIZED:
+				response->SetStatus(Http::HTTP_NO_ACCESS);
+				break;
+			case FileHandler::FILESTATUS_NO_FILE:
+				response->SetStatus(Http::HTTP_NOT_FOUND);
+				break;
+
+			case FileHandler::FILESTATUS_INTERNAL_ERROR:
+			default:
+				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
+				break;
+			}
+
+		}
 	}
 	else
 	{
-		switch (status)
-		{
-		case FileHandler::FILESTATUS_NOT_AUTHORIZED:
-			response->SetStatus(Http::HTTP_NO_ACCESS);
-			break;
-		case FileHandler::FILESTATUS_NO_FILE:
-			response->SetStatus(Http::HTTP_NOT_FOUND);
-			break;
-
-		case FileHandler::FILESTATUS_INTERNAL_ERROR:
-		default:
-			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
-			break;
-		}
-
+		response->SetStatus(request->GetStatus());
 	}
-
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
 }

@@ -42,7 +42,6 @@ Request::Request(Connection* connection, const Site& site) :
 	mKeepAlive=true;
 	mConnection=connection;
 	mParseState=0;
-	mParsePos=0;
 }
 
 Request::~Request()
@@ -56,13 +55,11 @@ const std::string Request::ToString() const
 	str+=" "+mUri+" ";
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
-	str+="keep-alive:";
-	str+=(GetKeepAlive() ? "yes\n" : "no\n");
 	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
 	for (;it!=mHeader.end();++it)
 	{
-		str+=it->first+":"+it->second+"\n";
+		str+="'"+it->first+"':'"+it->second+"'\n";
 	}
 	return str;
 }
@@ -115,17 +112,22 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 		if (position>0)
 			request->mParseState=1;
 	}
-
 	if (request->GetStatus()==Http::HTTP_OK&&request->mParseState==1)
 	{
 		bool ok=ParseRequestHeaders(request,data,size,position);
 		if (ok)
 		{
-			request->mParsePos=0;
-			request->SetStatus(Http::HTTP_OK);
+			buffer->Clear();
 
 			if (request->GetHttpVersion()==Http::HTTP_VERSION_1_1)
+			{
 				request->mKeepAlive=true;
+
+				if (request->mHeader.find("Host")==request->mHeader.end())
+				{
+					request->SetStatus(Http::HTTP_BAD_REQUEST);
+				}
+			}
 			else
 				request->mKeepAlive=false;
 
@@ -140,10 +142,12 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 					request->mKeepAlive=false;
 			}
 
-			AppLog(Logger::DEBUG,"Parsed sucessfullyrequest:\n" + request->ToString() );
+			AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
+			return true;
+
 		}
 	}
-	return true;
+	return false;
 }
 
 size_t Request::ParseRequestLine(Request* request, const char* data, size_t size)
@@ -225,13 +229,15 @@ bool Request::ParseRequestHeaders(Request* request, const char* data, size_t siz
 		// Was request only a request line, ie. no headers?
 		if (data[position]=='\r'&&data[position+1]=='\n')
 		{
+			position++;
 			return true;
 		}
 	}
 
 	char lookfor=':';
 	int state=0;
-	size_t oldpos=position;
+	size_t oldpos=position-1;
+	;
 	std::string header;
 	for (size_t pos=position;pos<size;pos++)
 	{
@@ -239,7 +245,7 @@ bool Request::ParseRequestHeaders(Request* request, const char* data, size_t siz
 		{
 			if (state==0)
 			{
-				header=std::string(data+oldpos,pos-oldpos);
+				header=std::string(data+oldpos+1,pos-oldpos-1);
 				lookfor='\r';
 				state=1;
 				pos++;
@@ -262,6 +268,7 @@ bool Request::ParseRequestHeaders(Request* request, const char* data, size_t siz
 				{
 					if (data[pos+1]=='\r'&&data[pos+2]=='\n')
 					{
+						position=pos+2;
 						return true;
 					}
 					else
@@ -272,7 +279,10 @@ bool Request::ParseRequestHeaders(Request* request, const char* data, size_t siz
 					}
 				}
 				else
+				{
+					position=pos;
 					return false;
+				}
 			}
 		}
 	}

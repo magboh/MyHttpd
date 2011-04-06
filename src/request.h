@@ -71,7 +71,6 @@ private:
 	RequestType mType;
 	Connection* mConnection;
 	int mParseState;
-	size_t mParsePos;
 	std::map<std::string, std::string> mHeader;
 	const Site& mSite;
 
