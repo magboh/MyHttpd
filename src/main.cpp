@@ -21,12 +21,33 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
+#include <iostream>
 #include "myhttpd.h"
+
+void Usage();
+void ParseArgs(int argc, char** argv);
+
+void Usage()
+{
+	std::cout << "MyHtppd version 0.1" << "\n"
+			  << "Author Magnus Bohman (magnus.bohman@gmail.com)\n"
+			  << "\n"
+			  << "Usage: myhttpd [-f file] [-debuglog]";
+}
+
+void ParseArgs(int argc, char** argv)
+{
+
+}
 
 int main(int argc, char** argv)
 {
-	MyHttpd myHttpd;
-	myHttpd.Start();
+	ParseArgs(argc,argv);
 
+	Usage();
+	MyHttpd myHttpd;
+
+
+	myHttpd.Start();
 	return 0;
 }
