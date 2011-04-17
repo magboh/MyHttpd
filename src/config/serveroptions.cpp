@@ -23,10 +23,9 @@
 
 #include "serveroptions.h"
 
-ServerOptions::ServerOptions()
+ServerOptions::ServerOptions() :
+	mNoIOWorkers(1), mNoRequstWorkers(1), mResponseBufferSize(4096), mRequestBufferSize(4096), mConnectionQueueSize(400)
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 ServerOptions::~ServerOptions()
