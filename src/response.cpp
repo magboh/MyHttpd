@@ -27,6 +27,9 @@
 #include "request.h"
 #include "response.h"
 #include "bytebuffer.h"
+#include "myhttpd.h"
+
+#define EOL "\r\n"
 
 Response *Response::CreateResponse(const Request *request)
 {
@@ -84,29 +87,29 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	size_t len=0;
 
 	Http::Status status=GetStatus();
-	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<"\r\n";
-
+	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
+	ss<<"Server: MyHttpd"<< std::string(VersionString) << EOL;
 	ss<<"Connection: ";
 	if (mKeepAlive)
 	{
-		ss<<"keep-alive\r\n";
+		ss<<"keep-alive"<<EOL;
 	}
 	else
 	{
-		ss<<"close\r\n";
+		ss<<"close"<<EOL;
 	}
 
 	if (status==Http::HTTP_OK)
 	{
-		ss<<"Content-Length:"<<mContentLength<<"\r\n";
-		ss<<"Content-Type: text/html\r\n";
-		ss<<"\r\n";
+		ss<<"Content-Length:"<<mContentLength<<EOL;
+		ss<<"Content-Type: text/html"<<EOL;
+		ss<<EOL;
 	}
 	else
 	{
 		str="<html><body><h1>"+Http::GetStatusString(status)+"</h1></body></html>";
 		ss<<"Content-Type: text/html\r\n";
-		ss<<"\r\n";
+		ss<<EOL;
 		ss<<str;
 	}
 
