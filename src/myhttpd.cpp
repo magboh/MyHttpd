@@ -69,10 +69,11 @@ int MyHttpd::Start()
 
 	BlockSignals();
 
-	StartRequestQueue();
+	mRequestQueue=new RequestQueue();
 	mConnectionManager=new ConnectionManager(400,*mRequestQueue);
-	StartRequestWorkers();
-	StartConnectionWorkers();
+	mRequestQueue->AddWorker(mNrRequestWorkers);
+	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
+	mConnectionManager->AddIoWorker(1);
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
@@ -120,14 +121,15 @@ void MyHttpd::Stop()
 	// All sites should be stopped (ie. their Socket closed).
 	StopSites();
 	// Stop request queue
-	StopRequestQueue();
+	AppLog(Logger::DEBUG,"Shutting down Request Queue");
+	mRequestQueue->Shutdown();
 	// Wait for request worker threads to die
-	WaitForRequestWorkers();
+	mRequestQueue->WaitForWorkers();
 
 	// Stop Connections. Should have no more requests to handle
-	StopConnectionWorkers();
 	// Wait for Connection Threads to die
-	WaitForConnectionWorkers();
+	mConnectionManager->ShutdownWorkers();
+	mConnectionManager->WaitForWorkers();
 
 }
 
@@ -153,43 +155,6 @@ bool MyHttpd::LoadConfig(ConfigReader* cr)
 		ok=false;
 	}
 	return ok;
-}
-
-void MyHttpd::StartRequestQueue()
-{
-	mRequestQueue=new RequestQueue();
-}
-
-void MyHttpd::StopRequestQueue()
-{
-	AppLog(Logger::DEBUG,"Shutting down Request Queue");
-	mRequestQueue->Shutdown();
-}
-
-void MyHttpd::StartRequestWorkers()
-{
-	mRequestQueue->AddWorker(mNrRequestWorkers);
-}
-
-void MyHttpd::WaitForRequestWorkers()
-{
-	mRequestQueue->WaitForWorkers();
-}
-
-void MyHttpd::StartConnectionWorkers()
-{
-	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
-	mConnectionManager->AddIoWorker(1);
-}
-
-void MyHttpd::StopConnectionWorkers()
-{
-	mConnectionManager->ShutdownWorkers();
-}
-
-void MyHttpd::WaitForConnectionWorkers()
-{
-	mConnectionManager->WaitForWorkers();
 }
 
 void MyHttpd::StartSites(const ConfigReader* cr)

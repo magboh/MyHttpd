@@ -55,13 +55,6 @@ private:
 
 	AcceptWorker* mAcceptWorker;
 	ConnectionManager* mConnectionManager;
-	void StartRequestQueue();
-	void StartConnectionWorkers();
-	void StartRequestWorkers();
-	void StopRequestQueue();
-	void StopConnectionWorkers();
-	void WaitForConnectionWorkers();
-	void WaitForRequestWorkers();
 
 	void StartSites(const ConfigReader* cr);
 	void StopSites();
