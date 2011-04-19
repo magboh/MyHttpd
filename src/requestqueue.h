@@ -33,7 +33,7 @@
 #include <queue>
 #include <list>
 class Request;
-class RequestQueueWorker;
+class RequestWorker;
 
 /*!
  \brief RequestQueue: Class responsible for queing Requests for the RequestQueuWorkers
@@ -80,7 +80,7 @@ private:
 		unsigned long mTotalNrInQueue;
 		unsigned long mHighestInQueue;
 	} mStats;
-	std::list <RequestQueueWorker*> mWorkerList;
+	std::list <RequestWorker*> mWorkerList;
 };
 
 #endif /* REQUESTQUEUE_H_ */

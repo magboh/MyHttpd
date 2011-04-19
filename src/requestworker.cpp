@@ -23,19 +23,19 @@
 
 #include "request.h"
 #include "requestqueue.h"
-#include "requestqueueworker.h"
+#include "requestworker.h"
 #include "response.h"
 #include "connection.h"
 #include "site.h"
 #include "filehandler.h"
 
-RequestQueueWorker::RequestQueueWorker(RequestQueue* requestQueue)
+RequestWorker::RequestWorker(RequestQueue* requestQueue)
 {
 	mRequestQueue=requestQueue;
 	mFilehandler=new FileHandler();
 }
 
-RequestQueueWorker::~RequestQueueWorker()
+RequestWorker::~RequestWorker()
 {
 	if (mFilehandler)
 		delete mFilehandler;
@@ -43,7 +43,7 @@ RequestQueueWorker::~RequestQueueWorker()
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
-void RequestQueueWorker::DoWork()
+void RequestWorker::DoWork()
 {
 	const Request* request;
 	/* Handle request until Request queue is closed, IE. returns NULL*/
@@ -55,7 +55,7 @@ void RequestQueueWorker::DoWork()
 	}
 }
 
-void RequestQueueWorker::HandleRequest(const Request* request)
+void RequestWorker::HandleRequest(const Request* request)
 {
 	Response* response=Response::CreateResponse(request);
 

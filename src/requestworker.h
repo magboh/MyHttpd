@@ -30,11 +30,11 @@ class RequestQueue;
 class FileHandler;
 // Worker is responsible to DELETE the request gotten from queue
 
-class RequestQueueWorker:public Thread
+class RequestWorker:public Thread
 {
 public:
-	RequestQueueWorker(RequestQueue* requestQueue);
-	virtual ~RequestQueueWorker();
+	RequestWorker(RequestQueue* requestQueue);
+	virtual ~RequestWorker();
 private:
 	void DoWork();
 	void HandleRequest(const Request* request);

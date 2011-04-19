@@ -215,7 +215,7 @@ void Connection::SetHasData(bool b)
 }
 
 /**
- * Called from RequestQueueWorker thread to "deliver" the repsonse.
+ * Called from RequestWorker thread to "deliver" the repsonse.
  * ConnectionQueueoworked thread SHOULD not touch this data until SetHasData() is called..
  * @param response
  */

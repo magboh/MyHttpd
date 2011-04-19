@@ -30,7 +30,7 @@
 #include "request.h"
 #include "requestqueue.h"
 #include "logger.h"
-#include "requestqueueworker.h"
+#include "requestworker.h"
 
 RequestQueue::RequestQueue()
 {
@@ -123,7 +123,7 @@ void RequestQueue::AddWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		RequestQueueWorker* rqw=new RequestQueueWorker(this);
+		RequestWorker* rqw=new RequestWorker(this);
 		if (rqw->Start())
 		{
 			mWorkerList.push_back(rqw);
@@ -139,7 +139,7 @@ void RequestQueue::AddWorker(int nr)
 
 void RequestQueue::WaitForWorkers()
 {
-	std::list<RequestQueueWorker*>::iterator it=mWorkerList.begin();
+	std::list<RequestWorker*>::iterator it=mWorkerList.begin();
 	for (;it!=mWorkerList.end();it++)
 	{
 		(*it)->Join();

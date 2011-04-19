@@ -27,7 +27,7 @@
 
 #include "myhttpd.h"
 #include "requestqueue.h"
-#include "requestqueueworker.h"
+#include "requestworker.h"
 #include "connectionmanager.h"
 #include "connectionworker.h"
 #include "acceptworker.h"
