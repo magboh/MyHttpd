@@ -27,7 +27,7 @@
 
 #include <vector>
 
-class ConnectionQueueWorker;
+class ConnectionWorker;
 class Site;
 class RequestQueue;
 class IoWorker;
@@ -73,7 +73,7 @@ private:
 		unsigned int nrTotalConnections;
 	} mStats;
 
-	std::vector <ConnectionQueueWorker*> mWorkerVector;
+	std::vector <ConnectionWorker*> mWorkerVector;
 	IoWorker* mIoWorker;
 };
 

@@ -33,13 +33,13 @@
 
 #include "connection.h"
 #include "connectionmanager.h"
-#include "connectionqueueworker.h"
+#include "connectionworker.h"
 #include "requestqueue.h"
 
 #include "logger.h"
 #include "mutex.h"
 
-ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
+ConnectionWorker::ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
 	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
 {
 	mKeepRunning=true;
@@ -47,19 +47,19 @@ ConnectionQueueWorker::ConnectionQueueWorker(RequestQueue& requestQueue, Connect
 	mEpollSocket=epoll_create(1000);
 }
 
-ConnectionQueueWorker::~ConnectionQueueWorker()
+ConnectionWorker::~ConnectionWorker()
 {
 	delete mMutex;
 	mMutex=0;
 }
 
-void ConnectionQueueWorker::RemoveConnection(Connection *con)
+void ConnectionWorker::RemoveConnection(Connection *con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
 	delete con;
 }
 
-void ConnectionQueueWorker::DoWork()
+void ConnectionWorker::DoWork()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
@@ -164,7 +164,7 @@ void ConnectionQueueWorker::DoWork()
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
 
-void ConnectionQueueWorker::HandleConnection(Connection* con)
+void ConnectionWorker::HandleConnection(Connection* con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
 	mMutex->Lock();
@@ -172,7 +172,7 @@ void ConnectionQueueWorker::HandleConnection(Connection* con)
 	mMutex->UnLock();
 }
 
-void ConnectionQueueWorker::Stop()
+void ConnectionWorker::Stop()
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::Stop");
 	mKeepRunning=false;

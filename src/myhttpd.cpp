@@ -29,7 +29,7 @@
 #include "requestqueue.h"
 #include "requestqueueworker.h"
 #include "connectionmanager.h"
-#include "connectionqueueworker.h"
+#include "connectionworker.h"
 #include "acceptworker.h"
 #include "config/configreader.h"
 

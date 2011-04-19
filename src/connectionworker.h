@@ -21,8 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef CONNECTIONQUEUEWORKER_H_
-#define CONNECTIONQUEUEWORKER_H_
+#ifndef CONNECTIONWORKER_H_
+#define CONNECTIONWORKER_H_
 
 #include <list>
 #include <map>
@@ -34,13 +34,13 @@ class RequestQueue;
 class Connection;
 class ConnectionManager;
 class Mutex;
-class ConnectionQueueWorker:public Thread
+class ConnectionWorker:public Thread
 {
 public:
-	ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
+	ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
 
 	void HandleConnection(Connection* con);
-	virtual ~ConnectionQueueWorker();
+	virtual ~ConnectionWorker();
 	void Stop();
 private:
 
@@ -71,4 +71,4 @@ private:
 	Mutex* mMutex;
 };
 
-#endif /* CONNECTIONQUEUEWORKER_H_ */
+#endif /* CONNECTIONWORKER_H_ */

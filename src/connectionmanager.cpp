@@ -29,7 +29,7 @@
 
 #include "connection.h"
 #include "connectionmanager.h"
-#include "connectionqueueworker.h"
+#include "connectionworker.h"
 #include "site.h"
 #include "requestqueue.h"
 #include "ioworker.h"
@@ -78,7 +78,7 @@ void ConnectionManager::AddConnectionWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		ConnectionQueueWorker* cqw=new ConnectionQueueWorker(mRequestQueue,*this);
+		ConnectionWorker* cqw=new ConnectionWorker(mRequestQueue,*this);
 		if (cqw->Start())
 		{
 			mWorkerVector.push_back(cqw);
