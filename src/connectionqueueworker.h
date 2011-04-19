@@ -49,11 +49,6 @@ private:
 	void RemoveConnection(Connection* con);
 
 	/**
-	 * thread runs while true
-	 */
-	bool mKeepRunning;
-
-	/**
 	 *
 	 */
 	RequestQueue& mRequestQueue;

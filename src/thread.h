@@ -32,9 +32,10 @@ public:
 
 	bool Start();
 	bool Join();
-	bool Stop();
+	void Stop();
 protected:
 	virtual void DoWork()=0;
+	bool mKeepRunning;
 private:
 	static void* ThreadCallBack(void* arg);
 

@@ -172,10 +172,14 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 			mSites.push_back(s);
 			mAcceptWorker->AddSite(s);
 		}
-
+	}
+	if (!mAcceptWorker->Start())
+	{
+		delete mAcceptWorker;
+		mAcceptWorker = 0 ;
+		AppLog(Logger::CRIT,"Failed to start Accept worker");
 	}
 
-	mAcceptWorker->Start();
 }
 
 void MyHttpd::StopSites()

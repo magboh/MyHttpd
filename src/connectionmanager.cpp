@@ -79,9 +79,16 @@ void ConnectionManager::AddConnectionWorker(int nr)
 	for (int i=0;i<nr;i++)
 	{
 		ConnectionQueueWorker* cqw=new ConnectionQueueWorker(mRequestQueue,*this);
-		cqw->Start();
-		mWorkerVector.push_back(cqw);
-		AppLog(Logger::DEBUG,"Connection worker added");
+		if (cqw->Start())
+		{
+			mWorkerVector.push_back(cqw);
+			AppLog(Logger::DEBUG,"Connection worker added");
+		}
+		else
+		{
+			delete cqw;
+			AppLog(Logger::CRIT,"Failed to create Connection worker");
+		}
 	}
 }
 
@@ -90,8 +97,16 @@ void ConnectionManager::AddIoWorker(int nr)
 	for (int i=0;i<nr;i++)
 	{
 		mIoWorker=new IoWorker(*this);
-		mIoWorker->Start();
-		AppLog(Logger::DEBUG,"IO worker added");
+		if (mIoWorker->Start())
+		{
+			AppLog(Logger::DEBUG,"IO worker added");
+		}
+		else
+		{
+			delete mIoWorker;
+			mIoWorker = 0;
+			AppLog(Logger::CRIT,"Failed to create Io worker");
+		}
 	}
 }
 

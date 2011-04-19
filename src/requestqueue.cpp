@@ -35,10 +35,10 @@
 RequestQueue::RequestQueue()
 {
 	mMutex=new pthread_mutex_t;
-	pthread_mutex_init(mMutex, NULL);
+	pthread_mutex_init(mMutex,NULL);
 
 	mCondThread=new pthread_cond_t;
-	pthread_cond_init(mCondThread, NULL);
+	pthread_cond_init(mCondThread,NULL);
 	mKeepRunning=true;
 
 	mStats.mHighestInQueue=0;
@@ -74,7 +74,7 @@ const Request* RequestQueue::GetNextRequest()
 		{
 			if (mKeepRunning)
 			{
-				pthread_cond_wait(mCondThread, mMutex);
+				pthread_cond_wait(mCondThread,mMutex);
 			}
 			else
 			{
@@ -119,23 +119,27 @@ void RequestQueue::PrintStats()
 {
 }
 
-
-
 void RequestQueue::AddWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		AppLog(Logger::DEBUG,"RequestQueue Worker added");
-		RequestQueueWorker* rqw = new RequestQueueWorker(this);
-		rqw->Start();
-		mWorkerList.push_back(rqw);
+		RequestQueueWorker* rqw=new RequestQueueWorker(this);
+		if (rqw->Start())
+		{
+			mWorkerList.push_back(rqw);
+			AppLog(Logger::DEBUG,"RequestQueue Worker added");
+		}
+		else
+		{
+			delete rqw;
+			AppLog(Logger::CRIT,"RequestQueue Worker failed to start");
+		}
 	}
 }
 
-
 void RequestQueue::WaitForWorkers()
 {
-	std::list<RequestQueueWorker*>::iterator it = mWorkerList.begin();
+	std::list<RequestQueueWorker*>::iterator it=mWorkerList.begin();
 	for (;it!=mWorkerList.end();it++)
 	{
 		(*it)->Join();

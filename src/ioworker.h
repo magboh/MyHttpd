@@ -44,10 +44,6 @@ public:
 private:
 	int mPollSocket;
 	ConnectionManager& mConnectionManager;
-	/**
-	 * thread runs while true
-	 */
-	bool mKeepRunning;
 
 };
 
