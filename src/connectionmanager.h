@@ -63,7 +63,6 @@ public:
 	 */
 	void WaitForWorkers();
 private:
-	static void* ThreadCallBack(void* arg);
 
 	int mNumConnections;
 	int mMaxConnections;
