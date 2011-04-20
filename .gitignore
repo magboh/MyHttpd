@@ -6,3 +6,7 @@ results
 dox
 core
 a.out
+out
+src/.cccc
+test/core
+test/*.o
