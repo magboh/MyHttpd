@@ -24,7 +24,6 @@
 #ifndef ACCEPTWORKER_H_
 #define ACCEPTWORKER_H_
 
-#include <map>
 #include "thread.h"
 
 /**

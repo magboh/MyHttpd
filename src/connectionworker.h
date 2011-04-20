@@ -25,9 +25,6 @@
 #define CONNECTIONWORKER_H_
 
 #include <list>
-#include <map>
-#include <sys/epoll.h>
-
 #include "thread.h"
 
 class RequestQueue;

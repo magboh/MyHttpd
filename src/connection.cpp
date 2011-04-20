@@ -35,13 +35,14 @@
 #include <time.h>
 #include <errno.h>
 #include <sstream>
+
 #include "site.h"
 #include "request.h"
 #include "response.h"
 #include "connection.h"
-#include "requestqueue.h"
 #include "bytebuffer.h"
 #include "logger.h"
+
 Connection::Connection(int socket, const Site& site, unsigned char threadNr) :
 	mSocket(socket), mSite(site), mTreadNr(threadNr)
 {

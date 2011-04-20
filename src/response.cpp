@@ -87,24 +87,22 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	ss<<"Connection: ";
 	if (GetKeepAlive())
 	{
-		ss<<"keep-alive"<<EOL;
+		ss<<"keep-alive\r\n";
 	}
 	else
 	{
-		ss<<"close"<<EOL;
+		ss<<"close\r\n";
 	}
 
 	if (status==Http::HTTP_OK)
 	{
-		ss<<"Content-Length:"<<mContentLength<<EOL;
-		ss<<"Content-Type: text/html"<<EOL;
-		ss<<EOL;
+		ss<<"Content-Length: "<<mContentLength<<EOL;
+		ss<<"Content-Type: text/html\r\n\r\n";
 	}
 	else
 	{
 		str="<html><body><h1>"+Http::GetStatusString(status)+"</h1></body></html>";
-		ss<<"Content-Type: text/html\r\n";
-		ss<<EOL;
+		ss<<"Content-Type: text/html\r\n\r\n";
 		ss<<str;
 	}
 
@@ -112,7 +110,6 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
-	//	std::cout << "ToBuffer= size=" << len <<"\n";
 	buffer->Add(ss.str().c_str(), len);
 	return len;
 }

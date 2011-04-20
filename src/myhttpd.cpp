@@ -47,7 +47,7 @@ void handlerInt(int s)
 MyHttpd::MyHttpd()
 {
 	// TODO Auto-generated constructor stub
-	sAppLog.SetLogLevel(Logger::DEBUG);
+	sAppLog.SetLogLevel(Logger::INFO);
 	myhttpd=this;
 }
 
