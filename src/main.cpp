@@ -22,17 +22,17 @@
  */
 
 #include <iostream>
+#include <string>
+
 #include "myhttpd.h"
+#include "logger.h"
 
 void Usage();
 void ParseArgs(int argc, char** argv);
 
 void Usage()
 {
-	std::cout << "MyHtppd version 0.1" << "\n"
-			  << "Author Magnus Bohman (magnus.bohman@gmail.com)\n"
-			  << "\n"
-			  << "Usage: myhttpd [-f file] [-debuglog]";
+	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"\n"<<"Usage: myhttpd [-f file] [-debuglog]";
 }
 
 void ParseArgs(int argc, char** argv)
@@ -45,8 +45,62 @@ int main(int argc, char** argv)
 	ParseArgs(argc,argv);
 
 	Usage();
-	MyHttpd myHttpd;
 
+	enum State_t
+	{
+		NONE, LOG_LEVEL, CONF_FILE
+	};
+
+	State_t state=NONE;
+
+	std::string logLevel="";
+	std::string configFile="";
+	for (int i=1;i<argc;i++)
+	{
+		std::string strArg(argv[i]);
+
+		switch (state)
+		{
+		case LOG_LEVEL:
+		{
+			logLevel=strArg;
+			state=NONE;
+			break;
+		}
+		case CONF_FILE:
+		{
+			configFile = strArg;
+			break;
+		}
+		default:
+			break;
+		}
+
+		if (strArg.compare("-l")==0)
+		{
+			state=LOG_LEVEL;
+		}
+		else if (strArg.compare("-f")==0)
+		{
+			state=CONF_FILE;
+		}
+
+	}
+
+	if (logLevel.length()>0)
+	{
+		Logger::LogType defaultLevel=Logger::INFO;
+
+		if (logLevel.compare("DEBUG")==0)
+			defaultLevel=Logger::DEBUG;
+		if (logLevel.compare("INFO")==0)
+			defaultLevel=Logger::INFO;
+		std::cout<<"\nSetting Log level to:"<<logLevel<<"\n";
+	}
+
+	std::cout<<"Setting configuration file:"<<configFile<<"\n";
+
+	MyHttpd myHttpd;
 
 	myHttpd.Start();
 	return 0;
