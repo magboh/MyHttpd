@@ -53,7 +53,7 @@ ConnectionManager::~ConnectionManager()
 void ConnectionManager::CreateConnection(int socket, const Site& site)
 {
 	++mStats.nrTotalConnections;
-	mIoWorker->AddConnection(new Connection(socket,this,site,mCurrentThread++%mWorkerVector.size()));
+	mIoWorker->AddConnection(new Connection(socket,site,mCurrentThread++%mWorkerVector.size()));
 }
 
 void ConnectionManager::AddConnection(Connection* con)

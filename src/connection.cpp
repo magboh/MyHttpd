@@ -39,19 +39,17 @@
 #include "request.h"
 #include "response.h"
 #include "connection.h"
-#include "connectionmanager.h"
 #include "requestqueue.h"
 #include "bytebuffer.h"
 #include "logger.h"
-Connection::Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr) :
-	mSocket(socket), mConnectionManager(conectionMgr), mSite(site), mTreadNr(threadNr)
+Connection::Connection(int socket, const Site& site, unsigned char threadNr) :
+	mSocket(socket), mSite(site), mTreadNr(threadNr)
 {
 	mSocket=socket;
 
 	mReadBuffer=new ByteBuffer(4096);
 	mWriteBuffer=new ByteBuffer(4096);
 
-	mConnectionManager=conectionMgr;
 	mWantToRead=true;
 	mRequest=NULL;
 	mHasData=false;

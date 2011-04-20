@@ -23,7 +23,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/fcntl.h>
@@ -33,7 +32,6 @@
 #include "acceptworker.h"
 #include "connectionmanager.h"
 #include "site.h"
-
 #include "logger.h"
 
 AcceptWorker::AcceptWorker(ConnectionManager& connectionManager) :

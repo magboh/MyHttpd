@@ -10,7 +10,6 @@
 
 class Response;
 class Request;
-class ConnectionManager;
 class ByteBuffer;
 class Site;
 
@@ -18,7 +17,7 @@ class Connection
 {
 public:
 	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE};
-	Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr);
+	Connection(int socket, const Site& site, unsigned char threadNr);
 	virtual ~Connection();
 
 	/**
@@ -76,7 +75,6 @@ private:
 	ByteBuffer* mReadBuffer;
 	ByteBuffer* mWriteBuffer;
 
-	ConnectionManager* mConnectionManager;
 	Request* mRequest;
 	bool mWantToRead;
 	const Response* mResponse;
