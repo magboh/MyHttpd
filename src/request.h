@@ -56,8 +56,6 @@ public:
 
 	Connection *GetConnection() const;
 	void SetConnection(Connection *mConnection);
-	bool GetKeepAlive() const;
-
 private:
 	Request(const Request &);
 	enum
@@ -67,7 +65,6 @@ private:
 	std::string mHost;
 	std::string mUri;
 
-	bool mKeepAlive;
 	RequestType mType;
 	Connection* mConnection;
 	int mParseState;

@@ -35,7 +35,7 @@ Response *Response::CreateResponse(const Request *request)
 {
 	Response* response=new Response();
 	response->SetHttpVersion(request->GetHttpVersion());
-	response->mKeepAlive=request->GetKeepAlive();
+	response->SetKeepAlive(request->GetKeepAlive());
 
 	return response;
 }
@@ -75,11 +75,6 @@ void Response::SetContentLength(unsigned int length)
 	mContentLength=length;
 }
 
-bool Response::GetKeepAlive() const
-{
-	return mKeepAlive;
-}
-
 int Response::ToBuffer(ByteBuffer* buffer) const
 {
 	std::stringstream ss;
@@ -90,7 +85,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
 	ss<<"Server: MyHttpd"<< std::string(VersionString) << EOL;
 	ss<<"Connection: ";
-	if (mKeepAlive)
+	if (GetKeepAlive())
 	{
 		ss<<"keep-alive"<<EOL;
 	}

@@ -27,7 +27,6 @@
 #include "http.h"
 
 class Request;
-class Connection;
 class ByteBuffer;
 class Response:public Http
 {
@@ -41,16 +40,12 @@ public:
 	int GetFile() const;
 	void SetFile(int fd);
 
-	bool GetKeepAlive() const;
 
 	int ToBuffer(ByteBuffer* buffer) const;
 private:
 	Response();
 	unsigned int mContentLength;
 	int mFile;
-	Connection* mConnection;
-	bool mKeepAlive;
-
 };
 
 #endif /* RESPONSE_H_ */

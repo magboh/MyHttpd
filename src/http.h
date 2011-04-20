@@ -116,29 +116,40 @@ public:
 	}
 	;
 
-	Http::Version GetHttpVersion() const
+	inline Http::Version GetHttpVersion() const
 	{
 		return mVersion;
 	}
 
-	void SetHttpVersion(Version version)
+	inline void SetHttpVersion(Version version)
 	{
 		mVersion=version;
 	}
 
-	Http::Status GetStatus() const
+	inline Http::Status GetStatus() const
 	{
 		return mStatus;
 	}
 
-	void SetStatus(Status status)
+	inline void SetStatus(Status status)
 	{
 		mStatus=status;
+	}
+
+	inline bool GetKeepAlive() const
+	{
+		return mKeepAlive;
+	}
+
+	inline void SetKeepAlive(bool keepAlive)
+	{
+		mKeepAlive=keepAlive;
 	}
 
 private:
 	Http::Version mVersion;
 	Http::Status mStatus;
+	bool mKeepAlive;
 };
 
 #endif /* HTTP_H_ */

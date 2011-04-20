@@ -39,7 +39,6 @@ Request::Request(Connection* connection, const Site& site) :
 	mHost="";
 	mUri="";
 	mType=HTTP_UNDEF;
-	mKeepAlive=true;
 	mConnection=connection;
 	mParseState=0;
 }
@@ -84,10 +83,6 @@ void Request::SetConnection(Connection *mConnection)
 	mConnection=mConnection;
 }
 
-bool Request::GetKeepAlive() const
-{
-	return mKeepAlive;
-}
 
 const Site& Request::GetSite() const
 {
@@ -121,7 +116,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 
 			if (request->GetHttpVersion()==Http::HTTP_VERSION_1_1)
 			{
-				request->mKeepAlive=true;
+				request->SetKeepAlive(true);
 
 				if (request->mHeader.find("Host")==request->mHeader.end())
 				{
@@ -129,7 +124,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				}
 			}
 			else
-				request->mKeepAlive=false;
+				request->SetKeepAlive(false);
 
 			std::map<std::string, std::string>::iterator it=request->mHeader.find("Connection");
 
@@ -137,9 +132,10 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 			{
 				std::string & header=it->second;
 				if (header.compare("keep-alive")==0)
-					request->mKeepAlive=true;
+					request->SetKeepAlive(true);
 				else if (header.compare("close")==0)
-					request->mKeepAlive=false;
+					request->SetKeepAlive(false);
+
 			}
 
 			AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
