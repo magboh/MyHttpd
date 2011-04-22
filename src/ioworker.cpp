@@ -40,7 +40,6 @@ IoWorker::IoWorker(ConnectionManager& connectionManager) :
 	mConnectionManager(connectionManager)
 {
 	mPollSocket=epoll_create(1000);
-	mKeepRunning=true;
 }
 
 IoWorker::~IoWorker()
@@ -54,7 +53,7 @@ void IoWorker::DoWork()
 	const int EPOLL_WAIT=-1;
 	struct epoll_event events[MAX_EVENTS];
 
-	while (mKeepRunning)
+	while (isRunning())
 	{
 		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,EPOLL_WAIT);
 		if (nfds==-1)
@@ -107,10 +106,4 @@ void IoWorker::ModConnection(Connection* con)
 		perror("IoWorker::ModConnection");
 		AppLog(Logger::CRIT,"epoll_ctl failed");
 	}
-}
-
-void IoWorker::Stop()
-{
-	AppLog(Logger::DEBUG,"IoWorker::Stop");
-	mKeepRunning=false;
 }

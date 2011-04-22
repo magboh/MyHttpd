@@ -38,7 +38,6 @@ public:
 
 	void HandleConnection(Connection* con);
 	virtual ~ConnectionWorker();
-	void Stop();
 private:
 
 	virtual void DoWork();

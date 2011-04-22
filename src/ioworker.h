@@ -40,7 +40,6 @@ public:
 	virtual void DoWork();
 	void AddConnection(Connection* con);
 	void ModConnection(Connection* con);
-	void Stop();
 private:
 	int mPollSocket;
 	ConnectionManager& mConnectionManager;

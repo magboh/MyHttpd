@@ -43,7 +43,6 @@
 ConnectionWorker::ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
 	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
 {
-	mKeepRunning=true;
 	mMutex=new Mutex();
 	mEpollSocket=epoll_create(1000);
 }
@@ -69,7 +68,7 @@ void ConnectionWorker::DoWork()
 	// This should be TrafficShaped to be throughput per second
 	int writeThrougput=4096;
 
-	while (mKeepRunning)
+	while (isRunning())
 	{
 		mMutex->Lock();
 		mList.merge(mAddList);
@@ -171,10 +170,4 @@ void ConnectionWorker::HandleConnection(Connection* con)
 	mMutex->Lock();
 	mAddList.push_back(con);
 	mMutex->UnLock();
-}
-
-void ConnectionWorker::Stop()
-{
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::Stop");
-	mKeepRunning=false;
 }
