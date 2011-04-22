@@ -35,7 +35,7 @@
 #include "logger.h"
 
 ConnectionManager::ConnectionManager(int maxConnections) :
-	mNumConnections(0),mMaxConnections(maxConnections),mCurrentThread(0)
+	mNumConnections(0), mMaxConnections(maxConnections), mCurrentThread(0)
 {
 	mStats.nrTotalConnections=0;
 }

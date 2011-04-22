@@ -99,7 +99,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 {
 	const char* data=buffer->GetBuffer();
 	size_t size=buffer->GetUsage();
-
+	bool retVal=false;
 	size_t position=0;
 	if (request->mParseState==0)
 	{
@@ -139,11 +139,11 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 			}
 
 			AppLog(Logger::DEBUG,"Parsed request:\n" + request->ToString() );
-			return true;
+			retVal=true;
 
 		}
 	}
-	return false;
+	return retVal;
 }
 
 size_t Request::ParseRequestLine(Request* request, const char* data, size_t size)
