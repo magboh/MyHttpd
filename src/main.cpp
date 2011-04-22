@@ -87,16 +87,16 @@ int main(int argc, char** argv)
 
 	}
 
+	Logger::LogType defaultLevel=Logger::INFO;
 	if (logLevel.length()>0)
 	{
-		Logger::LogType defaultLevel=Logger::INFO;
-
 		if (logLevel.compare("DEBUG")==0)
 			defaultLevel=Logger::DEBUG;
 		if (logLevel.compare("INFO")==0)
 			defaultLevel=Logger::INFO;
 		std::cout<<"\nSetting Log level to:"<<logLevel<<"\n";
 	}
+	sAppLog.SetLogLevel(defaultLevel);
 
 	std::cout<<"Setting configuration file:"<<configFile<<"\n";
 
