@@ -45,8 +45,8 @@ RequestWorker::~RequestWorker()
 /* Worker is responsible to DELETE the request gotten from queue*/
 void RequestWorker::DoWork()
 {
-	const Request* request;
 	/* Handle request until Request queue is closed, IE. returns NULL*/
+	const Request* request;
 	while ((request=mRequestQueue->GetNextRequest()))
 	{
 		HandleRequest(request);

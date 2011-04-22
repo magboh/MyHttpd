@@ -70,9 +70,9 @@ int MyHttpd::Start()
 	BlockSignals();
 
 	mRequestQueue=new RequestQueue();
-	mConnectionManager=new ConnectionManager(400,*mRequestQueue);
 	mRequestQueue->AddWorker(mNrRequestWorkers);
-	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
+	mConnectionManager=new ConnectionManager(400);
+	mConnectionManager->AddConnectionWorker(*mRequestQueue,mNrConnectionWorkers);
 	mConnectionManager->AddIoWorker(1);
 
 	AllowSignals();

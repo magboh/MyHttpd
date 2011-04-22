@@ -31,6 +31,7 @@
 class RequestQueue;
 class ConfigReader;
 class AcceptWorker;
+
 class MyHttpd
 {
 public:

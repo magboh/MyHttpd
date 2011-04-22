@@ -110,6 +110,7 @@ void ConnectionWorker::DoWork()
 				state=REMOVE;
 			}
 			}
+
 			if (con->HasData())
 			{
 				con->SetDataPending(false);
@@ -118,9 +119,10 @@ void ConnectionWorker::DoWork()
 				{
 				case Connection::STATUS_DONE:
 				{
-					state=WAIT_FOR_IO;
 					if (con->IsCloseable())
 						state=REMOVE;
+					else
+						state=WAIT_FOR_IO;
 					break;
 				}
 				case Connection::STATUS_OK:

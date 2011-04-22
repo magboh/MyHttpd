@@ -30,19 +30,14 @@
 #include "connection.h"
 #include "connectionmanager.h"
 #include "connectionworker.h"
-#include "site.h"
-#include "requestqueue.h"
+
 #include "ioworker.h"
 #include "logger.h"
 
-ConnectionManager::ConnectionManager(int maxConnections, RequestQueue& requestQueue) :
-	mRequestQueue(requestQueue)
+ConnectionManager::ConnectionManager(int maxConnections) :
+	mNumConnections(0),mMaxConnections(maxConnections),mCurrentThread(0)
 {
-	mMaxConnections=maxConnections;
-	mNumConnections=0;
-	mCurrentThread=0;
 	mStats.nrTotalConnections=0;
-
 }
 
 ConnectionManager::~ConnectionManager()
@@ -74,11 +69,11 @@ void ConnectionManager::PrintStats()
 	std::cout<<"Total Connections: "<<mStats.nrTotalConnections<<"\n";
 }
 
-void ConnectionManager::AddConnectionWorker(int nr)
+void ConnectionManager::AddConnectionWorker(RequestQueue& requestQueue, int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		ConnectionWorker* cqw=new ConnectionWorker(mRequestQueue,*this);
+		ConnectionWorker* cqw=new ConnectionWorker(requestQueue,*this);
 		if (cqw->Start())
 		{
 			mWorkerVector.push_back(cqw);
@@ -104,7 +99,7 @@ void ConnectionManager::AddIoWorker(int nr)
 		else
 		{
 			delete mIoWorker;
-			mIoWorker = 0;
+			mIoWorker=0;
 			AppLog(Logger::CRIT,"Failed to create Io worker");
 		}
 	}
@@ -125,7 +120,7 @@ void ConnectionManager::ShutdownWorkers()
 void ConnectionManager::WaitForWorkers()
 {
 	AppLog(Logger::DEBUG,"ConnectionManager Waiting for workers");
-	for (unsigned int i=0;i<mWorkerVector.size();i++)
+	for (size_t i=0;i<mWorkerVector.size();i++)
 	{
 		mWorkerVector[i]->Join();
 		delete mWorkerVector[i];
