@@ -24,7 +24,7 @@
 #include "serveroptions.h"
 
 ServerOptions::ServerOptions() :
-	mNoIOWorkers(1), mNoRequstWorkers(1), mResponseBufferSize(4096), mRequestBufferSize(4096), mConnectionQueueSize(400)
+	mNoRequstWorkers(1),mNoIOWorkers(1),  mResponseBufferSize(4096), mRequestBufferSize(4096), mConnectionQueueSize(400)
 {
 }
 
