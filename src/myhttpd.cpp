@@ -60,7 +60,7 @@ int MyHttpd::Start(const RunOptions& options)
 {
 	ConfigReader cr;
 
-	if (!LoadConfig(&cr,options.configFile))
+	if (!LoadConfig(cr,options.configFile))
 	{
 		AppLog(Logger::ERROR,"MyHttpd exiting due to problem loading configuration");
 		return 0;
@@ -78,7 +78,7 @@ int MyHttpd::Start(const RunOptions& options)
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
-	StartSites(&cr);
+	StartSites(cr);
 
 	mKeepRunning=true;
 
@@ -114,7 +114,6 @@ void MyHttpd::SigINTHandler(int signal)
 
 void MyHttpd::Stop()
 {
-
 	// All sites should be stopped (ie. their Socket closed).
 	StopSites();
 	// Stop request queue
@@ -130,13 +129,13 @@ void MyHttpd::Stop()
 
 }
 
-bool MyHttpd::LoadConfig(ConfigReader* cr, const std::string& fileName)
+bool MyHttpd::LoadConfig(ConfigReader& cr, const std::string& fileName)
 {
-	ConfigReader::LoadStatus ls=cr->Load(fileName);
+	ConfigReader::LoadStatus ls=cr.Load(fileName);
 	bool ok=true;
 	if (ls==ConfigReader::LOAD_OK)
 	{
-		const ServerOptions& so=cr->GetServerOptions();
+		const ServerOptions& so=cr.GetServerOptions();
 
 		mNrConnectionWorkers=so.GetNoIOWorkers();
 		mNrRequestWorkers=so.GetNoRequstWorkers();
@@ -154,9 +153,9 @@ bool MyHttpd::LoadConfig(ConfigReader* cr, const std::string& fileName)
 	return ok;
 }
 
-void MyHttpd::StartSites(const ConfigReader* cr)
+void MyHttpd::StartSites(const ConfigReader& cr)
 {
-	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
+	const std::vector<SiteOptions> siteOpts=cr.GetSiteOptions();
 
 	mAcceptWorker=new AcceptWorker(*mConnectionManager);
 	for (size_t i=0;i<siteOpts.size();i++)

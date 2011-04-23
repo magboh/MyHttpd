@@ -51,8 +51,8 @@ public:
 	void Stop();
 	void SigINTHandler(int signal);
 
+	bool LoadConfig(ConfigReader& cr, const std::string& fileName);
 	static MyHttpd* myhttpd;
-
 private:
 	RequestQueue* mRequestQueue;
 	AcceptWorker* mAcceptWorker;
@@ -65,7 +65,15 @@ private:
 	int mNrRequestWorkers;
 
 	std::vector<Site*> mSites;
-	void StartSites(const ConfigReader* cr);
+	void StartRequestQueue();
+	void StartConnectionWorkers();
+	void StartRequestWorkers();
+	void StopRequestQueue();
+	void StopConnectionWorkers();
+	void WaitForConnectionWorkers();
+	void WaitForRequestWorkers();
+
+	void StartSites(const ConfigReader& cr);
 	void StopSites();
 
 	void AllowSignals();
