@@ -50,17 +50,13 @@ IoWorker::~IoWorker()
 void IoWorker::DoWork()
 {
 	const int MAX_EVENTS=100;
-	const int EPOLL_WAIT=-1;
+	const int EPOLL_WAIT=500;
 	struct epoll_event events[MAX_EVENTS];
 
 	while (isRunning())
 	{
 		int nfds=epoll_wait(mPollSocket,events,MAX_EVENTS,EPOLL_WAIT);
-		if (nfds==-1)
-		{
-			perror("IoWorker::DoWork() epoll_pwait");
-		}
-		for (int n=0;n<nfds;++n)
+		for (int n=0;n<nfds;n++)
 		{
 			Connection* con=static_cast<Connection*> (events[n].data.ptr);
 			// Tell Connection Manager to handle IO for this connection

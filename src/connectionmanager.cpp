@@ -63,12 +63,6 @@ void ConnectionManager::HandleConnection(Connection* con)
 	mWorkerVector[con->GetThreadNr()]->HandleConnection(con);
 }
 
-void ConnectionManager::PrintStats()
-{
-	std::cout<<"---- ConnectionManager ----\n";
-	std::cout<<"Total Connections: "<<mStats.nrTotalConnections<<"\n";
-}
-
 void ConnectionManager::AddConnectionWorker(RequestQueue& requestQueue, int nr)
 {
 	for (int i=0;i<nr;i++)

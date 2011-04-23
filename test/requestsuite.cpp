@@ -28,7 +28,7 @@ void RequestSuite::TestRequestConnectionKeepAlive() {
 	SiteOptions so;
 	so.SetPort(50);
 
-	Site site(&so, NULL);
+	Site site(&so);
 
 	const int NR = 6;
 	const char
@@ -69,7 +69,7 @@ void RequestSuite::TestManyGoodGets() {
 	SiteOptions so;
 	so.SetPort(50);
 
-	Site site(&so, NULL);
+	Site site(&so);
 	const int NR = 13;
 
 	const char
@@ -106,7 +106,7 @@ void RequestSuite::TestEvilRequests() {
 	SiteOptions so;
 	so.SetPort(50);
 
-	Site site(&so, NULL);
+	Site site(&so);
 	const int NR = 3;
 
 	const char
@@ -133,7 +133,7 @@ void RequestSuite::TestMandatoryHeaderMissing() {
 	SiteOptions so;
 	so.SetPort(50);
 
-	Site site(&so, NULL);
+	Site site(&so);
 	const int NR = 1;
 
 	const char *getstring[NR] = {
@@ -153,17 +153,18 @@ void RequestSuite::TestMandatoryHeaderMissing() {
 
 }
 
-
 void RequestSuite::TestMultilineHeaders() {
 	SiteOptions so;
 	so.SetPort(50);
 
-	Site site(&so, NULL);
+	Site site(&so);
 	const int NR = 2;
 
-	const char *getstring[NR] = {
-			"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n\r\n",
-			"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n Gnu2\r\n\r\n", };
+	const char
+			*getstring[NR] =
+					{
+							"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nHost: keep-alive\r\nMyHeader: apa\r\n Gnu\r\n Gnu2\r\n\r\n", };
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {

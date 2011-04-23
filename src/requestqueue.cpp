@@ -115,10 +115,6 @@ void RequestQueue::Shutdown()
 	pthread_mutex_unlock(mMutex);
 }
 
-void RequestQueue::PrintStats()
-{
-}
-
 void RequestQueue::AddWorker(int nr)
 {
 	for (int i=0;i<nr;i++)

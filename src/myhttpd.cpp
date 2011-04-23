@@ -27,9 +27,7 @@
 
 #include "myhttpd.h"
 #include "requestqueue.h"
-#include "requestworker.h"
 #include "connectionmanager.h"
-#include "connectionworker.h"
 #include "acceptworker.h"
 #include "config/configreader.h"
 
@@ -46,8 +44,6 @@ void handlerInt(int s)
 
 MyHttpd::MyHttpd()
 {
-	// TODO Auto-generated constructor stub
-	sAppLog.SetLogLevel(Logger::INFO);
 	myhttpd=this;
 }
 
@@ -80,14 +76,10 @@ int MyHttpd::Start()
 	StartSites(&cr);
 
 	mKeepRunning=true;
+
 	while (mKeepRunning)
 	{
-		/*		for (size_t i=0; i<mSites.size() ; i++)
-		 {
-		 mSites[i].HandleIncomming();
-		 }
-		 */
-		usleep(10);
+		usleep(1000);
 	}
 
 	AppLog(Logger::INFO,"MyHttpd shutting down");
@@ -165,7 +157,7 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 	for (size_t i=0;i<siteOpts.size();i++)
 	{
 		const SiteOptions& so=siteOpts[i];
-		Site *s=new Site(&so,mConnectionManager);
+		Site *s=new Site(&so);
 		if (s->Setup())
 		{
 			AppLog(Logger::DEBUG,"Site set up and added:" + s->GetDocumentRoot());

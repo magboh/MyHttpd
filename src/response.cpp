@@ -83,7 +83,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	Http::Status status=GetStatus();
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
-	ss<<"Server: MyHttpd"<< std::string(VersionString) << EOL;
+	ss<<"Server: MyHttpd "<< std::string(VersionString) << EOL;
 	ss<<"Connection: ";
 	if (GetKeepAlive())
 	{

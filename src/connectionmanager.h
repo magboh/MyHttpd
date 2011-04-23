@@ -41,7 +41,6 @@ public:
 	void CreateConnection(int socket, const Site& site);
 	void HandleConnection(Connection* con);
 	void AddConnection(Connection* con);
-	void PrintStats();
 	/**
 	 * Add a Worker to handle Connections.
 	 */

@@ -62,7 +62,6 @@ public:
 	 */
 	const Request* GetNextRequest();
 	void Shutdown();
-	void PrintStats();
 
 	void AddWorker(int nr=1);
 	void WaitForWorkers();

@@ -75,7 +75,10 @@ void ConnectionWorker::DoWork()
 		mMutex->UnLock();
 
 		std::list<Connection*>::iterator it=mList.begin();
-		usleep(20);
+		if (mList.size()==0)
+			usleep(500);
+		else
+
 		while (it!=mList.end())
 		{
 			Connection* con=*it;

@@ -78,13 +78,22 @@ Connection::~Connection()
 	}
 
 	if (mRequest)
+	{
 		delete mRequest;
+		mRequest =0;
+	}
 
 	if (mResponse)
+	{
 		delete mResponse;
+		mResponse=0;
+	}
 
-	close(mSocket);
-
+	if(mSocket!=-1)
+	{
+		close(mSocket);
+		mSocket=-1;
+	}
 }
 
 Connection::Status_t Connection::Read(size_t size)
