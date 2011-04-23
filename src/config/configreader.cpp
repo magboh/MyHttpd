@@ -71,7 +71,8 @@ in_addr_t GetIp4Value(TiXmlElement* element)
 		ss<<token;
 		unsigned int a;
 		ss>>a;
-		addr|=(unsigned char) a<<(i--)*8;
+		addr|=(unsigned char) a<<(i*8);
+		i--;
 	}
 	return addr;
 }
@@ -130,41 +131,20 @@ ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)
 
 bool ConfigReader::ParseDefaultSiteOptions(TiXmlElement* element)
 {
-	assert(element!=0);
 
-	std::map<std::string, std::string> map;
-	std::map<std::string, std::string>::iterator it;
-	std::stringstream ss;
+	TiXmlElement* child=0;
 
-	TiXmlElement* child=element->FirstChildElement();
+	if ((child=element->FirstChildElement("DefaultFile")))
+		mDefaultSiteOptions.SetDefaultFile(GetString(child));
+	child=0;
 
-	for (;child!=0;child=child->NextSiblingElement())
-	{
-		map[child->ValueStr()]=std::string(child->GetText());
-	}
+	if ((child=element->FirstChildElement("AllowDirectoryBrowsing")))
+		mDefaultSiteOptions.SetAllowDirectoryBrowsing(GetBool(child));
+	child=0;
 
-	if ((it=map.find("DefaultFile"))!=map.end())
-	{
-		mDefaultSiteOptions.SetDefaultFile(it->second);
-	}
-
-	if ((it=map.find("AllowDirectoryBrowsing"))!=map.end())
-	{
-		if (it->second.compare("true")==0)
-			mDefaultSiteOptions.SetAllowDirectoryBrowsing(true);
-		else
-			mDefaultSiteOptions.SetAllowDirectoryBrowsing(false);
-	}
-
-	if ((it=map.find("ConnectionTimeout"))!=map.end())
-	{
-		int timeout=0;
-
-		ss<<it->second;
-		ss>>timeout;
-
-		mDefaultSiteOptions.SetConnectionTimeout(timeout);
-	}
+	if ((child=element->FirstChildElement("ConnectionTimeout")))
+		mDefaultSiteOptions.SetConnectionTimeout(GetIntValue(child));
+	child=0;
 
 	return true;
 }
