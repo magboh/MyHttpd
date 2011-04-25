@@ -136,6 +136,7 @@ void ConnectionWorker::DoWork()
 					state=NO_ACTION;
 					break;
 				}
+				case Connection::STATUS_CLOSE:
 				case Connection::STATUS_ERROR:
 				{
 					state=REMOVE;
