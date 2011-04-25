@@ -52,6 +52,7 @@ void Testrunner::RunTests()
 	//file->close();
 
 	//delete file;
+	delete textout;
 	delete out;
 }
 

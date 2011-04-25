@@ -10,15 +10,16 @@
 #include "../src/config/siteoptions.h"
 
 RequestSuite::RequestSuite() {
-
-	TEST_ADD(RequestSuite::TestManyGoodGets);
-	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
-	TEST_ADD(RequestSuite::TestEvilRequests);
-	TEST_ADD(RequestSuite::TestMandatoryHeaderMissing);
-	TEST_ADD(RequestSuite::TestMultilineHeaders);
-
 	sAppLog.SetLogLevel(Logger::DEBUG);
+#if 1
+	TEST_ADD(RequestSuite::TestManyGoodGets);
 
+	TEST_ADD(RequestSuite::TestRequestConnectionKeepAlive);
+//	TEST_ADD(RequestSuite::TestEvilRequests);
+	TEST_ADD(RequestSuite::TestMandatoryHeaderMissing);
+//	TEST_ADD(RequestSuite::TestMultilineHeaders);
+#endif
+	TEST_ADD(RequestSuite::TestReqeustsByteForByte);
 }
 
 RequestSuite::~RequestSuite() {
@@ -178,4 +179,52 @@ void RequestSuite::TestMultilineHeaders() {
 	}
 	delete buf;
 
+}
+
+
+void RequestSuite::TestReqeustsByteForByte() {
+
+	SiteOptions so;
+	so.SetPort(50);
+
+	Site site(&so);
+	const int NR = 11;
+
+	const char
+			*getstring[NR] =
+					{
+							"GET / HTTP/1.0\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nConnection: keep-alive\r\nHost: \t   localhost:80\r\n\r\n",
+							"GET /good.html HTTP/1.1\r\nConnection: close\r\nHost:    localhost:81\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection: keep-alive\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\nConnection: close\r\n\r\n",
+							"GET /good.html HTTP/1.0\r\n\r\n",
+							"GET / HTTP/1.1\r\nHost: localhost:8080\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\nHost: localhost:8080\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\n\r\n",
+							"GET /last.html HTTP/1.1\r\nHost: localhost:8080\r\nConnection:        \t close\r\n\r\n",
+							"GET /last.html HTTP/1.0\r\nConnection:        \t close\r\n\r\n" };
+
+	ByteBuffer* buf = new ByteBuffer(2000);
+	for (int i = 0; i < NR; i++) {
+		Request *r = new Request(NULL, site);
+		buf->Clear();
+		size_t len=strlen(getstring[i]);
+		for (size_t j=0;j<len;j++)
+		{
+			buf->Add(getstring[i]+j, 1);
+			bool result = Request::ParseRequest(r, buf);
+			if (j+1<len)
+			{
+				TEST_ASSERT_MSG(result==false,getstring[i]);
+			}
+			else
+			{
+				TEST_ASSERT_MSG(result,getstring[i]);
+				TEST_ASSERT_MSG(r->GetStatus() == Http::HTTP_OK,getstring[i]);
+			}
+		}
+		delete r;
+	}
+	delete buf;
 }
