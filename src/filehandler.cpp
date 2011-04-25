@@ -39,7 +39,12 @@ FileHandler::FileHandler()
 
 FileHandler::~FileHandler()
 {
-	// TODO Auto-generated destructor stub
+	std::map<std::string, File *>::iterator it;
+	// file already in FileHandler?
+	for (it=mFileMap.begin(); it!=mFileMap.end();it++)
+	{
+		delete it->second;
+	}
 }
 
 const File* FileHandler::GetFile(const std::string& file, FileStatus &status)
