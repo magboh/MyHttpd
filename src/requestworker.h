@@ -33,12 +33,12 @@ class FileHandler;
 class RequestWorker:public Thread
 {
 public:
-	RequestWorker(RequestQueue* requestQueue);
+	RequestWorker(RequestQueue& requestQueue);
 	virtual ~RequestWorker();
 private:
 	void DoWork();
 	void HandleRequest(const Request* request);
-	RequestQueue* mRequestQueue;
+	RequestQueue& mRequestQueue;
 	FileHandler* mFilehandler;
 };
 

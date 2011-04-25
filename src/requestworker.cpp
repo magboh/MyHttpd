@@ -29,9 +29,9 @@
 #include "site.h"
 #include "filehandler.h"
 
-RequestWorker::RequestWorker(RequestQueue* requestQueue)
+RequestWorker::RequestWorker(RequestQueue& requestQueue)
+	: mRequestQueue(requestQueue)
 {
-	mRequestQueue=requestQueue;
 	mFilehandler=new FileHandler();
 }
 
@@ -47,7 +47,7 @@ void RequestWorker::DoWork()
 {
 	/* Handle request until Request queue is closed, IE. returns NULL*/
 	const Request* request;
-	while ((request=mRequestQueue->GetNextRequest()))
+	while ((request=mRequestQueue.GetNextRequest()))
 	{
 		HandleRequest(request);
 		delete request;
@@ -63,7 +63,7 @@ void RequestWorker::HandleRequest(const Request* request)
 	{
 		const std::string & root=request->GetSite().GetDocumentRoot();
 
-		std::string filename=root+request->GetUri();
+		const std::string & filename=root+request->GetUri();
 
 		FileHandler::FileStatus status;
 		const File* file=mFilehandler->GetFile(filename,status);

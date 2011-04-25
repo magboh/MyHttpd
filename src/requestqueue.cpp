@@ -119,7 +119,7 @@ void RequestQueue::AddWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		RequestWorker* rqw=new RequestWorker(this);
+		RequestWorker* rqw=new RequestWorker(*this);
 		if (rqw->Start())
 		{
 			mWorkerList.push_back(rqw);
