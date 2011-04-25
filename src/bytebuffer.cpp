@@ -33,7 +33,7 @@ ByteBuffer::ByteBuffer(size_t size)
 
 ByteBuffer::~ByteBuffer()
 {
-	delete mBuffer;
+	delete [] mBuffer;
 	mBuffer=0;
 	mSize=0;
 
