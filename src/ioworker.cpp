@@ -64,6 +64,7 @@ void IoWorker::DoWork()
 			if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
 			{
 				epoll_ctl(mPollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
+				AppLog(Logger::DEBUG,"IoWorker::DoWork Remove connection");
 				delete con;
 			}
 			else if ((events[n].events&EPOLLIN)==events[n].events)

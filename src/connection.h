@@ -16,7 +16,7 @@ class Site;
 class Connection
 {
 public:
-	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE};
+	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE,STATUS_CLOSE};
 	Connection(int socket, const Site& site, unsigned char threadNr);
 	virtual ~Connection();
 

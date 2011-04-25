@@ -35,6 +35,7 @@
 #include <time.h>
 #include <errno.h>
 #include <sstream>
+#include <iostream>
 
 #include "site.h"
 #include "request.h"
@@ -64,7 +65,6 @@ Connection::Connection(int socket, const Site& site, unsigned char threadNr) :
 
 Connection::~Connection()
 {
-	//	printf("Closing Connection\n");
 	if (mReadBuffer)
 	{
 		delete mReadBuffer;
@@ -118,7 +118,7 @@ Connection::Status_t Connection::Read(size_t size)
 	}
 	else if (len==0)
 	{
-		status=STATUS_AGAIN;
+		status=STATUS_CLOSE;
 	}
 	else
 	{
@@ -139,13 +139,12 @@ Connection::Status_t Connection::Write(size_t size)
 
 	if (mWriteStatus==0)
 	{
-		mResponse->ToBuffer(mWriteBuffer);
 
-		if (size>mWriteBuffer->GetUsage())
-			toWrite=mWriteBuffer->GetUsage();
+		if (mWritten+size>mWriteBuffer->GetUsage())
+			toWrite=mWriteBuffer->GetUsage()-mWritten;
 
 		const char* buffer=mWriteBuffer->GetBuffer();
-		ssize_t len=write(mSocket,buffer,toWrite);
+		ssize_t len=write(mSocket,buffer+mWritten,toWrite);
 		int err=errno;
 
 		if (len>=0)
@@ -161,15 +160,17 @@ Connection::Status_t Connection::Write(size_t size)
 		}
 		else
 		{
+			perror("sending header");
 			status=ErrnoToStatus(err);
 		}
 	}
 
 	if (mWriteStatus==1&&mResponse->GetFile()!=-1)
 	{
-		if (toWrite>mResponse->GetContentLength())
+		toWrite = size;
+		if (mWritten+size>mResponse->GetContentLength())
 		{
-			toWrite=mResponse->GetContentLength();
+			toWrite=mResponse->GetContentLength()-mWritten;
 		}
 
 		ssize_t len=0;
@@ -231,6 +232,7 @@ void Connection::SetResponse(const Response* response)
 {
 	assert(mResponse==NULL);
 	mResponse=response;
+	mResponse->ToBuffer(mWriteBuffer);
 }
 
 Request* Connection::GetRequest() const

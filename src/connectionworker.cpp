@@ -31,7 +31,7 @@
 #include <list>
 #include <cassert>
 #include <sstream>
-
+#include <iostream>
 #include "connection.h"
 #include "connectionmanager.h"
 #include "connectionworker.h"
@@ -63,10 +63,10 @@ void ConnectionWorker::DoWork()
 {
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
-	int readThrougput=4096;
+	int readThrougput=128;
 	// Max per iteration of data to send.. Should be ca 100kb.. this
 	// This should be TrafficShaped to be throughput per second
-	int writeThrougput=4096;
+	int writeThrougput=128;
 
 	while (isRunning())
 	{
@@ -78,7 +78,6 @@ void ConnectionWorker::DoWork()
 		if (mList.size()==0)
 			usleep(500);
 		else
-
 		while (it!=mList.end())
 		{
 			Connection* con=*it;
@@ -108,6 +107,8 @@ void ConnectionWorker::DoWork()
 				state=WAIT_FOR_IO;
 				break;
 			}
+
+			case Connection::STATUS_CLOSE:
 			default:
 			{
 				state=REMOVE;
@@ -149,7 +150,6 @@ void ConnectionWorker::DoWork()
 			}
 
 			// Determine what to do with current con, depending on state
-
 			switch (state)
 			{
 			case REMOVE:
@@ -176,3 +176,4 @@ void ConnectionWorker::HandleConnection(Connection* con)
 	mAddList.push_back(con);
 	mMutex->UnLock();
 }
+
