@@ -44,6 +44,13 @@ private:
 
 	void RemoveConnection(Connection* con);
 
+	enum State
+	{
+		REMOVE, WAIT_FOR_IO, NO_ACTION
+	};
+
+	State Read(Connection* con);
+	State Write(Connection* con);
 	/**
 	 *
 	 */

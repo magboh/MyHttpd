@@ -61,13 +61,6 @@ void ConnectionWorker::RemoveConnection(Connection *con)
 
 void ConnectionWorker::DoWork()
 {
-	// Max per iteration of data to send.. Should be ca 100kb.. this
-	// This should be TrafficShaped to be throughput per second
-	int readThrougput=128;
-	// Max per iteration of data to send.. Should be ca 100kb.. this
-	// This should be TrafficShaped to be throughput per second
-	int writeThrougput=128;
-
 	while (isRunning())
 	{
 		mMutex->Lock();
@@ -78,94 +71,40 @@ void ConnectionWorker::DoWork()
 		if (mList.size()==0)
 			usleep(500);
 		else
-		while (it!=mList.end())
-		{
-			Connection* con=*it;
+			while (it!=mList.end())
+			{
+				Connection* con=*it;
 
-			enum State
-			{
-				REMOVE, WAIT_FOR_IO, NO_ACTION
-			};
-			State state=NO_ACTION;
-			Connection::Status_t status=con->Read(readThrougput);
-			switch (status)
-			{
-			case Connection::STATUS_OK:
-			{
-				if (con->Parse())
+				State state=NO_ACTION;
+
+				state=Read(con);
+
+				if (con->HasData())
 				{
-					mRequestQueue.AddRequest(con->GetRequest());
-					con->SetDataPending(true);
-					con->SetRequest(NULL);
-					state=WAIT_FOR_IO;
+					state=Write(con);
 				}
-				break;
-			}
-			case Connection::STATUS_AGAIN:
-			case Connection::STATUS_INTERUPT:
-			{
-				state=WAIT_FOR_IO;
-				break;
-			}
 
-			case Connection::STATUS_CLOSE:
-			default:
-			{
-				state=REMOVE;
-			}
-			}
-
-			if (con->HasData())
-			{
-				con->SetDataPending(false);
-				Connection::Status_t status=con->Write(writeThrougput);
-				switch (status)
-				{
-				case Connection::STATUS_DONE:
-				{
-					if (con->IsCloseable())
-						state=REMOVE;
-					else
-						state=WAIT_FOR_IO;
-					break;
-				}
-				case Connection::STATUS_OK:
-				case Connection::STATUS_AGAIN:
-				case Connection::STATUS_INTERUPT:
+				if (con->HasDataPending())
 				{
 					state=NO_ACTION;
-					break;
 				}
-				case Connection::STATUS_CLOSE:
-				case Connection::STATUS_ERROR:
+
+				// Determine what to do with current con, depending on state
+				switch (state)
 				{
-					state=REMOVE;
+				case REMOVE:
+					it=mList.erase(it);
+					RemoveConnection(con);
+					break;
+				case WAIT_FOR_IO:
+					it=mList.erase(it);
+					mConnectionManager.AddConnection(con);
+					break;
+				case NO_ACTION:
+					it++;
 					break;
 				}
-				}
 			}
-
-			if (con->HasDataPending())
-			{
-				state=NO_ACTION;
-			}
-
-			// Determine what to do with current con, depending on state
-			switch (state)
-			{
-			case REMOVE:
-				it=mList.erase(it);
-				RemoveConnection(con);
-				break;
-			case WAIT_FOR_IO:
-				it=mList.erase(it);
-				mConnectionManager.AddConnection(con);
-				break;
-			case NO_ACTION:
-				it++;
-				break;
-			}
-		}
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
@@ -178,3 +117,70 @@ void ConnectionWorker::HandleConnection(Connection* con)
 	mMutex->UnLock();
 }
 
+ConnectionWorker::State ConnectionWorker::Read(Connection* con)
+{
+	State state=NO_ACTION;
+	Connection::Status_t status=con->Read(128);
+	switch (status)
+	{
+	case Connection::STATUS_OK:
+	{
+		if (con->Parse())
+		{
+			mRequestQueue.AddRequest(con->GetRequest());
+			con->SetDataPending(true);
+			con->SetRequest(NULL);
+			state=WAIT_FOR_IO;
+		} // state already set to NO_ACTION Above
+
+		break;
+	}
+	case Connection::STATUS_AGAIN:
+	case Connection::STATUS_INTERUPT:
+	{
+		state=WAIT_FOR_IO;
+		break;
+	}
+
+	case Connection::STATUS_CLOSE:
+	default:
+	{
+		state=REMOVE;
+	}
+	}
+	return state;
+}
+
+ConnectionWorker::State ConnectionWorker::Write(Connection* con)
+{
+	State state=NO_ACTION;
+
+	con->SetDataPending(false);
+	Connection::Status_t status=con->Write(128);
+	switch (status)
+	{
+	case Connection::STATUS_DONE:
+	{
+		if (con->IsCloseable())
+			state=REMOVE;
+		else
+			state=WAIT_FOR_IO;
+		break;
+	}
+	case Connection::STATUS_OK:
+	case Connection::STATUS_AGAIN:
+	case Connection::STATUS_INTERUPT:
+	{
+		state=NO_ACTION;
+		break;
+	}
+	case Connection::STATUS_CLOSE:
+	case Connection::STATUS_ERROR:
+	{
+		state=REMOVE;
+		break;
+	}
+	}
+
+	return state;
+}
