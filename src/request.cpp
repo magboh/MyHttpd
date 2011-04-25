@@ -142,6 +142,7 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 			retVal=true;
 
 		}
+		else request->mParseState=0;
 	}
 	return retVal;
 }
@@ -153,6 +154,7 @@ size_t Request::ParseRequestLine(Request* request, const char* data, size_t size
 	size_t oldpos=0;
 	size_t position=0;
 	Status status=HTTP_OK;
+	request->SetStatus(status);
 	for (size_t pos=0;pos<size;pos++)
 	{
 		if (data[pos]==lookfor)
