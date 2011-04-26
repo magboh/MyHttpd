@@ -25,36 +25,35 @@
 #include <string>
 
 #include "myhttpd.h"
-#include "logger.h"
-
+enum Action
+{
+	RUN, USAGE, VER
+};
 void Usage();
-void ParseArgs(int argc, char** argv);
+void Ver();
+Action ParseArgs(int argc, char** argv, RunOptions& options);
 
 void Usage()
 {
-	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"\n"<<"Usage: myhttpd [-f file] [-debuglog]";
+	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"\n"<<"Usage: myhttpd [-f file] [-l DEBUG] [--version]\n";
 }
 
-void ParseArgs(int argc, char** argv)
+void Ver()
 {
-
+	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"Uses TinyXml\n";
 }
 
-int main(int argc, char** argv)
+Action ParseArgs(int argc, char** argv, RunOptions& options)
 {
-	ParseArgs(argc,argv);
-
-	Usage();
-
 	enum State_t
 	{
 		NONE, LOG_LEVEL, CONF_FILE
 	};
-
+	Action action=RUN;
 	State_t state=NONE;
 
 	std::string logLevel="";
-	std::string configFile="";
+
 	for (int i=1;i<argc;i++)
 	{
 		std::string strArg(argv[i]);
@@ -65,12 +64,13 @@ int main(int argc, char** argv)
 		{
 			logLevel=strArg;
 			state=NONE;
-			break;
+			continue;
 		}
 		case CONF_FILE:
 		{
-			configFile = strArg;
-			break;
+			options.configFile=strArg;
+			state=NONE;
+			continue;
 		}
 		default:
 			break;
@@ -84,24 +84,43 @@ int main(int argc, char** argv)
 		{
 			state=CONF_FILE;
 		}
-
+		else if (strArg.compare("--version")==0)
+			action=VER;
+		else
+			action=USAGE;
 	}
 
-	Logger::LogType defaultLevel=Logger::INFO;
 	if (logLevel.length()>0)
 	{
 		if (logLevel.compare("DEBUG")==0)
-			defaultLevel=Logger::DEBUG;
+			options.defaultLogType=Logger::DEBUG;
 		if (logLevel.compare("INFO")==0)
-			defaultLevel=Logger::INFO;
-		std::cout<<"\nSetting Log level to:"<<logLevel<<"\n";
+			options.defaultLogType=Logger::INFO;
 	}
-	sAppLog.SetLogLevel(defaultLevel);
+	return action;
+}
 
-	std::cout<<"Setting configuration file:"<<configFile<<"\n";
+int main(int argc, char** argv)
+{
+	RunOptions options;
+	options.defaultLogType=Logger::INFO;
+	options.configFile="/etc/myhttpd.conf";
 
-	MyHttpd myHttpd;
-
-	myHttpd.Start();
+	Action action=ParseArgs(argc,argv,options);
+	switch (action)
+	{
+	case RUN:
+	{
+		MyHttpd myHttpd;
+		myHttpd.Start(options);
+		break;
+	}
+	case USAGE:
+		Usage();
+		break;
+	case VER:
+		Ver();
+		break;
+	}
 	return 0;
 }

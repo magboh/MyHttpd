@@ -25,6 +25,7 @@
 #define MYHTTPD_H_
 #include <vector>
 #include "site.h"
+#include "logger.h"
 
 #define Version 0.1
 #define VersionString "0.1"
@@ -34,16 +35,25 @@ class ConfigReader;
 class AcceptWorker;
 class ConnectionManager;
 
+struct RunOptions
+{
+	std::string configFile;
+	Logger::LogType defaultLogType;
+};
+
 class MyHttpd
 {
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
-	int Start();
+
+	bool ParseArgs(int argc, char** argv);
+	int Start(const RunOptions& options);
 	void Stop();
 	void SigINTHandler(int signal);
 
 	static MyHttpd* myhttpd;
+
 private:
 	RequestQueue* mRequestQueue;
 	AcceptWorker* mAcceptWorker;
@@ -62,7 +72,7 @@ private:
 	void AllowSignals();
 	void BlockSignals();
 
-	bool LoadConfig(ConfigReader* cr);
+	bool LoadConfig(ConfigReader* cr, const std::string& fileName);
 };
 
 #endif /* MYHTTPD_H_ */

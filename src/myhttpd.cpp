@@ -31,8 +31,6 @@
 #include "acceptworker.h"
 #include "config/configreader.h"
 
-#include "logger.h"
-
 MyHttpd* MyHttpd::myhttpd=NULL;
 
 void handlerInt(int s);
@@ -45,24 +43,29 @@ void handlerInt(int s)
 MyHttpd::MyHttpd()
 {
 	myhttpd=this;
+	mConnectionManager=0;
+	mRequestQueue=0;
 }
 
 MyHttpd::~MyHttpd()
 {
-	delete mConnectionManager;
-	delete mRequestQueue;
+	if (mConnectionManager)
+		delete mConnectionManager;
+	if (mRequestQueue)
+		delete mRequestQueue;
 }
 
-int MyHttpd::Start()
+int MyHttpd::Start(const RunOptions& options)
 {
 	ConfigReader cr;
 
-	if (!LoadConfig(&cr))
+	if (!LoadConfig(&cr,options.configFile))
 	{
 		AppLog(Logger::ERROR,"MyHttpd exiting due to problem loading configuration");
 		return 0;
 	}
 
+	sAppLog.SetLogLevel(options.defaultLogType);
 	BlockSignals();
 
 	mRequestQueue=new RequestQueue();
@@ -125,9 +128,9 @@ void MyHttpd::Stop()
 
 }
 
-bool MyHttpd::LoadConfig(ConfigReader* cr)
+bool MyHttpd::LoadConfig(ConfigReader* cr, const std::string& fileName)
 {
-	ConfigReader::LoadStatus ls=cr->Load("/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
+	ConfigReader::LoadStatus ls=cr->Load(fileName);
 	bool ok=true;
 	if (ls==ConfigReader::LOAD_OK)
 	{
@@ -168,7 +171,7 @@ void MyHttpd::StartSites(const ConfigReader* cr)
 	if (!mAcceptWorker->Start())
 	{
 		delete mAcceptWorker;
-		mAcceptWorker = 0 ;
+		mAcceptWorker=0;
 		AppLog(Logger::CRIT,"Failed to start Accept worker");
 	}
 
@@ -184,5 +187,5 @@ void MyHttpd::StopSites()
 
 	mAcceptWorker->Stop();
 	delete mAcceptWorker;
-	mAcceptWorker = 0;
+	mAcceptWorker=0;
 }
