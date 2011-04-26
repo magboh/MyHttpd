@@ -37,7 +37,9 @@ public:
 	virtual ~RequestWorker();
 private:
 	void DoWork();
-	void HandleRequest(const Request* request);
+	void HandleHead(const Request* request);
+	void HandleGet(const Request* request);
+	void HandleUnsupported(const Request* request);
 	RequestQueue& mRequestQueue;
 	FileHandler* mFilehandler;
 };

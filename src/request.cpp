@@ -50,13 +50,12 @@ Request::~Request()
 
 const std::string Request::ToString() const
 {
-	std::string str=(mType==HTTP_GET) ? "GET" : "POST";
+	std::string str=(mType==HTTP_GET) ? "GET" : "HEAD";
 	str+=" "+mUri+" ";
 	str+=Http::GetVersionString(GetHttpVersion());
 	str+=" "+Http::GetStatusString(GetStatus())+"\n";
-	std::map<std::string, std::string>::const_iterator it=mHeader.begin();
 
-	for (;it!=mHeader.end();++it)
+	for (std::map<std::string, std::string>::const_iterator it=mHeader.begin();it!=mHeader.end();++it)
 	{
 		str+="'"+it->first+"':'"+it->second+"'\n";
 	}
@@ -82,7 +81,6 @@ void Request::SetConnection(Connection *mConnection)
 {
 	mConnection=mConnection;
 }
-
 
 const Site& Request::GetSite() const
 {
@@ -142,7 +140,8 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 			retVal=true;
 
 		}
-		else request->mParseState=0;
+		else
+			request->mParseState=0;
 	}
 	return retVal;
 }
@@ -162,9 +161,13 @@ size_t Request::ParseRequestLine(Request* request, const char* data, size_t size
 			if (state==0&&pos>0) // parse METHOD
 			{
 				std::string method(data,pos);
-				if (method.compare(0,3,"GET")==0)
+				if (pos==3&&method.compare(0,3,"GET")==0)
 				{
 					request->mType=Request::HTTP_GET;
+				}
+				else if (pos==4&&method.compare(0,4,"HEAD")==0)
+				{
+					request->mType=Request::HTTP_HEAD;
 				}
 				else
 				{

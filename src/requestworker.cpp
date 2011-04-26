@@ -29,8 +29,8 @@
 #include "site.h"
 #include "filehandler.h"
 
-RequestWorker::RequestWorker(RequestQueue& requestQueue)
-	: mRequestQueue(requestQueue)
+RequestWorker::RequestWorker(RequestQueue& requestQueue) :
+	mRequestQueue(requestQueue)
 {
 	mFilehandler=new FileHandler();
 }
@@ -49,13 +49,24 @@ void RequestWorker::DoWork()
 	const Request* request;
 	while ((request=mRequestQueue.GetNextRequest()))
 	{
-		HandleRequest(request);
+		switch (request->GetHttpType())
+		{
+		case Request::HTTP_HEAD:
+			HandleHead(request);
+			break;
+		case Request::HTTP_GET:
+			HandleGet(request);
+			break;
+		default:
+			HandleUnsupported(request);
+			break;
+		}
 		delete request;
 		request=NULL;
 	}
 }
 
-void RequestWorker::HandleRequest(const Request* request)
+void RequestWorker::HandleGet(const Request* request)
 {
 	Response* response=Response::CreateResponse(request);
 
@@ -101,3 +112,51 @@ void RequestWorker::HandleRequest(const Request* request)
 	request->GetConnection()->SetHasData(true);
 }
 
+void RequestWorker::HandleHead(const Request* request)
+{
+	Response* response=Response::CreateResponse(request);
+
+	if (request->GetStatus()==Http::HTTP_OK)
+	{
+		const std::string & root=request->GetSite().GetDocumentRoot();
+
+		const std::string & filename=root+request->GetUri();
+
+		FileHandler::FileStatus status;
+		const File* file=mFilehandler->GetFile(filename,status);
+
+		if (file!=NULL)
+		{
+			response->SetStatus(Http::HTTP_OK);
+		}
+		else
+
+		{
+			switch (status)
+			{
+			case FileHandler::FILESTATUS_NOT_AUTHORIZED:
+				response->SetStatus(Http::HTTP_NO_ACCESS);
+				break;
+			case FileHandler::FILESTATUS_NO_FILE:
+				response->SetStatus(Http::HTTP_NOT_FOUND);
+				break;
+
+			case FileHandler::FILESTATUS_INTERNAL_ERROR:
+			default:
+				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
+				break;
+			}
+
+		}
+	}
+	request->GetConnection()->SetResponse(response);
+	request->GetConnection()->SetHasData(true);
+}
+
+void RequestWorker::HandleUnsupported(const Request* request)
+{
+	Response* response=Response::CreateResponse(request);
+	response->SetStatus(Http::HTTP_NOT_IMPLEMENTED);
+	request->GetConnection()->SetResponse(response);
+	request->GetConnection()->SetHasData(true);
+}

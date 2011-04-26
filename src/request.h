@@ -45,7 +45,7 @@ public:
 	static bool ParseRequest(Request* request, ByteBuffer* buffer);
 	enum RequestType
 	{
-		HTTP_UNDEF=0,HTTP_GET, HTTP_POST
+		HTTP_UNDEF=0,HTTP_GET, HTTP_POST, HTTP_HEAD
 	};
 
 	const std::string ToString() const;
