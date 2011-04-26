@@ -66,7 +66,6 @@ void ConnectionWorker::DoWork()
 		mMutex->Lock();
 		mList.merge(mAddList);
 		mMutex->UnLock();
-
 		std::list<Connection*>::iterator it=mList.begin();
 		if (mList.size()==0)
 			usleep(500);
@@ -75,9 +74,7 @@ void ConnectionWorker::DoWork()
 			{
 				Connection* con=*it;
 
-				State state=NO_ACTION;
-
-				state=Read(con);
+				State state=Read(con);
 
 				if (con->HasData())
 				{
@@ -95,6 +92,7 @@ void ConnectionWorker::DoWork()
 				case REMOVE:
 					it=mList.erase(it);
 					RemoveConnection(con);
+					con=0;
 					break;
 				case WAIT_FOR_IO:
 					it=mList.erase(it);
