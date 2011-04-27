@@ -25,7 +25,6 @@
 #define MYHTTPD_H_
 #include <vector>
 #include "site.h"
-#include "logger.h"
 
 #define Version 0.1
 #define VersionString "0.1"
@@ -38,7 +37,7 @@ class ConnectionManager;
 struct RunOptions
 {
 	std::string configFile;
-	Logger::LogType defaultLogType;
+	bool debugLog;
 };
 
 class MyHttpd

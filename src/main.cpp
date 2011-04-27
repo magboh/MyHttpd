@@ -93,9 +93,7 @@ Action ParseArgs(int argc, char** argv, RunOptions& options)
 	if (logLevel.length()>0)
 	{
 		if (logLevel.compare("DEBUG")==0)
-			options.defaultLogType=Logger::DEBUG;
-		if (logLevel.compare("INFO")==0)
-			options.defaultLogType=Logger::INFO;
+			options.debugLog=true;
 	}
 	return action;
 }
@@ -103,7 +101,7 @@ Action ParseArgs(int argc, char** argv, RunOptions& options)
 int main(int argc, char** argv)
 {
 	RunOptions options;
-	options.defaultLogType=Logger::INFO;
+	options.debugLog=false;
 	options.configFile="/etc/myhttpd.conf";
 
 	Action action=ParseArgs(argc,argv,options);

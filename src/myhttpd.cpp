@@ -30,6 +30,7 @@
 #include "connectionmanager.h"
 #include "acceptworker.h"
 #include "config/configreader.h"
+#include "logger.h"
 
 MyHttpd* MyHttpd::myhttpd=NULL;
 
@@ -65,7 +66,8 @@ int MyHttpd::Start(const RunOptions& options)
 		return 0;
 	}
 
-	sAppLog.SetLogLevel(options.defaultLogType);
+
+	sAppLog.SetLogLevel((options.debugLog)?Logger::DEBUG:Logger::INFO);
 	BlockSignals();
 
 	mRequestQueue=new RequestQueue();
