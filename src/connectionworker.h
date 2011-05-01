@@ -35,7 +35,11 @@ class ConnectionWorker:public Thread
 {
 public:
 	ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
-
+	/**
+	 * Called from ConnectionManager when there is work read/write/close to be done on this connection
+	 * Method is thread-safe, and takes ownership of the Connection object con.
+	 * @param con
+	 */
 	void HandleConnection(Connection* con);
 	virtual ~ConnectionWorker();
 private:
