@@ -76,22 +76,27 @@ void ConnectionWorker::DoWork()
 		else
 		{
 			it=mList.begin();
-			while ((it!=mList.end()) && (++loopCounter<10)) // Not more than 10 laps, before checking for more connections
+			while ((it!=mList.end())&&(++loopCounter<10)) // Not more than 10 laps, before checking for more connections
 			{
 				Connection* con=*it;
 
-				State state=Read(con);
-
-				if (con->HasData())
+				if (!(con->HasData()||con->HasDataPending()))
 				{
-					state=Write(con);
+					State state=Read(con);
 				}
-
-				if (con->HasDataPending())
+				else
 				{
-					state=NO_ACTION;
-				}
 
+					if (con->HasData())
+					{
+						state=Write(con);
+					}
+
+					if (con->HasDataPending())
+					{
+						state=NO_ACTION;
+					}
+				}
 				// Determine what to do with current con, depending on state
 				switch (state)
 				{
@@ -103,6 +108,7 @@ void ConnectionWorker::DoWork()
 				case WAIT_FOR_IO:
 					it=mList.erase(it);
 					mConnectionManager.AddConnection(con);
+					con=0;
 					break;
 				case NO_ACTION:
 					it++;
