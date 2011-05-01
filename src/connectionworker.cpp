@@ -61,16 +61,22 @@ void ConnectionWorker::RemoveConnection(Connection *con)
 
 void ConnectionWorker::DoWork()
 {
+	std::list<Connection*>::iterator it=mList.begin();
 	while (isRunning())
 	{
+		char loopCounter=0;
 		mMutex->Lock();
 		mList.merge(mAddList);
 		mMutex->UnLock();
-		std::list<Connection*>::iterator it=mList.begin();
+
 		if (mList.size()==0)
+		{
 			usleep(500);
+		}
 		else
-			while (it!=mList.end())
+		{
+			it=mList.begin();
+			while ((it!=mList.end()) && (++loopCounter<10)) // Not more than 10 laps, before checking for more connections
 			{
 				Connection* con=*it;
 
@@ -103,6 +109,7 @@ void ConnectionWorker::DoWork()
 					break;
 				}
 			}
+		}
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
 }
