@@ -26,12 +26,11 @@
 
 #include "http.h"
 
-class Request;
 class ByteBuffer;
 class Response:public Http
 {
 public:
-	static Response* CreateResponse(const Request* request);
+	Response(Http::Version version, bool keepAlive);
 	virtual ~Response();
 
 	void SetContentLength(unsigned int length);
@@ -43,7 +42,6 @@ public:
 
 	int ToBuffer(ByteBuffer* buffer) const;
 private:
-	Response();
 	unsigned int mContentLength;
 	int mFile;
 };

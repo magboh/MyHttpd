@@ -24,20 +24,17 @@
 #include <sstream>
 #include <string.h>
 
-#include "request.h"
 #include "response.h"
 #include "bytebuffer.h"
 #include "myhttpd.h"
 
 #define EOL "\r\n"
 
-Response *Response::CreateResponse(const Request *request)
+Response::Response(Http::Version version, bool keepAlive) :
+	mContentLength(0), mFile(-1)
 {
-	Response* response=new Response();
-	response->SetHttpVersion(request->GetHttpVersion());
-	response->SetKeepAlive(request->GetKeepAlive());
-
-	return response;
+	SetHttpVersion(version);
+	SetKeepAlive(keepAlive);
 }
 
 Response::~Response()
@@ -47,12 +44,6 @@ Response::~Response()
 		//		close(mFile);
 		mFile=-1;
 	}
-}
-
-Response::Response()
-{
-	mFile=-1;
-	mContentLength=0;
 }
 
 int Response::GetFile() const
@@ -83,7 +74,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	Http::Status status=GetStatus();
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
-	ss<<"Server: MyHttpd "<< std::string(VersionString) << EOL;
+	ss<<"Server: MyHttpd "<<std::string(VersionString)<<EOL;
 	ss<<"Connection: ";
 	if (GetKeepAlive())
 	{
@@ -110,7 +101,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
-	buffer->Add(ss.str().c_str(), len);
+	buffer->Add(ss.str().c_str(),len);
 	return len;
 }
 

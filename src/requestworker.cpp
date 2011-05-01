@@ -68,7 +68,7 @@ void RequestWorker::DoWork()
 
 void RequestWorker::HandleGet(const Request* request)
 {
-	Response* response=Response::CreateResponse(request);
+	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
@@ -114,7 +114,7 @@ void RequestWorker::HandleGet(const Request* request)
 
 void RequestWorker::HandleHead(const Request* request)
 {
-	Response* response=Response::CreateResponse(request);
+	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
@@ -155,7 +155,7 @@ void RequestWorker::HandleHead(const Request* request)
 
 void RequestWorker::HandleUnsupported(const Request* request)
 {
-	Response* response=Response::CreateResponse(request);
+	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 	response->SetStatus(Http::HTTP_NOT_IMPLEMENTED);
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
