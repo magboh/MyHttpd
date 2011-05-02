@@ -31,23 +31,27 @@ class RequestQueue;
 class Connection;
 class ConnectionManager;
 class Mutex;
+class Site;
 class ConnectionWorker:public Thread
 {
 public:
-	ConnectionWorker(ConnectionManager& connectionManager);
+	ConnectionWorker();
 	/**
 	 * Called from ConnectionManager when there is work read/write/close to be done on this connection
 	 * Method is thread-safe, and takes ownership of the Connection object con.
 	 * @param con
 	 */
-	void HandleConnection(Connection* con);
+	void AddConnection(Connection* con);
+	void CreateConnection(int socket, const Site& site);
 	virtual ~ConnectionWorker();
+	size_t GetQueueSize();
 private:
 
 	virtual void DoWork();
 
 	void RemoveConnection(Connection* con);
-
+	void UpdateConnectionIo();
+	void WaitIo(Connection* con);
 	enum State
 	{
 		REMOVE, WAIT_FOR_IO, NO_ACTION
@@ -55,10 +59,6 @@ private:
 
 	State Read(Connection* con);
 	State Write(Connection* con);
-	/**
-	 *
-	 */
-	ConnectionManager& mConnectionManager;
 	/**
 	 * used as the epoll() socket
 	 */
@@ -73,7 +73,7 @@ private:
 	 * List of Connections newly added. Not just added to mList
 	 */
 	std::list<Connection*> mAddList;
-
+	size_t mQueSize;
 	Mutex* mMutex;
 };
 

@@ -30,7 +30,7 @@
 
 class ConfigReader;
 class AcceptWorker;
-class ConnectionManager;
+class ConnectionWorker;
 
 struct RunOptions
 {
@@ -53,14 +53,13 @@ public:
 	static MyHttpd* myhttpd;
 private:
 	AcceptWorker* mAcceptWorker;
-	ConnectionManager* mConnectionManager;
 	bool mKeepRunning;
 	int mNumConnections;
 	int mMaxConnections;
 
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
-
+	std::vector <ConnectionWorker*> mWorkerVector;
 	std::vector<Site*> mSites;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
@@ -77,6 +76,19 @@ private:
 	void BlockSignals();
 
 	bool LoadConfig(ConfigReader* cr, const std::string& fileName);
+
+	void AddConnectionWorker(int nr = 1);
+
+	/**
+	 * Tell all added Workers to stop.
+	 */
+	void ShutdownWorkers();
+	/**
+	 * Wait for all Workers to stop.
+	 * Caller thread blocked until all workers done.
+	 */
+	void WaitForWorkers();
+
 };
 
 #endif /* MYHTTPD_H_ */

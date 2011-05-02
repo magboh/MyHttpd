@@ -44,8 +44,8 @@
 #include "bytebuffer.h"
 #include "logger.h"
 
-Connection::Connection(int socket, const Site& site, unsigned char threadNr) :
-	mSocket(socket), mSite(site), mTreadNr(threadNr)
+Connection::Connection(int socket, const Site& site) :
+	mSocket(socket), mSite(site)
 {
 	mSocket=socket;
 

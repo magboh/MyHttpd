@@ -207,9 +207,9 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 	if (child)
 		mServerOptions.SetNoRequstWorkers(GetIntValue(child));
 
-	child=element->FirstChildElement("IOWorkers");
+	child=element->FirstChildElement("ConnectionWorkers");
 	if (child)
-		mServerOptions.SetNoIOWorkers(GetIntValue(child));
+		mServerOptions.SetNoConnectionWorkers(GetIntValue(child));
 
 	child=element->FirstChildElement("RequestBuffer");
 	if (child)
