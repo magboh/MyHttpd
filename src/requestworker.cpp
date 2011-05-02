@@ -29,8 +29,7 @@
 #include "site.h"
 #include "filehandler.h"
 
-RequestWorker::RequestWorker(RequestQueue& requestQueue) :
-	mRequestQueue(requestQueue)
+RequestWorker::RequestWorker()
 {
 	mFilehandler=new FileHandler();
 }
@@ -47,7 +46,8 @@ void RequestWorker::DoWork()
 {
 	/* Handle request until Request queue is closed, IE. returns NULL*/
 	const Request* request;
-	while ((request=mRequestQueue.GetNextRequest()))
+	RequestQueue&  requestQueue = RequestQueue::GetInstance();
+	while ((request=requestQueue.GetNextRequest()))
 	{
 		switch (request->GetHttpType())
 		{

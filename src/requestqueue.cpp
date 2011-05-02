@@ -55,6 +55,11 @@ RequestQueue::~RequestQueue()
 	mCondThread=NULL;
 }
 
+RequestQueue & RequestQueue::GetInstance()
+{
+	static RequestQueue sInstance;
+	return sInstance;
+}
 /***
  * Used by RequestWorker to obtain a request to work with.
  * OWnership of Request is transfered to caller.
@@ -119,7 +124,7 @@ void RequestQueue::AddWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		RequestWorker* rqw=new RequestWorker(*this);
+		RequestWorker* rqw=new RequestWorker();
 		if (rqw->Start())
 		{
 			mWorkerList.push_back(rqw);

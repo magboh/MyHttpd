@@ -26,21 +26,19 @@
 
 #include "thread.h"
 
-class RequestQueue;
 class FileHandler;
 // Worker is responsible to DELETE the request gotten from queue
 
 class RequestWorker:public Thread
 {
 public:
-	RequestWorker(RequestQueue& requestQueue);
+	RequestWorker();
 	virtual ~RequestWorker();
 private:
 	void DoWork();
 	void HandleHead(const Request* request);
 	void HandleGet(const Request* request);
 	void HandleUnsupported(const Request* request);
-	RequestQueue& mRequestQueue;
 	FileHandler* mFilehandler;
 };
 

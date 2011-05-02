@@ -40,8 +40,8 @@
 #include "logger.h"
 #include "mutex.h"
 
-ConnectionWorker::ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
-	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
+ConnectionWorker::ConnectionWorker( ConnectionManager& connectionManager) :
+	mConnectionManager(connectionManager)
 {
 	mMutex=new Mutex();
 	mEpollSocket=epoll_create(1000);
@@ -79,14 +79,13 @@ void ConnectionWorker::DoWork()
 			while ((it!=mList.end())&&(++loopCounter<10)) // Not more than 10 laps, before checking for more connections
 			{
 				Connection* con=*it;
-
+				State state = NO_ACTION;
 				if (!(con->HasData()||con->HasDataPending()))
 				{
-					State state=Read(con);
+					state=Read(con);
 				}
 				else
 				{
-
 					if (con->HasData())
 					{
 						state=Write(con);
@@ -107,7 +106,7 @@ void ConnectionWorker::DoWork()
 					break;
 				case WAIT_FOR_IO:
 					it=mList.erase(it);
-					mConnectionManager.AddConnection(con);
+					mConnectionManager.WaitIo(con);
 					con=0;
 					break;
 				case NO_ACTION:
@@ -138,7 +137,7 @@ ConnectionWorker::State ConnectionWorker::Read(Connection* con)
 	{
 		if (con->Parse())
 		{
-			mRequestQueue.AddRequest(con->GetRequest());
+			RequestQueue::GetInstance().AddRequest(con->GetRequest());
 			con->SetDataPending(true);
 			con->SetRequest(NULL);
 			state=WAIT_FOR_IO;

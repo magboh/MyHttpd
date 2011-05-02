@@ -28,7 +28,6 @@
 
 #define VersionString "0.1"
 
-class RequestQueue;
 class ConfigReader;
 class AcceptWorker;
 class ConnectionManager;
@@ -53,7 +52,6 @@ public:
 	bool LoadConfig(ConfigReader& cr, const std::string& fileName);
 	static MyHttpd* myhttpd;
 private:
-	RequestQueue* mRequestQueue;
 	AcceptWorker* mAcceptWorker;
 	ConnectionManager* mConnectionManager;
 	bool mKeepRunning;

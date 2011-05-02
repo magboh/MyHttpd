@@ -29,7 +29,6 @@
 
 class ConnectionWorker;
 class Site;
-class RequestQueue;
 class IoWorker;
 class Connection;
 
@@ -39,12 +38,12 @@ public:
 	ConnectionManager(int maxConnections);
 	virtual ~ConnectionManager();
 	void CreateConnection(int socket, const Site& site);
-	void HandleConnection(Connection* con);
-	void AddConnection(Connection* con);
+	void HandleIo(Connection* con);
+	void WaitIo(Connection* con);
 	/**
 	 * Add a Worker to handle Connections.
 	 */
-	void AddConnectionWorker(RequestQueue& requestQueue,int nr = 1);
+	void AddConnectionWorker(int nr = 1);
 
 
 	/**

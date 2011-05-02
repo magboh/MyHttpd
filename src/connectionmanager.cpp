@@ -51,23 +51,23 @@ void ConnectionManager::CreateConnection(int socket, const Site& site)
 	mIoWorker->AddConnection(new Connection(socket,site,mCurrentThread++%mWorkerVector.size()));
 }
 
-void ConnectionManager::AddConnection(Connection* con)
+void ConnectionManager::WaitIo(Connection* con)
 {
 	AppLog(Logger::DEBUG,"ConnectionManager AddConnection()");
-	mIoWorker->ModConnection(con);
+	mIoWorker->WaitIo(con);
 }
 
-void ConnectionManager::HandleConnection(Connection* con)
+void ConnectionManager::HandleIo(Connection* con)
 {
 	AppLog(Logger::DEBUG,"ConnectionManager HandleConnection()");
 	mWorkerVector[con->GetThreadNr()]->HandleConnection(con);
 }
 
-void ConnectionManager::AddConnectionWorker(RequestQueue& requestQueue, int nr)
+void ConnectionManager::AddConnectionWorker(int nr)
 {
 	for (int i=0;i<nr;i++)
 	{
-		ConnectionWorker* cqw=new ConnectionWorker(requestQueue,*this);
+		ConnectionWorker* cqw=new ConnectionWorker(*this);
 		if (cqw->Start())
 		{
 			mWorkerVector.push_back(cqw);

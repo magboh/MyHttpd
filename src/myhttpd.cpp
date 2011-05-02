@@ -45,15 +45,12 @@ MyHttpd::MyHttpd()
 {
 	myhttpd=this;
 	mConnectionManager=0;
-	mRequestQueue=0;
 }
 
 MyHttpd::~MyHttpd()
 {
 	if (mConnectionManager)
 		delete mConnectionManager;
-	if (mRequestQueue)
-		delete mRequestQueue;
 }
 
 int MyHttpd::Start(const RunOptions& options)
@@ -70,10 +67,11 @@ int MyHttpd::Start(const RunOptions& options)
 	sAppLog.SetLogLevel((options.debugLog)?Logger::DEBUG:Logger::INFO);
 	BlockSignals();
 
-	mRequestQueue=new RequestQueue();
-	mRequestQueue->AddWorker(mNrRequestWorkers);
+	RequestQueue &requestQueue  =RequestQueue::GetInstance();
+	requestQueue.AddWorker(mNrRequestWorkers);
+
 	mConnectionManager=new ConnectionManager(400);
-	mConnectionManager->AddConnectionWorker(*mRequestQueue,mNrConnectionWorkers);
+	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
 	mConnectionManager->AddIoWorker(1);
 
 	AllowSignals();
@@ -118,9 +116,9 @@ void MyHttpd::Stop()
 	StopSites();
 	// Stop request queue
 	AppLog(Logger::DEBUG,"Shutting down Request Queue");
-	mRequestQueue->Shutdown();
+	RequestQueue::GetInstance().Shutdown();
 	// Wait for request worker threads to die
-	mRequestQueue->WaitForWorkers();
+	RequestQueue::GetInstance().WaitForWorkers();
 
 	// Stop Connections. Should have no more requests to handle
 	// Wait for Connection Threads to die

@@ -69,7 +69,7 @@ void IoWorker::DoWork()
 			}
 			else if ((events[n].events&EPOLLIN)==events[n].events)
 			{
-				mConnectionManager.HandleConnection(con);
+				mConnectionManager.HandleIo(con);
 			}
 		}
 	}
@@ -91,7 +91,7 @@ void IoWorker::AddConnection(Connection* con)
 	}
 }
 
-void IoWorker::ModConnection(Connection* con)
+void IoWorker::WaitIo(Connection* con)
 {
 	AppLog(Logger::DEBUG,"IoWorker::ModConnection");
 	struct epoll_event ev;

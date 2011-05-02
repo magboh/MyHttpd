@@ -66,8 +66,9 @@ public:
 	{
 		return mTreadNr;
 	}
-private:
 
+
+private:
 	Status_t ErrnoToStatus(int error);
 
 	int mSocket;

@@ -39,7 +39,7 @@ public:
 	virtual ~IoWorker();
 	virtual void DoWork();
 	void AddConnection(Connection* con);
-	void ModConnection(Connection* con);
+	void WaitIo(Connection* con);
 private:
 	int mPollSocket;
 	ConnectionManager& mConnectionManager;
