@@ -174,15 +174,23 @@ void MyHttpd::StartSites(const ConfigReader& cr)
 
 void MyHttpd::StopSites()
 {
-	for (unsigned int i=0;i<mSites.size();i++)
+
+	for (size_t i=0;i<mSites.size();i++)
 	{
 		mSites[i]->Stop();
-		delete mSites[i];
 	}
 
 	mAcceptWorker->Stop();
+	mAcceptWorker->Join();
 	delete mAcceptWorker;
 	mAcceptWorker=0;
+
+	for (size_t i=0;i<mSites.size();i++)
+	{
+		delete mSites[i];
+	}
+
+	mSites.clear();
 }
 
 void MyHttpd::AddConnectionWorker(int nr)

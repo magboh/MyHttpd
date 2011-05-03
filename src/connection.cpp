@@ -157,6 +157,10 @@ Connection::Status_t Connection::Write(size_t size)
 				mWritten=0;
 				status=STATUS_DONE;
 			}
+			else
+			{
+				return status;
+			}
 		}
 		else
 		{
@@ -187,6 +191,10 @@ Connection::Status_t Connection::Write(size_t size)
 			{
 				mWriteStatus=2;
 				status=STATUS_DONE;
+			}
+			else
+			{
+				return status;
 			}
 		}
 		else

@@ -52,6 +52,7 @@ ConnectionWorker::~ConnectionWorker()
 void ConnectionWorker::RemoveConnection(Connection *con)
 {
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
+	epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 	delete con;
 }
 
@@ -120,7 +121,7 @@ ConnectionWorker::State ConnectionWorker::Read(Connection* con)
 {
 	State state=NO_ACTION;
 	AppLog(Logger::DEBUG,"ConnectionWorker::Read");
-	Connection::Status_t status=con->Read(256);
+	Connection::Status_t status=con->Read(1024);
 	switch (status)
 	{
 	case Connection::STATUS_OK:
@@ -156,7 +157,7 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 	State state=NO_ACTION;
 
 	con->SetDataPending(false);
-	Connection::Status_t status=con->Write(256);
+	Connection::Status_t status=con->Write(1024);
 	AppLog(Logger::DEBUG,"ConnectionWorker::Write");
 	switch (status)
 	{
@@ -188,7 +189,7 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 
 void ConnectionWorker::UpdateConnectionIo()
 {
-	const int MAX_EVENTS=10;
+	const int MAX_EVENTS=100;
 	const int EPOLL_WAIT=0; /* NO one there, well thread got more things to do*/
 	struct epoll_event events[MAX_EVENTS];
 
@@ -200,7 +201,6 @@ void ConnectionWorker::UpdateConnectionIo()
 		// Tell Connection Manager to handle IO for this connection
 		if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
 		{
-			epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 			RemoveConnection(con);
 		}
 		else if ((events[n].events&EPOLLIN)==events[n].events)

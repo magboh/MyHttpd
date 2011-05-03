@@ -58,7 +58,7 @@ void AcceptWorker::DoWork()
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
 
-	for (;;)
+	while(isRunning())
 	{
 		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,EPOLL_WAIT);
 		if (nfds==-1)
