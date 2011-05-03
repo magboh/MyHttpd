@@ -30,7 +30,6 @@
 class RequestQueue;
 class Connection;
 class ConnectionManager;
-class Mutex;
 class Site;
 class ConnectionWorker:public Thread
 {
@@ -74,7 +73,6 @@ private:
 	 */
 	std::list<Connection*> mAddList;
 	size_t mQueSize;
-	Mutex* mMutex;
 };
 
 #endif /* CONNECTIONWORKER_H_ */
