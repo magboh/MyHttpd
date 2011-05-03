@@ -17,7 +17,7 @@ class Connection
 {
 public:
 	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE,STATUS_CLOSE};
-	Connection(int socket, const Site& site);
+	Connection(int socket, const Site* site);
 	virtual ~Connection();
 
 	/**
@@ -80,7 +80,7 @@ private:
 	time_t mLastRequest;
 	bool mCloseable;
 	bool mPendingData;
-	const Site& mSite;
+	const Site* mSite;
 	unsigned char mTreadNr;
 };
 

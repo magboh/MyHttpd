@@ -82,7 +82,7 @@ void AcceptWorker::DoWork()
 				{
 					int flags=fcntl(clientSock,F_GETFL,0);
 					fcntl(clientSock,F_SETFL,flags|O_NONBLOCK);
-					cw->CreateConnection(clientSock,*site);
+					cw->CreateConnection(clientSock,site);
 				}
 				else
 					perror("Accept():");

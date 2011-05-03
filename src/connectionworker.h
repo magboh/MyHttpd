@@ -41,7 +41,7 @@ public:
 	 * @param con
 	 */
 	void AddConnection(Connection* con);
-	void CreateConnection(int socket, const Site& site);
+	void CreateConnection(int socket, const Site* site);
 	virtual ~ConnectionWorker();
 	/**
 	 * Get the number of connections Worker currently working on. May not be 100% accurate

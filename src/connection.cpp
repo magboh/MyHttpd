@@ -44,7 +44,7 @@
 #include "bytebuffer.h"
 #include "logger.h"
 
-Connection::Connection(int socket, const Site& site) :
+Connection::Connection(int socket, const Site* site) :
 	mSocket(socket), mSite(site)
 {
 	mSocket=socket;
@@ -109,12 +109,15 @@ Connection::Status_t Connection::Read(size_t size)
 	ssize_t len=read(mSocket,mReadBuffer->GetCurrentBufferPtr(),toRead);
 	int err=errno;
 
-	if (len>0)
+	if (len>0 )
 	{
-		std::stringstream ss;
-		ss<<"Bytes Read:" << len ;
-		AppLog(Logger::DEBUG,ss);
 		mReadBuffer->Add(len);
+		if (IsAppLog(Logger::DEBUG))
+		{
+			std::stringstream ss;
+			ss<<"Bytes Read:" << len ;
+			AppLog(Logger::DEBUG,ss);
+		}
 	}
 	else if (len==0)
 	{

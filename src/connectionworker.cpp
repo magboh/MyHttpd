@@ -40,7 +40,8 @@
 
 #include "logger.h"
 
-ConnectionWorker::ConnectionWorker()
+ConnectionWorker::ConnectionWorker():
+	mQueSize(0)
 {
 	mEpollSocket=epoll_create(1000);
 }
@@ -51,7 +52,8 @@ ConnectionWorker::~ConnectionWorker()
 
 void ConnectionWorker::RemoveConnection(Connection *con)
 {
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
 	epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 	delete con;
 }
@@ -69,12 +71,11 @@ void ConnectionWorker::DoWork()
 		if (nr>10000)
 		{
 			std::stringstream ss;
-			ss<<"list.size=" << mList.size();
+			ss<<"list.size="<<mList.size() << " mqueuesize=" << mQueSize;
 			nr=0;
 			AppLog(Logger::INFO,ss.str());
 		}
 		it=mList.begin();
-		mQueSize = mList.size();
 		while ((it!=mList.end())&&(++loopCounter<2)) // Not more than 10 laps, before checking for more connections
 		{
 			Connection* con=*it;
@@ -95,14 +96,15 @@ void ConnectionWorker::DoWork()
 			{
 			case REMOVE:
 				it=mList.erase(it);
-				epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 				RemoveConnection(con);
 				con=0;
+				--mQueSize;
 				break;
 			case WAIT_FOR_IO:
 				it=mList.erase(it);
 				WaitIo(con);
 				con=0;
+				--mQueSize;
 				break;
 			case NO_ACTION:
 				it++;
@@ -120,7 +122,8 @@ void ConnectionWorker::DoWork()
 ConnectionWorker::State ConnectionWorker::Read(Connection* con)
 {
 	State state=NO_ACTION;
-	AppLog(Logger::DEBUG,"ConnectionWorker::Read");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::Read");
 	Connection::Status_t status=con->Read(1024);
 	switch (status)
 	{
@@ -158,7 +161,8 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 
 	con->SetDataPending(false);
 	Connection::Status_t status=con->Write(1024);
-	AppLog(Logger::DEBUG,"ConnectionWorker::Write");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::Write");
 	switch (status)
 	{
 	case Connection::STATUS_DONE:
@@ -190,11 +194,14 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 void ConnectionWorker::UpdateConnectionIo()
 {
 	const int MAX_EVENTS=100;
-	const int EPOLL_WAIT=0; /* NO one there, well thread got more things to do*/
+	const int EPOLL_WAIT=0;  /* NO one there, well thread got more things to do*/
+	const int EPOLL_WAIT_EMPTY=500;  /* We have no other to worry about. Wait a while*/
 	struct epoll_event events[MAX_EVENTS];
 
-	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,mList.size()>0 ? EPOLL_WAIT : 500);
-	AppLog(Logger::DEBUG,"ConnectionWorker::UpdateConnectionIo");
+	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS, mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
+
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::UpdateConnectionIo");
 	for (int n=0;n<nfds;n++)
 	{
 		Connection* con=static_cast<Connection*> (events[n].data.ptr);
@@ -205,20 +212,23 @@ void ConnectionWorker::UpdateConnectionIo()
 		}
 		else if ((events[n].events&EPOLLIN)==events[n].events)
 		{
-			if (find(mList.begin(),mList.end(),con)!=mList.end())
-			{
-				AppLog(Logger::CRIT,"ERROR ERROR");
-				assert(false);
-			}
-			else
-				mList.push_back(con);
+			/*			if (find(mList.begin(),mList.end(),con)!=mList.end())
+			 {
+			 AppLog(Logger::CRIT,"ERROR ERROR");
+			 assert(false);
+			 }
+			 else
+			 */
+			mQueSize++;
+			mList.push_back(con);
 		}
 	}
 }
 
 void ConnectionWorker::AddConnection(Connection* con)
 {
-	AppLog(Logger::DEBUG,"ConnectionWorker::AddConnection");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::AddConnection");
 	struct epoll_event ev;
 
 	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
@@ -233,7 +243,8 @@ void ConnectionWorker::AddConnection(Connection* con)
 
 void ConnectionWorker::WaitIo(Connection* con)
 {
-	AppLog(Logger::DEBUG,"ConnectionWorker::WaitIo");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::WaitIo");
 	struct epoll_event ev;
 	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
 	ev.data.ptr=(void*) con;
@@ -245,12 +256,12 @@ void ConnectionWorker::WaitIo(Connection* con)
 	}
 }
 
-void ConnectionWorker::CreateConnection(int socket, const Site& site)
+void ConnectionWorker::CreateConnection(int socket, const Site* site)
 {
-	AppLog(Logger::DEBUG,"ConnectionWorker::CreateConnection");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::CreateConnection");
 	AddConnection(new Connection(socket,site));
 }
-
 
 size_t ConnectionWorker::GetQueueSize()
 {

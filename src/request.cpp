@@ -32,7 +32,7 @@
 #include "site.h"
 #include "logger.h"
 
-Request::Request(Connection* connection, const Site& site) :
+Request::Request(Connection* connection, const Site* site) :
 	mSite(site)
 {
 	// TODO Auto-generated constructor stub
@@ -82,7 +82,7 @@ void Request::SetConnection(Connection *mConnection)
 	mConnection=mConnection;
 }
 
-const Site& Request::GetSite() const
+const Site* Request::GetSite() const
 {
 	return mSite;
 }
