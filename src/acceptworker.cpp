@@ -50,34 +50,24 @@ AcceptWorker::~AcceptWorker()
 
 void AcceptWorker::DoWork()
 {
-#define MAX_EVENTS 1000
+	const int MAX_EVENTS=100;
+	const int EPOLL_WAIT=500;
 
 	struct epoll_event events[MAX_EVENTS];
 
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
 
-	size_t worker=0;
-	size_t workerMax= mConWorkerVector.size();
-
 	for (;;)
 	{
-		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,-1);
+		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,EPOLL_WAIT);
 		if (nfds==-1)
 		{
 			perror("AcceptWorker::DoWork() epoll_wait:");
 			AppLog(Logger::ERROR,"epoll_wait() failed");
 		}
-		ConnectionWorker *cw=mConWorkerVector[0];;
-		int small=cw->GetQueueSize();
-		for (int i=1;i<workerMax;i++)
-		{
-			if (mConWorkerVector[i]->GetQueueSize() < small )
-			{
-				small=mConWorkerVector[i]->GetQueueSize();
-				cw=mConWorkerVector[i];
-			}
-		}
+
+		ConnectionWorker *cw=GetWorker();
 
 		for (int n=0;n<nfds;++n)
 		{
@@ -93,8 +83,6 @@ void AcceptWorker::DoWork()
 					int flags=fcntl(clientSock,F_GETFL,0);
 					fcntl(clientSock,F_SETFL,flags|O_NONBLOCK);
 					cw->CreateConnection(clientSock,*site);
-					if(++worker>=workerMax)
-						worker=0;
 				}
 				else
 					perror("Accept():");
@@ -127,4 +115,21 @@ void AcceptWorker::DeleteSite(Site* site)
 	{
 		perror("AcceptWorker::AddSite()");
 	}
+}
+
+ConnectionWorker *AcceptWorker::GetWorker()
+{
+	size_t workerMax= mConWorkerVector.size();
+	ConnectionWorker *cw=mConWorkerVector[0];
+	size_t small=cw->GetQueueSize();
+
+	for (size_t i=1;i<workerMax;i++)
+	{
+		if (mConWorkerVector[i]->GetQueueSize() < small )
+		{
+			small=mConWorkerVector[i]->GetQueueSize();
+			cw=mConWorkerVector[i];
+		}
+	}
+	return cw;
 }

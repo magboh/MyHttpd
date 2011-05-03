@@ -43,6 +43,11 @@ public:
 	void AddConnection(Connection* con);
 	void CreateConnection(int socket, const Site& site);
 	virtual ~ConnectionWorker();
+	/**
+	 * Get the number of connections Worker currently working on. May not be 100% accurate
+	 * Thread-safe
+	 * @return
+	 */
 	size_t GetQueueSize();
 private:
 

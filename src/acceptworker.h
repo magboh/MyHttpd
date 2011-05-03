@@ -45,7 +45,7 @@ public:
 	void DeleteSite(Site* site);
 private:
 	virtual void DoWork();
-
+	ConnectionWorker *GetWorker();
 	int mEpollSocket;
 	std::vector <ConnectionWorker*>& mConWorkerVector;
 };
