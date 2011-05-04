@@ -44,6 +44,9 @@ public:
 	void AddSite(Site* site);
 	void DeleteSite(Site* site);
 private:
+	AcceptWorker(const AcceptWorker &);  // No implementation
+	AcceptWorker& operator=(const AcceptWorker& rhs);  // No implementation
+
 	virtual void DoWork();
 	ConnectionWorker *GetWorker();
 	int mEpollSocket;

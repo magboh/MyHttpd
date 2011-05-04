@@ -39,8 +39,8 @@ public:
 	 */
 	void UnLock();
 private:
-	Mutex(const Mutex &);
-	Mutex& operator=(const Mutex &);
+	Mutex(const Mutex &);  // No implementation
+	Mutex& operator=(const Mutex &);  // No implementation
 
 	pthread_mutex_t *mMutex;
 };

@@ -35,10 +35,15 @@ public:
 	RequestWorker();
 	virtual ~RequestWorker();
 private:
+	RequestWorker(const RequestWorker &);  // No implementation
+	RequestWorker& operator=(const RequestWorker& rhs);  // No implementation
+
 	void DoWork();
 	void HandleHead(const Request* request);
 	void HandleGet(const Request* request);
 	void HandleUnsupported(const Request* request);
+
+
 	FileHandler* mFilehandler;
 };
 

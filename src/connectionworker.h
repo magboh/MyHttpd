@@ -48,6 +48,8 @@ public:
 	 */
 	size_t GetQueueSize();
 private:
+	ConnectionWorker(const ConnectionWorker &);  // No implementation
+	ConnectionWorker& operator=(const ConnectionWorker& rhs);  // No implementation
 
 	virtual void DoWork();
 

@@ -76,6 +76,8 @@ void ConnectionWorker::DoWork()
 
 		UpdateConnectionIo();
 		nr++;
+
+#if 0
 		if (nr>10000)
 		{
 			std::stringstream ss;
@@ -83,6 +85,7 @@ void ConnectionWorker::DoWork()
 			nr=0;
 			AppLog(Logger::INFO,ss.str());
 		}
+#endif
 		it=mList.begin();
 
 		while ((it!=mList.end())&&(++loopCounter<2)) // Not more than 10 laps, before checking for more connections
@@ -221,13 +224,14 @@ void ConnectionWorker::UpdateConnectionIo()
 		}
 		else if ((events[n].events&EPOLLIN)==events[n].events)
 		{
-			/*			if (find(mList.begin(),mList.end(),con)!=mList.end())
+#if 0
+			if (find(mList.begin(),mList.end(),con)!=mList.end())
 			 {
 			 AppLog(Logger::CRIT,"ERROR ERROR");
 			 assert(false);
 			 }
 			 else
-			 */
+#endif
 			mQueSize++;
 			mList.push_back(con);
 		}

@@ -58,10 +58,14 @@ public:
 	void SetConnection(Connection *mConnection);
 private:
 	Request(const Request &);
+	Request& operator=(const Request& rhs);  // No implementation
+
 	enum
 	{
 		MAX_URI_LENGTH=2048
 	};
+	const Site* mSite;
+
 	std::string mHost;
 	std::string mUri;
 
@@ -69,7 +73,6 @@ private:
 	Connection* mConnection;
 	int mParseState;
 	std::map<std::string, std::string> mHeader;
-	const Site* mSite;
 
 	static size_t ParseRequestLine(Request* request, const char* data, size_t size);
 	static bool ParseRequestHeaders(Request* request, const char* data, size_t size,size_t& position);
