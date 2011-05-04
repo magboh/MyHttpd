@@ -32,107 +32,118 @@
 #include <cassert>
 #include <sstream>
 #include <iostream>
+#include <stdio.h>
+#include <algorithm>
 #include "connection.h"
-#include "connectionmanager.h"
 #include "connectionworker.h"
 #include "requestqueue.h"
 
 #include "logger.h"
-#include "mutex.h"
 
-ConnectionWorker::ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager) :
-	mRequestQueue(requestQueue), mConnectionManager(connectionManager)
+ConnectionWorker::ConnectionWorker() :
+	mQueSize(0)
 {
-	mMutex=new Mutex();
-	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionWorker::~ConnectionWorker()
 {
-	delete mMutex;
-	mMutex=0;
 }
 
 void ConnectionWorker::RemoveConnection(Connection *con)
 {
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionQueueWorker::RemoveConnection");
+	epoll_ctl(mEpollSocket,EPOLL_CTL_DEL,con->GetSocket(),0);
 	delete con;
 }
 
 void ConnectionWorker::DoWork()
 {
+	mEpollSocket=epoll_create(1000);
+
+	if (mEpollSocket==-1)
+	{
+		AppLog(Logger::ERROR,"ConnectionWorker leaving on epoll_create() error");
+		return;
+	}
+
 	std::list<Connection*>::iterator it=mList.begin();
+
+	int nr=0;
 	while (isRunning())
 	{
 		char loopCounter=0;
-		mMutex->Lock();
-		mList.merge(mAddList);
-		mMutex->UnLock();
 
-		if (mList.size()==0)
+		UpdateConnectionIo();
+		nr++;
+
+#if 0
+		if (nr>10000)
 		{
-			usleep(500);
+			std::stringstream ss;
+			ss<<"list.size="<<mList.size()<<" mqueuesize="<<mQueSize;
+			nr=0;
+			AppLog(Logger::INFO,ss.str());
 		}
-		else
+#endif
+		it=mList.begin();
+
+		while ((it!=mList.end())&&(++loopCounter<2)) // Not more than 10 laps, before checking for more connections
 		{
-			it=mList.begin();
-			while ((it!=mList.end()) && (++loopCounter<10)) // Not more than 10 laps, before checking for more connections
+			Connection* con=*it;
+			State state=NO_ACTION;
+			state=Read(con);
+
+			if (con->HasData())
 			{
-				Connection* con=*it;
+				state=Write(con);
+			}
 
-				State state=Read(con);
-
-				if (con->HasData())
-				{
-					state=Write(con);
-				}
-
-				if (con->HasDataPending())
-				{
-					state=NO_ACTION;
-				}
-
-				// Determine what to do with current con, depending on state
-				switch (state)
-				{
-				case REMOVE:
-					it=mList.erase(it);
-					RemoveConnection(con);
-					con=0;
-					break;
-				case WAIT_FOR_IO:
-					it=mList.erase(it);
-					mConnectionManager.AddConnection(con);
-					break;
-				case NO_ACTION:
-					it++;
-					break;
-				}
+			if (con->HasDataPending())
+			{
+				state=NO_ACTION;
+			}
+			// Determine what to do with current con, depending on state
+			switch (state)
+			{
+			case REMOVE:
+				it=mList.erase(it);
+				RemoveConnection(con);
+				con=0;
+				--mQueSize;
+				break;
+			case WAIT_FOR_IO:
+				it=mList.erase(it);
+				WaitIo(con);
+				con=0;
+				--mQueSize;
+				break;
+			case NO_ACTION:
+				it++;
+				break;
 			}
 		}
 	}
 	AppLog(Logger::DEBUG,"ConnectionQueueWorker leaving");
-}
 
-void ConnectionWorker::HandleConnection(Connection* con)
-{
-	AppLog(Logger::DEBUG,"ConnectionQueueWorker::HandleConnection");
-	mMutex->Lock();
-	mAddList.push_back(con);
-	mMutex->UnLock();
+	close(mEpollSocket);
+	mEpollSocket=-1;
+
 }
 
 ConnectionWorker::State ConnectionWorker::Read(Connection* con)
 {
 	State state=NO_ACTION;
-	Connection::Status_t status=con->Read(128);
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::Read");
+	Connection::Status_t status=con->Read(1024);
 	switch (status)
 	{
 	case Connection::STATUS_OK:
 	{
 		if (con->Parse())
 		{
-			mRequestQueue.AddRequest(con->GetRequest());
+			RequestQueue::GetInstance().AddRequest(con->GetRequest());
 			con->SetDataPending(true);
 			con->SetRequest(NULL);
 			state=WAIT_FOR_IO;
@@ -161,7 +172,9 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 	State state=NO_ACTION;
 
 	con->SetDataPending(false);
-	Connection::Status_t status=con->Write(128);
+	Connection::Status_t status=con->Write(1024);
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::Write");
 	switch (status)
 	{
 	case Connection::STATUS_DONE:
@@ -188,4 +201,82 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 	}
 
 	return state;
+}
+
+void ConnectionWorker::UpdateConnectionIo()
+{
+	const int MAX_EVENTS=100;
+	const int EPOLL_WAIT=0; /* NO one there, well thread got more things to do*/
+	const int EPOLL_WAIT_EMPTY=500; /* We have no other to worry about. Wait a while*/
+	struct epoll_event events[MAX_EVENTS];
+
+	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
+
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::UpdateConnectionIo");
+	for (int n=0;n<nfds;n++)
+	{
+		Connection* con=static_cast<Connection*> (events[n].data.ptr);
+		// Tell Connection Manager to handle IO for this connection
+		if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
+		{
+			RemoveConnection(con);
+		}
+		else if ((events[n].events&EPOLLIN)==events[n].events)
+		{
+#if 0
+			if (find(mList.begin(),mList.end(),con)!=mList.end())
+			 {
+			 AppLog(Logger::CRIT,"ERROR ERROR");
+			 assert(false);
+			 }
+			 else
+#endif
+			mQueSize++;
+			mList.push_back(con);
+		}
+	}
+}
+
+void ConnectionWorker::AddConnection(Connection* con)
+{
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::AddConnection");
+	struct epoll_event ev;
+
+	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
+	ev.data.ptr=(void*) con;
+
+	if (epoll_ctl(mEpollSocket,EPOLL_CTL_ADD,con->GetSocket(),&ev))
+	{
+		perror("ConnectionWorker::AddConnection");
+		AppLog(Logger::CRIT,"epoll_ctl failed");
+	}
+}
+
+void ConnectionWorker::WaitIo(Connection* con)
+{
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::WaitIo");
+	struct epoll_event ev;
+	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
+	ev.data.ptr=(void*) con;
+
+	if (epoll_ctl(mEpollSocket,EPOLL_CTL_MOD,con->GetSocket(),&ev))
+	{
+		perror("ConnectionWorker::ModConnection");
+		AppLog(Logger::CRIT,"epoll_ctl failed");
+	}
+}
+
+void ConnectionWorker::CreateConnection(int socket, const Site* site)
+{
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,"ConnectionWorker::CreateConnection");
+	AddConnection(new Connection(socket,site));
+}
+
+size_t ConnectionWorker::GetQueueSize()
+{
+	return mQueSize;
 }

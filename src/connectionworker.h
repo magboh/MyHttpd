@@ -27,27 +27,37 @@
 #include <list>
 #include "thread.h"
 
-class RequestQueue;
+class Site;
 class Connection;
-class ConnectionManager;
-class Mutex;
+
 class ConnectionWorker:public Thread
 {
 public:
-	ConnectionWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
+	ConnectionWorker();
 	/**
-	 * Called from ConnectionManager when there is work read/write/close to be done on this connection
-	 * Method is thread-safe, and takes ownership of the Connection object con.
-	 * @param con
+	 *  Creates and handles Read/Writes of the socket.
+	 * @param socket of new connection
+	 * @param site, the site connected to
 	 */
-	void HandleConnection(Connection* con);
+	void CreateConnection(int socket, const Site* site);
 	virtual ~ConnectionWorker();
+	/**
+	 * Get the number of connections Worker currently working on. May not be 100% accurate
+	 * Thread-safe
+	 * @return
+	 */
+	size_t GetQueueSize();
 private:
+	ConnectionWorker(const ConnectionWorker &);  // No implementation
+	ConnectionWorker& operator=(const ConnectionWorker& rhs);  // No implementation
 
 	virtual void DoWork();
 
+	void AddConnection(Connection* con);
 	void RemoveConnection(Connection* con);
 
+	void UpdateConnectionIo();
+	void WaitIo(Connection* con);
 	enum State
 	{
 		REMOVE, WAIT_FOR_IO, NO_ACTION
@@ -55,11 +65,6 @@ private:
 
 	State Read(Connection* con);
 	State Write(Connection* con);
-	/**
-	 *
-	 */
-	RequestQueue& mRequestQueue;
-	ConnectionManager& mConnectionManager;
 	/**
 	 * used as the epoll() socket
 	 */
@@ -69,13 +74,10 @@ private:
 	 * List of Connections this worker handles
 	 */
 	std::list<Connection*> mList;
-
 	/**
-	 * List of Connections newly added. Not just added to mList
+	 * Nr of connections in mList.
 	 */
-	std::list<Connection*> mAddList;
-
-	Mutex* mMutex;
+	size_t mQueSize;
 };
 
 #endif /* CONNECTIONWORKER_H_ */

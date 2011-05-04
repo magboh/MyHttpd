@@ -30,7 +30,6 @@ ServerOptions::ServerOptions() :
 
 ServerOptions::~ServerOptions()
 {
-	// TODO Auto-generated destructor stub
 }
 
 int ServerOptions::GetConnectionQueueSize() const
@@ -38,7 +37,7 @@ int ServerOptions::GetConnectionQueueSize() const
 	return mConnectionQueueSize;
 }
 
-int ServerOptions::GetNoIOWorkers() const
+int ServerOptions::GetNoConnectionWorkers() const
 {
 	return mNoIOWorkers;
 }
@@ -63,7 +62,7 @@ void ServerOptions::SetConnectionQueueSize(int connectionQueueSize)
 	mConnectionQueueSize=connectionQueueSize;
 }
 
-void ServerOptions::SetNoIOWorkers(int noIOWorkers)
+void ServerOptions::SetNoConnectionWorkers(int noIOWorkers)
 {
 	mNoIOWorkers=noIOWorkers;
 }

@@ -53,7 +53,7 @@ void RequestSuite::TestRequestConnectionKeepAlive() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 
 		buf->Clear();
 		buf->Add(data[i].getstring, strlen(data[i].getstring));
@@ -92,7 +92,7 @@ void RequestSuite::TestManyGoodGets() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
@@ -118,7 +118,7 @@ void RequestSuite::TestEvilRequests() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
@@ -142,7 +142,7 @@ void RequestSuite::TestMandatoryHeaderMissing() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
@@ -169,7 +169,7 @@ void RequestSuite::TestMultilineHeaders() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 		buf->Clear();
 		buf->Add(getstring[i], strlen(getstring[i]));
 		bool result = Request::ParseRequest(r, buf);
@@ -207,7 +207,7 @@ void RequestSuite::TestReqeustsByteForByte() {
 
 	ByteBuffer* buf = new ByteBuffer(2000);
 	for (int i = 0; i < NR; i++) {
-		Request *r = new Request(NULL, site);
+		Request *r = new Request(NULL, &site);
 		buf->Clear();
 		size_t len=strlen(getstring[i]);
 		for (size_t j=0;j<len;j++)

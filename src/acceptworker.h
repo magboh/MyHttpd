@@ -24,6 +24,7 @@
 #ifndef ACCEPTWORKER_H_
 #define ACCEPTWORKER_H_
 
+#include <vector>
 #include "thread.h"
 
 /**
@@ -33,20 +34,23 @@
  */
 
 class Site;
-class ConnectionManager;
+class ConnectionWorker;
 
 class AcceptWorker: public Thread
 {
 public:
-	AcceptWorker(ConnectionManager& connectionManager);
+	AcceptWorker(std::vector <ConnectionWorker*>& conWorkerVector);
 	virtual ~AcceptWorker();
 	void AddSite(Site* site);
 	void DeleteSite(Site* site);
 private:
-	virtual void DoWork();
+	AcceptWorker(const AcceptWorker &);  // No implementation
+	AcceptWorker& operator=(const AcceptWorker& rhs);  // No implementation
 
+	virtual void DoWork();
+	ConnectionWorker *GetWorker();
 	int mEpollSocket;
-	ConnectionManager& mConnectionManager;
+	std::vector <ConnectionWorker*>& mConWorkerVector;
 };
 
 #endif /* ACCEPTWORKER_H_ */

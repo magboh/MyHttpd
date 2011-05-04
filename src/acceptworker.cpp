@@ -30,14 +30,13 @@
 #include <netinet/in.h>
 
 #include "acceptworker.h"
-#include "connectionmanager.h"
+#include "connectionworker.h"
 #include "site.h"
 #include "logger.h"
 
-AcceptWorker::AcceptWorker(ConnectionManager& connectionManager) :
-	mConnectionManager(connectionManager)
+AcceptWorker::AcceptWorker(std::vector <ConnectionWorker*>& conWorkerVector) :
+	mConWorkerVector(conWorkerVector)
 {
-
 	if ((mEpollSocket=epoll_create(100))==-1)
 	{
 		AppLog(Logger::CRIT,"Unable to create epoll socket");
@@ -51,21 +50,24 @@ AcceptWorker::~AcceptWorker()
 
 void AcceptWorker::DoWork()
 {
-#define MAX_EVENTS 1000
+	const int MAX_EVENTS=100;
+	const int EPOLL_WAIT=500;
 
 	struct epoll_event events[MAX_EVENTS];
 
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
 
-	for (;;)
+	while(isRunning())
 	{
-		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,-1);
+		int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,EPOLL_WAIT);
 		if (nfds==-1)
 		{
 			perror("AcceptWorker::DoWork() epoll_wait:");
 			AppLog(Logger::ERROR,"epoll_wait() failed");
 		}
+
+		ConnectionWorker *cw=GetWorker();
 
 		for (int n=0;n<nfds;++n)
 		{
@@ -80,7 +82,7 @@ void AcceptWorker::DoWork()
 				{
 					int flags=fcntl(clientSock,F_GETFL,0);
 					fcntl(clientSock,F_SETFL,flags|O_NONBLOCK);
-					mConnectionManager.CreateConnection(clientSock,*site);
+					cw->CreateConnection(clientSock,site);
 				}
 				else
 					perror("Accept():");
@@ -113,4 +115,21 @@ void AcceptWorker::DeleteSite(Site* site)
 	{
 		perror("AcceptWorker::AddSite()");
 	}
+}
+
+ConnectionWorker *AcceptWorker::GetWorker()
+{
+	size_t workerMax= mConWorkerVector.size();
+	ConnectionWorker *cw=mConWorkerVector[0];
+	size_t small=cw->GetQueueSize();
+
+	for (size_t i=1;i<workerMax;i++)
+	{
+		if (mConWorkerVector[i]->GetQueueSize() < small )
+		{
+			small=mConWorkerVector[i]->GetQueueSize();
+			cw=mConWorkerVector[i];
+		}
+	}
+	return cw;
 }

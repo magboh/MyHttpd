@@ -29,8 +29,7 @@
 #include "site.h"
 #include "filehandler.h"
 
-RequestWorker::RequestWorker(RequestQueue& requestQueue) :
-	mRequestQueue(requestQueue)
+RequestWorker::RequestWorker()
 {
 	mFilehandler=new FileHandler();
 }
@@ -47,7 +46,8 @@ void RequestWorker::DoWork()
 {
 	/* Handle request until Request queue is closed, IE. returns NULL*/
 	const Request* request;
-	while ((request=mRequestQueue.GetNextRequest()))
+	RequestQueue& requestQueue=RequestQueue::GetInstance();
+	while ((request=requestQueue.GetNextRequest()))
 	{
 		switch (request->GetHttpType())
 		{
@@ -72,7 +72,7 @@ void RequestWorker::HandleGet(const Request* request)
 
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
-		const std::string & root=request->GetSite().GetDocumentRoot();
+		const std::string & root=request->GetSite()->GetDocumentRoot();
 
 		const std::string & filename=root+request->GetUri();
 
@@ -118,10 +118,11 @@ void RequestWorker::HandleHead(const Request* request)
 
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
-		const std::string & root=request->GetSite().GetDocumentRoot();
+		const std::string & root=request->GetSite()->GetDocumentRoot();
 
 		const std::string & filename=root+request->GetUri();
 
+		//TODO: Make SURE no URI-path exploits can happen
 		FileHandler::FileStatus status;
 		const File* file=mFilehandler->GetFile(filename,status);
 

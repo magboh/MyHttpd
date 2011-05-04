@@ -8,7 +8,7 @@
 
 	<ServerOptions>
 	  	<RequestWorkers>5</RequestWorkers>
-		<IOWorkers>5</IOWorkers>
+		<ConnectionWorkers>2</ConnectionWorkers>
 		<RequestBuffer>4096</RequestBuffer>
 		<ResponseBuffer>4096</ResponseBuffer>
     	<ConnectionQueue>400</ConnectionQueue>

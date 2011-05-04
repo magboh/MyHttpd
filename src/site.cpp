@@ -47,7 +47,6 @@ Site::Site(const SiteOptions* siteOptions)
 
 Site::~Site()
 {
-	// TODO Auto-generated destructor stub
 }
 
 bool Site::Setup()

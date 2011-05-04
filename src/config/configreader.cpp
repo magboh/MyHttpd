@@ -84,13 +84,10 @@ std::string GetString(TiXmlElement* element)
 
 ConfigReader::ConfigReader()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 ConfigReader::~ConfigReader()
 {
-	// TODO Auto-generated destructor stub
 }
 
 ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)
@@ -207,9 +204,9 @@ bool ConfigReader::ParseServerOptions(TiXmlElement* element)
 	if (child)
 		mServerOptions.SetNoRequstWorkers(GetIntValue(child));
 
-	child=element->FirstChildElement("IOWorkers");
+	child=element->FirstChildElement("ConnectionWorkers");
 	if (child)
-		mServerOptions.SetNoIOWorkers(GetIntValue(child));
+		mServerOptions.SetNoConnectionWorkers(GetIntValue(child));
 
 	child=element->FirstChildElement("RequestBuffer");
 	if (child)

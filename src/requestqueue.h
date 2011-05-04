@@ -44,7 +44,6 @@ class RequestQueue
 {
 public:
 
-	RequestQueue();
 	virtual ~RequestQueue();
 	/**
 	 * Adds a Request to the queue.
@@ -65,7 +64,15 @@ public:
 
 	void AddWorker(int nr=1);
 	void WaitForWorkers();
+
+	/**
+	 *  Returns Singleton instance of RequestQueue.
+	 *  NOT thread-safe, do dont call first time in multithreads
+	 * @return
+	 */
+	static RequestQueue & GetInstance();
 private:
+	RequestQueue();
 	RequestQueue(const RequestQueue &); // No implementation
 	RequestQueue& operator=(const RequestQueue& rhs); // No implementation
 
