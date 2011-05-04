@@ -40,10 +40,9 @@
 
 #include "logger.h"
 
-ConnectionWorker::ConnectionWorker():
+ConnectionWorker::ConnectionWorker() :
 	mQueSize(0)
 {
-	mEpollSocket=epoll_create(1000);
 }
 
 ConnectionWorker::~ConnectionWorker()
@@ -60,7 +59,16 @@ void ConnectionWorker::RemoveConnection(Connection *con)
 
 void ConnectionWorker::DoWork()
 {
+	mEpollSocket=epoll_create(1000);
+
+	if (mEpollSocket==-1)
+	{
+		AppLog(Logger::ERROR,"ConnectionWorker leaving on epoll_create() error");
+		return;
+	}
+
 	std::list<Connection*>::iterator it=mList.begin();
+
 	int nr=0;
 	while (isRunning())
 	{
@@ -71,11 +79,12 @@ void ConnectionWorker::DoWork()
 		if (nr>10000)
 		{
 			std::stringstream ss;
-			ss<<"list.size="<<mList.size() << " mqueuesize=" << mQueSize;
+			ss<<"list.size="<<mList.size()<<" mqueuesize="<<mQueSize;
 			nr=0;
 			AppLog(Logger::INFO,ss.str());
 		}
 		it=mList.begin();
+
 		while ((it!=mList.end())&&(++loopCounter<2)) // Not more than 10 laps, before checking for more connections
 		{
 			Connection* con=*it;
@@ -194,11 +203,11 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 void ConnectionWorker::UpdateConnectionIo()
 {
 	const int MAX_EVENTS=100;
-	const int EPOLL_WAIT=0;  /* NO one there, well thread got more things to do*/
-	const int EPOLL_WAIT_EMPTY=500;  /* We have no other to worry about. Wait a while*/
+	const int EPOLL_WAIT=0; /* NO one there, well thread got more things to do*/
+	const int EPOLL_WAIT_EMPTY=500; /* We have no other to worry about. Wait a while*/
 	struct epoll_event events[MAX_EVENTS];
 
-	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS, mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
+	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
 
 	if (IsAppLog(Logger::DEBUG))
 		AppLog(Logger::DEBUG,"ConnectionWorker::UpdateConnectionIo");

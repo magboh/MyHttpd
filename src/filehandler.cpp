@@ -33,8 +33,6 @@
 
 FileHandler::FileHandler()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 FileHandler::~FileHandler()

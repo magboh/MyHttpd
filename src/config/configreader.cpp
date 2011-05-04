@@ -84,13 +84,10 @@ std::string GetString(TiXmlElement* element)
 
 ConfigReader::ConfigReader()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 ConfigReader::~ConfigReader()
 {
-	// TODO Auto-generated destructor stub
 }
 
 ConfigReader::LoadStatus ConfigReader::Load(const std::string & filename)

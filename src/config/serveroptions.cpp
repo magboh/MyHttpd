@@ -30,7 +30,6 @@ ServerOptions::ServerOptions() :
 
 ServerOptions::~ServerOptions()
 {
-	// TODO Auto-generated destructor stub
 }
 
 int ServerOptions::GetConnectionQueueSize() const

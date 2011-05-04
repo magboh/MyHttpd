@@ -26,13 +26,10 @@
 
 SiteOptions::SiteOptions()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
 SiteOptions::~SiteOptions()
 {
-	// TODO Auto-generated destructor stub
 }
 
 bool SiteOptions::GetAllowDirectoryBrowsing() const

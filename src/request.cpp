@@ -33,19 +33,12 @@
 #include "logger.h"
 
 Request::Request(Connection* connection, const Site* site) :
-	mSite(site)
+	mSite(site), mHost(""), mUri(""), mType(HTTP_UNDEF) ,mConnection(connection), mParseState(0)
 {
-	// TODO Auto-generated constructor stub
-	mHost="";
-	mUri="";
-	mType=HTTP_UNDEF;
-	mConnection=connection;
-	mParseState=0;
 }
 
 Request::~Request()
 {
-	// TODO Auto-generated destructor stub
 }
 
 const std::string Request::ToString() const

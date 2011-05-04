@@ -27,20 +27,18 @@
 #include <list>
 #include "thread.h"
 
-class RequestQueue;
-class Connection;
-class ConnectionManager;
 class Site;
+class Connection;
+
 class ConnectionWorker:public Thread
 {
 public:
 	ConnectionWorker();
 	/**
-	 * Called from ConnectionManager when there is work read/write/close to be done on this connection
-	 * Method is thread-safe, and takes ownership of the Connection object con.
-	 * @param con
+	 *  Creates and handles Read/Writes of the socket.
+	 * @param socket of new connection
+	 * @param site, the site connected to
 	 */
-	void AddConnection(Connection* con);
 	void CreateConnection(int socket, const Site* site);
 	virtual ~ConnectionWorker();
 	/**
@@ -53,7 +51,9 @@ private:
 
 	virtual void DoWork();
 
+	void AddConnection(Connection* con);
 	void RemoveConnection(Connection* con);
+
 	void UpdateConnectionIo();
 	void WaitIo(Connection* con);
 	enum State
@@ -72,11 +72,9 @@ private:
 	 * List of Connections this worker handles
 	 */
 	std::list<Connection*> mList;
-
 	/**
-	 * List of Connections newly added. Not just added to mList
+	 * Nr of connections in mList.
 	 */
-	std::list<Connection*> mAddList;
 	size_t mQueSize;
 };
 
