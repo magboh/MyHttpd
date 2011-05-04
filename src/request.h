@@ -38,10 +38,6 @@ class Request:public Http
 public:
 	Request(Connection* connection, const Site* site);
 	virtual ~Request();
-	enum ParseReturn
-	{
-		REQUEST_OK, REQUEST_BAD, REQUEST_UNFINISHED, REQUEST_HTPP_VERSION_NOT_SUPPORTED, REQUEST_TO_LARGE, REQUEST_URI_TO_LONG
-	};
 	static bool ParseRequest(Request* request, ByteBuffer* buffer);
 	enum RequestType
 	{
