@@ -67,7 +67,7 @@ public:
 
 	/**
 	 *  Returns Singleton instance of RequestQueue.
-	 *  NOT thread-safe, do dont call first time in multithreads
+	 *  NOT thread-safe, do not call first time from multiple threads
 	 * @return
 	 */
 	static RequestQueue & GetInstance();
@@ -86,7 +86,7 @@ private:
 		unsigned long mTotalNrInQueue;
 		unsigned long mHighestInQueue;
 	} mStats;
-	std::list <RequestWorker*> mWorkerList;
+	std::list<RequestWorker*> mWorkerList;
 };
 
 #endif /* REQUESTQUEUE_H_ */

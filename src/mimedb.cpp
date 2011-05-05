@@ -23,6 +23,7 @@
 
 #include "mimedb.h"
 #include "logger.h"
+
 MimeDb::MimeDb() :
 	mDefaultMime("text/html")
 {
@@ -54,16 +55,13 @@ void MimeDb::InitDefaultTypes()
 const std::string & MimeDb::LookUp(const std::string& extension) const
 {
 	std::map<const std::string, const std::string>::const_iterator it=mDb.find(extension);
-	AppLog(Logger::INFO,"Looking forextension " + it->second);
 
 	if (it!=mDb.end())
 	{
-		AppLog(Logger::INFO,extension+" " + it->second);
 		return it->second;
 	}
 	else
 	{
-		AppLog(Logger::INFO,extension+" " + mDefaultMime);
 		return mDefaultMime;
 	}
 }

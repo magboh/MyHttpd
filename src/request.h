@@ -53,7 +53,7 @@ public:
 	Connection *GetConnection() const;
 	void SetConnection(Connection *mConnection);
 private:
-	Request(const Request &);
+	Request(const Request &); // No implementation
 	Request& operator=(const Request& rhs);  // No implementation
 
 	enum
