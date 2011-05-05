@@ -31,7 +31,6 @@
 class MimeDb
 {
 public:
-	MimeDb();
 	virtual ~MimeDb();
 	/**
 	 * Gets the mime type/subtype ie. text/html dependent of the extension ie. htm||html
@@ -41,12 +40,14 @@ public:
 	 */
 	const std::string & LookUp( const std::string& extension) const;
 	bool ReadFile(const std::string& fileName);
+	static MimeDb& GetInstance();
 private:
+	MimeDb();
 	MimeDb(const MimeDb& );
 	MimeDb & operator=(const MimeDb&);
 
 	void InitDefaultTypes();
-	void AddType(const std::string type, const std::string ext);
+	void AddType(const std::string ext, const std::string type);
 	std::map<const std::string, const std::string> mDb;
 	const std::string mDefaultMime;
 };

@@ -26,7 +26,7 @@
 
 #include "thread.h"
 
-class FileHandler;
+class UriHandler;
 // Worker is responsible to DELETE the request gotten from queue
 
 class RequestWorker:public Thread
@@ -44,7 +44,7 @@ private:
 	void HandleUnsupported(const Request* request);
 
 
-	FileHandler* mFilehandler;
+	UriHandler* mUrihandler;
 };
 
 #endif /* REQUESTQUEUEWORKER_H_ */

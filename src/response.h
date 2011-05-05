@@ -39,10 +39,12 @@ public:
 	int GetFile() const;
 	void SetFile(int fd);
 
+	void SetContentType(const std::string& type);
 
 	int ToBuffer(ByteBuffer* buffer) const;
 private:
 	unsigned int mContentLength;
+	std::string mContentType;
 	int mFile;
 };
 

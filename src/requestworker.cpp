@@ -27,18 +27,18 @@
 #include "response.h"
 #include "connection.h"
 #include "site.h"
-#include "filehandler.h"
+#include "urihandler.h"
 
 RequestWorker::RequestWorker()
 {
-	mFilehandler=new FileHandler();
+	mUrihandler=new UriHandler();
 }
 
 RequestWorker::~RequestWorker()
 {
-	if (mFilehandler)
-		delete mFilehandler;
-	mFilehandler=0;
+	if (mUrihandler)
+		delete mUrihandler;
+	mUrihandler=0;
 }
 
 /* Worker is responsible to DELETE the request gotten from queue*/
@@ -76,27 +76,28 @@ void RequestWorker::HandleGet(const Request* request)
 
 		const std::string & filename=root+request->GetUri();
 
-		FileHandler::FileStatus status;
-		const File* file=mFilehandler->GetFile(filename,status);
+		const Uri* uri=mUrihandler->GetFile(filename);
 
-		if (file!=NULL)
+		Uri::FileStatus status=uri->GetStatus();
+		if (status==Uri::FILESTATUS_OK)
 		{
-			response->SetContentLength(file->GetSize());
-			response->SetFile(file->GetFd());
+			response->SetContentLength(uri->GetSize());
+			response->SetFile(uri->GetFd());
 			response->SetStatus(Http::HTTP_OK);
+			response->SetContentType(uri->GetContentType());
 		}
 		else
 		{
-			switch (status)
+		switch (status)
 			{
-			case FileHandler::FILESTATUS_NOT_AUTHORIZED:
+			case Uri::FILESTATUS_NOT_AUTHORIZED:
 				response->SetStatus(Http::HTTP_NO_ACCESS);
 				break;
-			case FileHandler::FILESTATUS_NO_FILE:
+			case Uri::FILESTATUS_NO_FILE:
 				response->SetStatus(Http::HTTP_NOT_FOUND);
 				break;
 
-			case FileHandler::FILESTATUS_INTERNAL_ERROR:
+			case Uri::FILESTATUS_INTERNAL_ERROR:
 			default:
 				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
 				break;
@@ -123,32 +124,27 @@ void RequestWorker::HandleHead(const Request* request)
 		const std::string & filename=root+request->GetUri();
 
 		//TODO: Make SURE no URI-path exploits can happen
-		FileHandler::FileStatus status;
-		const File* file=mFilehandler->GetFile(filename,status);
+		const Uri* uri=mUrihandler->GetFile(filename);
 
-		if (file!=NULL)
-		{
-			response->SetStatus(Http::HTTP_OK);
-		}
-		else
-
-		{
+			Uri::FileStatus status = uri->GetStatus();
 			switch (status)
 			{
-			case FileHandler::FILESTATUS_NOT_AUTHORIZED:
+			case Uri::FILESTATUS_OK:
+				response->SetStatus(Http::HTTP_OK);
+				break;
+			case Uri::FILESTATUS_NOT_AUTHORIZED:
 				response->SetStatus(Http::HTTP_NO_ACCESS);
 				break;
-			case FileHandler::FILESTATUS_NO_FILE:
+			case Uri::FILESTATUS_NO_FILE:
 				response->SetStatus(Http::HTTP_NOT_FOUND);
 				break;
 
-			case FileHandler::FILESTATUS_INTERNAL_ERROR:
+			case Uri::FILESTATUS_INTERNAL_ERROR:
 			default:
 				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
 				break;
 			}
 
-		}
 	}
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);

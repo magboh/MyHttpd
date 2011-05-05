@@ -22,7 +22,7 @@
  */
 
 #include "mimedb.h"
-
+#include "logger.h"
 MimeDb::MimeDb() :
 	mDefaultMime("text/html")
 {
@@ -31,6 +31,12 @@ MimeDb::MimeDb() :
 
 MimeDb::~MimeDb()
 {
+}
+
+MimeDb& MimeDb::GetInstance()
+{
+	static MimeDb sInstance;
+	return sInstance;
 }
 
 void MimeDb::InitDefaultTypes()
@@ -48,11 +54,18 @@ void MimeDb::InitDefaultTypes()
 const std::string & MimeDb::LookUp(const std::string& extension) const
 {
 	std::map<const std::string, const std::string>::const_iterator it=mDb.find(extension);
+	AppLog(Logger::INFO,"Looking forextension " + it->second);
 
 	if (it!=mDb.end())
+	{
+		AppLog(Logger::INFO,extension+" " + it->second);
 		return it->second;
+	}
 	else
+	{
+		AppLog(Logger::INFO,extension+" " + mDefaultMime);
 		return mDefaultMime;
+	}
 }
 
 bool ReadFile(const std::string& fileName)
@@ -61,7 +74,8 @@ bool ReadFile(const std::string& fileName)
 	return true;
 }
 
-void MimeDb::AddType(const std::string type, const std::string ext)
+void MimeDb::AddType(const std::string ext, const std::string type)
 {
 	mDb.insert(std::pair<const std::string, const std::string>(ext,type));
 }
+

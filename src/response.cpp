@@ -27,6 +27,7 @@
 #include "response.h"
 #include "bytebuffer.h"
 #include "myhttpd.h"
+#include "logger.h"
 
 #define EOL "\r\n"
 
@@ -88,7 +89,7 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	if (status==Http::HTTP_OK)
 	{
 		ss<<"Content-Length: "<<mContentLength<<EOL;
-		ss<<"Content-Type: text/html\r\n\r\n";
+		ss<<"Content-Type: " << mContentType << "\r\n\r\n";
 	}
 	else
 	{
@@ -101,7 +102,17 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
+
 	buffer->Add(ss.str().c_str(),len);
+
+	if (IsAppLog(Logger::INFO))
+		AppLog(Logger::INFO,ss);
+
 	return len;
 }
 
+
+void Response::SetContentType(const std::string& type)
+{
+	mContentType = type;
+}
