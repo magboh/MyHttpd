@@ -23,12 +23,6 @@
 
 #ifndef REQUESTQUEUE_H_
 #define REQUESTQUEUE_H_
-// The request queue will hold ALL request for all sites
-// Each request is handled in order by x number of requestqueueworker
-// All Requests added are considered to be OWNED by the request queue.
-// Once added nothing must be changed in request
-
-// ALL Additions / Removals must be THREAD_SAFE !! use mutexes
 
 #include <queue>
 #include <list>
@@ -36,9 +30,18 @@ class Request;
 class RequestWorker;
 
 /*!
- \brief RequestQueue: Class responsible for queing Requests for the RequestQueuWorkers
- This Class is thread safe.
- */
+ \brief Class responsible for queueing Requests for the RequestWorkers to work with
+
+ The RequestQueue class allows ConnectionWorker-threads to queue Requests,
+ that the RequestWorker-threads will handle. A ConnectionWorker uses GetNextRequest() to dequeue,
+ a Request and start to work with it.
+ If there are no Request in queue for a worker, then that worker-thread, will wait for new requests.
+ When recieving a Request all waiting thread workers will be notified.
+
+ All public methods are made thread-safe with mutex locks, except GetInstance().
+ GetInstance() should first be called in single-threaded mode, to properly set up the Singleton.
+ Then it is thread-safe for all to use.
+  */
 
 class RequestQueue
 {
@@ -60,14 +63,29 @@ public:
 	 * @return Next Request to handle or NULL if closing down Queue
 	 */
 	const Request* GetNextRequest();
+
+	/**
+	 * Adds a Request Worker Thread, to start work on the Request Queue
+	 * @param nr
+	 */
+	void AddWorker(int nr=1);
+
+	/**
+	 * Let worker threads finish with the current queue. Then instead of waiting for new Requests,
+	 * The threads will then stop and terminate.
+	 */
 	void Shutdown();
 
-	void AddWorker(int nr=1);
+	/**
+	 * Waits for all worker threads to terminate after a Shutdown.
+	 * Takes care of cleaning up, and freeing memory.
+	 * This method will block caller until ALL threads are done.
+	 */
 	void WaitForWorkers();
 
 	/**
 	 *  Returns Singleton instance of RequestQueue.
-	 *  NOT thread-safe, do not call first time from multiple threads
+	 *  NOT thread-safe, do not call first time from multiple threads. Then it is ok.
 	 * @return
 	 */
 	static RequestQueue & GetInstance();
@@ -76,9 +94,23 @@ private:
 	RequestQueue(const RequestQueue &); // No implementation
 	RequestQueue& operator=(const RequestQueue& rhs); // No implementation
 
+	/**
+	 * The might request queue
+	 */
 	std::queue<const Request*> mReqQueue;
+
+	/**
+	 * the mutex
+	 */
 	pthread_mutex_t* mMutex;
+	/**
+	 * Conditional variable, used for worker threads to sleep until new Requests arrive
+	 */
 	pthread_cond_t* mCondThread;
+
+	/**
+	 * While true, worker threads sleeps if no Requests. Otherwis they will terminate.
+	 */
 	bool mKeepRunning;
 	unsigned short mNrInQueue;
 	struct stats_t
@@ -86,6 +118,10 @@ private:
 		unsigned long mTotalNrInQueue;
 		unsigned long mHighestInQueue;
 	} mStats;
+
+	/**
+	 * List of RequestWorker threads, working the queue
+	 */
 	std::list<RequestWorker*> mWorkerList;
 };
 

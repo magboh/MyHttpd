@@ -51,8 +51,6 @@ Connection::Connection(int socket, const Site* site) :
 
 	mReadBuffer=new ByteBuffer(4096);
 	mWriteBuffer=new ByteBuffer(4096);
-
-	mWantToRead=true;
 	mRequest=NULL;
 	mHasData=false;
 	mWriteStatus=0;
