@@ -103,6 +103,7 @@ private:
 	 * the mutex
 	 */
 	pthread_mutex_t* mMutex;
+
 	/**
 	 * Conditional variable, used for worker threads to sleep until new Requests arrive
 	 */

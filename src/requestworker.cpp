@@ -73,12 +73,11 @@ void RequestWorker::HandleGet(const Request* request)
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
 		const std::string & root=request->GetSite()->GetDocumentRoot();
-
 		const std::string & filename=root+request->GetUri();
-
 		const Uri* uri=mUrihandler->GetFile(filename);
 
 		Uri::FileStatus status=uri->GetStatus();
+
 		if (status==Uri::FILESTATUS_OK)
 		{
 			response->SetContentLength(uri->GetSize());
@@ -88,7 +87,7 @@ void RequestWorker::HandleGet(const Request* request)
 		}
 		else
 		{
-		switch (status)
+			switch (status)
 			{
 			case Uri::FILESTATUS_NOT_AUTHORIZED:
 				response->SetStatus(Http::HTTP_NO_ACCESS);
@@ -96,7 +95,6 @@ void RequestWorker::HandleGet(const Request* request)
 			case Uri::FILESTATUS_NO_FILE:
 				response->SetStatus(Http::HTTP_NOT_FOUND);
 				break;
-
 			case Uri::FILESTATUS_INTERNAL_ERROR:
 			default:
 				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
@@ -120,30 +118,29 @@ void RequestWorker::HandleHead(const Request* request)
 	if (request->GetStatus()==Http::HTTP_OK)
 	{
 		const std::string & root=request->GetSite()->GetDocumentRoot();
-
 		const std::string & filename=root+request->GetUri();
 
 		//TODO: Make SURE no URI-path exploits can happen
 		const Uri* uri=mUrihandler->GetFile(filename);
 
-			Uri::FileStatus status = uri->GetStatus();
-			switch (status)
-			{
-			case Uri::FILESTATUS_OK:
-				response->SetStatus(Http::HTTP_OK);
-				break;
-			case Uri::FILESTATUS_NOT_AUTHORIZED:
-				response->SetStatus(Http::HTTP_NO_ACCESS);
-				break;
-			case Uri::FILESTATUS_NO_FILE:
-				response->SetStatus(Http::HTTP_NOT_FOUND);
-				break;
+		Uri::FileStatus status=uri->GetStatus();
+		switch (status)
+		{
+		case Uri::FILESTATUS_OK:
+			response->SetStatus(Http::HTTP_OK);
+			break;
+		case Uri::FILESTATUS_NOT_AUTHORIZED:
+			response->SetStatus(Http::HTTP_NO_ACCESS);
+			break;
+		case Uri::FILESTATUS_NO_FILE:
+			response->SetStatus(Http::HTTP_NOT_FOUND);
+			break;
 
-			case Uri::FILESTATUS_INTERNAL_ERROR:
-			default:
-				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
-				break;
-			}
+		case Uri::FILESTATUS_INTERNAL_ERROR:
+		default:
+			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
+			break;
+		}
 
 	}
 	request->GetConnection()->SetResponse(response);

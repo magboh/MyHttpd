@@ -105,8 +105,8 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	buffer->Add(ss.str().c_str(),len);
 
-	if (IsAppLog(Logger::INFO))
-		AppLog(Logger::INFO,ss);
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,ss);
 
 	return len;
 }
