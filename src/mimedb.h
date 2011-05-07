@@ -47,6 +47,12 @@ public:
 	const std::string & LookUp(const std::string& extension) const;
 
 	/**
+	 * Get the default MIME type.
+	 * @return MIMEM type
+	 */
+	const std::string & GetDefault() const;
+
+	/**
 	 * NOT implemented yet
 	 * @param fileName
 	 * @return

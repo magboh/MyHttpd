@@ -77,3 +77,7 @@ void MimeDb::AddType(const std::string ext, const std::string type)
 	mDb.insert(std::pair<const std::string, const std::string>(ext,type));
 }
 
+const std::string & MimeDb::GetDefault() const
+{
+	return mDefaultMime;
+}
