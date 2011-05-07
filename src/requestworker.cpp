@@ -101,12 +101,16 @@ void RequestWorker::HandleRequest(const Request* request)
 	int fd = uri->GetFd();
 	size_t contentLength= uri->GetSize();
 	time_t t = uri->GetTime();
+
 	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 	response->SetStatus(httpStatus);
-	response->SetFile(fd);
 	response->SetContentLength(contentLength);
 	response->SetContentType(contentType);
 	response->SetLastModTime(t);
+
+	if (request->GetHttpType()==Request::HTTP_GET)
+		response->SetFile(fd);
+
 	// Transfer ownership of response to Connection
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);

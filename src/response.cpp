@@ -99,12 +99,9 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	if (status==Http::HTTP_OK)
 	{
-		if (mFile!=-1)
-		{
 			ss<<"Last-Modified: " << ToGMTStr(mTime)<<EOL;
 			ss<<"Content-Length: "<<mContentLength<<EOL;
 			ss<<"Content-Type: " << mContentType << "\r\n\r\n";
-		}
 	}
 	else
 	{
