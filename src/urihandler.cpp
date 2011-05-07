@@ -83,12 +83,12 @@ Uri* UriHandler::CreateFile(const std::string& file)
 		if ((pos=file.find_last_of("."))!=std::string::npos)
 		{
 			const std::string& ct=mimeDb.LookUp(file.substr(pos+1));
-			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK);
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK,fileStat.st_mtim.tv_sec);
 		}
 		if (f==NULL)
 		{
 			const std::string& ct=mimeDb.GetDefault();
-			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK);
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK,fileStat.st_mtim.tv_sec);
 		}
 	}
 	else
