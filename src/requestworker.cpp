@@ -28,6 +28,7 @@
 #include "connection.h"
 #include "site.h"
 #include "urihandler.h"
+#include "logger.h"
 
 RequestWorker::RequestWorker()
 {
@@ -91,22 +92,26 @@ void RequestWorker::HandleRequest(const Request* request)
 	const std::string & root=request->GetSite()->GetDocumentRoot();
 	const std::string & filename=root+request->GetUri();
 	const Uri* uri=mUrihandler->GetFile(filename);
-	//TODO: Make SURE no URI-path exploits can happen
-
 	const std::string & contentType =uri->GetContentType();
+
+	//TODO: Make SURE no URI-path exploits can happen
 
 	Uri::FileStatus status=uri->GetStatus();
 	Http::Status httpStatus = MapFileStatusToHttpStatus(status);
 	int fd = uri->GetFd();
 	size_t contentLength= uri->GetSize();
+	time_t t = uri->GetTime();
 
 	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 	response->SetStatus(httpStatus);
-	response->SetFile(fd);
 	response->SetContentLength(contentLength);
 	response->SetContentType(contentType);
+	response->SetLastModTime(t);
 
-	// Transfer ovnership of response to Connection
+	if (request->GetHttpType()==Request::HTTP_GET)
+		response->SetFile(fd);
+
+	// Transfer ownership of response to Connection
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
 }
@@ -117,7 +122,7 @@ void RequestWorker::HandleFailedRequest(const Request* request)
 {
 	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 	response->SetStatus(Http::HTTP_NOT_IMPLEMENTED);
+	// Transfer ownership of response to Connection
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
-
 }

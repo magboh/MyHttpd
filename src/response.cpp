@@ -31,6 +31,8 @@
 
 #define EOL "\r\n"
 
+std::string ToGMTStr(time_t t);
+
 Response::Response(Http::Version version, bool keepAlive) :
 	mContentLength(0), mContentType("text/html"), mFile(-1)
 {
@@ -66,6 +68,14 @@ void Response::SetContentLength(unsigned int length)
 {
 	mContentLength=length;
 }
+std::string ToGMTStr(time_t t)
+{
+	char buff[30];
+	tm tmm;
+	gmtime_r(&t,&tmm);
+	strftime(buff,30,"%a, %d %b %Y %T GMT",&tmm);
+	return std::string(buff);
+}
 
 int Response::ToBuffer(ByteBuffer* buffer) const
 {
@@ -76,12 +86,22 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	Http::Status status=GetStatus();
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
 	ss<<"Server: " << ServerHeader <<EOL;
-	ss<<"Connection: " << ((GetKeepAlive()) ? "keep-alive\r\n" : "close\r\n");
+
+	// Do some HTTP 1.1 specifics
+	if (GetHttpVersion()==HTTP_VERSION_1_1)
+	{
+		ss<<"Connection: " << ((GetKeepAlive()) ? "keep-alive\r\n" : "close\r\n");
+	}
+
+	time_t t;
+	time(&t);
+	ss<<"Date: "<< ToGMTStr(t) << EOL;
 
 	if (status==Http::HTTP_OK)
 	{
-		ss<<"Content-Length: "<<mContentLength<<EOL;
-		ss<<"Content-Type: " << mContentType << "\r\n\r\n";
+			ss<<"Last-Modified: " << ToGMTStr(mTime)<<EOL;
+			ss<<"Content-Length: "<<mContentLength<<EOL;
+			ss<<"Content-Type: " << mContentType << "\r\n\r\n";
 	}
 	else
 	{
@@ -113,4 +133,9 @@ void Response::SetContentType(const std::string& type)
 const std::string& Response::GetContentType()
 {
 	return mContentType;
+}
+
+void Response::SetLastModTime(time_t t)
+{
+	mTime=t;
 }

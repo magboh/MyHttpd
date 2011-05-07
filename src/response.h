@@ -42,10 +42,12 @@ public:
 	void SetContentType(const std::string& type);
 	const std::string& GetContentType();
 	int ToBuffer(ByteBuffer* buffer) const;
+	void SetLastModTime(time_t t);
 private:
 	unsigned int mContentLength;
 	std::string mContentType;
 	int mFile;
+	time_t mTime;
 };
 
 #endif /* RESPONSE_H_ */

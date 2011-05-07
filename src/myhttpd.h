@@ -27,8 +27,9 @@
 #include "site.h"
 
 const std::string ServerName("MyHttpd");
-const std::string ServerVersion("0.1");
-const std::string ServerHeader(ServerName+" "+ServerVersion);
+const std::string ServerVersion("0.06");
+const std::string ServerHeader(ServerName+"/"+ServerVersion);
+
 class ConfigReader;
 class AcceptWorker;
 class ConnectionWorker;

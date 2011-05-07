@@ -49,12 +49,12 @@ public:
 		return mStatus;
 	}
 	Uri(FileStatus status):
-		mFd(-1),mSize(0), mContentType("") , mStatus(status)
+		mFd(-1),mSize(0), mContentType("") , mStatus(status), mTime(0)
 	{
 	}
 
-	Uri(int fd, size_t size,const std::string& ct,FileStatus status):
-		mFd(fd),mSize(size),mContentType(ct),mStatus(status)
+	Uri(int fd, size_t size,const std::string& ct,FileStatus status,time_t t):
+		mFd(fd),mSize(size),mContentType(ct),mStatus(status),mTime(t)
 	{
 	}
 
@@ -62,12 +62,18 @@ public:
 	{
 		return mContentType;
 	}
+
+	const time_t GetTime() const
+	{
+		return mTime;
+	}
 private:
 	int mFd;
 	size_t mSize;
 	int mRefCount;
 	std::string mContentType;
 	FileStatus mStatus;
+	time_t mTime;
 };
 
 class UriHandler
@@ -86,7 +92,7 @@ public:
 	const Uri& GetNullFile()
 	{
 		static std::string s("");
-		static Uri sUri(-1,0,s,Uri::FILESTATUS_NO_FILE);
+		static Uri sUri(-1,0,s,Uri::FILESTATUS_NO_FILE,0);
 		return sUri;
 	}
 private:
