@@ -21,45 +21,60 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef FILEHANDLER_H_
-#define FILEHANDLER_H_
+#ifndef URIHANDLER_H_
+#define URIHANDLER_H_
 
 #include <string>
 #include <map>
 
-class File
-{
-public:
-	int GetFd() const
-	{
-		return mFd;
-	}
-	;
-	size_t GetSize() const
-	{
-		return mSize;
-	}
-	;
-	File(int fd, size_t size)
-	{
-		mFd=fd;
-		mSize=size;
-	}
-private:
-	int mFd;
-	size_t mSize;
-	int mRefCount;
-};
-
-class FileHandler
+class Uri
 {
 public:
 	enum FileStatus
 	{
 		FILESTATUS_OK, FILESTATUS_NO_FILE, FILESTATUS_NOT_AUTHORIZED, FILESTATUS_INTERNAL_ERROR
 	};
-	FileHandler();
-	virtual ~FileHandler();
+
+	int GetFd() const
+	{
+		return mFd;
+	}
+	size_t GetSize() const
+	{
+		return mSize;
+	}
+
+	FileStatus GetStatus() const
+	{
+		return mStatus;
+	}
+	Uri(FileStatus status):
+		mFd(-1),mSize(0), mContentType("") , mStatus(status)
+	{
+	}
+
+	Uri(int fd, size_t size,const std::string& ct,FileStatus status):
+		mFd(fd),mSize(size),mContentType(ct),mStatus(status)
+	{
+	}
+
+	const std::string& GetContentType() const
+	{
+		return mContentType;
+	}
+private:
+	int mFd;
+	size_t mSize;
+	int mRefCount;
+	std::string mContentType;
+	FileStatus mStatus;
+};
+
+class UriHandler
+{
+public:
+	UriHandler();
+	virtual ~UriHandler();
 
 	/**
 	 *
@@ -67,14 +82,17 @@ public:
 	 * @param status
 	 * @return
 	 */
-	const File* GetFile(const std::string& file, FileStatus &status);
-
+	const Uri* GetFile(const std::string& file);
+	const Uri& GetNullFile()
+	{
+		static std::string s("");
+		static Uri sUri(-1,0,s,Uri::FILESTATUS_NO_FILE);
+		return sUri;
+	}
 private:
-
-	File* CreateFile(const std::string& file, FileStatus &status);
-
-	std::map<std::string, File *> mFileMap;
+	Uri* CreateFile(const std::string& file);
+	std::map<std::string, Uri *> mFileMap;
 
 };
 
-#endif /* FILEHANDLER_H_ */
+#endif /* URIHANDLER_H_ */

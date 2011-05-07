@@ -27,11 +27,12 @@
 #include "response.h"
 #include "bytebuffer.h"
 #include "myhttpd.h"
+#include "logger.h"
 
 #define EOL "\r\n"
 
 Response::Response(Http::Version version, bool keepAlive) :
-	mContentLength(0), mFile(-1)
+	mContentLength(0), mContentType("text/html"), mFile(-1)
 {
 	SetHttpVersion(version);
 	SetKeepAlive(keepAlive);
@@ -74,34 +75,42 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 
 	Http::Status status=GetStatus();
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
-	ss<<"Server: MyHttpd "<<std::string(VersionString)<<EOL;
-	ss<<"Connection: ";
-	if (GetKeepAlive())
-	{
-		ss<<"keep-alive\r\n";
-	}
-	else
-	{
-		ss<<"close\r\n";
-	}
+	ss<<"Server: " << ServerHeader <<EOL;
+	ss<<"Connection: " << ((GetKeepAlive()) ? "keep-alive\r\n" : "close\r\n");
 
 	if (status==Http::HTTP_OK)
 	{
 		ss<<"Content-Length: "<<mContentLength<<EOL;
-		ss<<"Content-Type: text/html\r\n\r\n";
+		ss<<"Content-Type: " << mContentType << "\r\n\r\n";
 	}
 	else
 	{
-		str="<html><body><h1>"+Http::GetStatusString(status)+"</h1></body></html>";
 		ss<<"Content-Type: text/html\r\n\r\n";
+		str="<html><body><h1>"+Http::GetStatusString(status)+"</h1></body></html>";
 		ss<<str;
 	}
 
-	len=ss.str().size();
+	str = ss.str();
+	len=str.size();
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
-	buffer->Add(ss.str().c_str(),len);
+
+	buffer->Add(str.c_str(),len);
+
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,ss);
+
 	return len;
 }
 
+
+void Response::SetContentType(const std::string& type)
+{
+	mContentType = type;
+}
+
+const std::string& Response::GetContentType()
+{
+	return mContentType;
+}

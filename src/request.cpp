@@ -113,6 +113,8 @@ bool Request::ParseRequest(Request* request, ByteBuffer* buffer)
 				{
 					request->SetStatus(Http::HTTP_BAD_REQUEST);
 				}
+
+				// TODO: Look at Host header, and determine which virtual site to go to
 			}
 			else
 				request->SetKeepAlive(false);

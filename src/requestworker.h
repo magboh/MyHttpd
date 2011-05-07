@@ -26,7 +26,7 @@
 
 #include "thread.h"
 
-class FileHandler;
+class UriHandler;
 // Worker is responsible to DELETE the request gotten from queue
 
 class RequestWorker:public Thread
@@ -35,16 +35,14 @@ public:
 	RequestWorker();
 	virtual ~RequestWorker();
 private:
-	RequestWorker(const RequestWorker &);  // No implementation
-	RequestWorker& operator=(const RequestWorker& rhs);  // No implementation
+	RequestWorker(const RequestWorker &); // No implementation
+	RequestWorker& operator=(const RequestWorker& rhs); // No implementation
 
 	void DoWork();
-	void HandleHead(const Request* request);
-	void HandleGet(const Request* request);
-	void HandleUnsupported(const Request* request);
+	void HandleRequest(const Request* request);
+	void HandleFailedRequest(const Request* request);
 
-
-	FileHandler* mFilehandler;
+	UriHandler* mUrihandler;
 };
 
 #endif /* REQUESTQUEUEWORKER_H_ */

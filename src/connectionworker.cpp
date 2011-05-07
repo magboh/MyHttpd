@@ -39,6 +39,10 @@
 #include "requestqueue.h"
 
 #include "logger.h"
+const int MAX_EVENTS=100;
+
+// Define IO_DEBUG to get debug logs for Read, Write and UpdateConnection
+//#define IO_DEBUG
 
 ConnectionWorker::ConnectionWorker() :
 	mQueSize(0)
@@ -47,6 +51,8 @@ ConnectionWorker::ConnectionWorker() :
 
 ConnectionWorker::~ConnectionWorker()
 {
+	if (mEvents)
+		delete [] mEvents ;
 }
 
 void ConnectionWorker::RemoveConnection(Connection *con)
@@ -66,7 +72,7 @@ void ConnectionWorker::DoWork()
 		AppLog(Logger::ERROR,"ConnectionWorker leaving on epoll_create() error");
 		return;
 	}
-
+	mEvents = new epoll_event[MAX_EVENTS];
 	std::list<Connection*>::iterator it=mList.begin();
 
 	int nr=0;
@@ -134,8 +140,10 @@ void ConnectionWorker::DoWork()
 ConnectionWorker::State ConnectionWorker::Read(Connection* con)
 {
 	State state=NO_ACTION;
+#if IO_DEBUG
 	if (IsAppLog(Logger::DEBUG))
 		AppLog(Logger::DEBUG,"ConnectionWorker::Read");
+#endif
 	Connection::Status_t status=con->Read(1024);
 	switch (status)
 	{
@@ -173,8 +181,10 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 
 	con->SetDataPending(false);
 	Connection::Status_t status=con->Write(1024);
+#if IO_DEBUG
 	if (IsAppLog(Logger::DEBUG))
 		AppLog(Logger::DEBUG,"ConnectionWorker::Write");
+#endif
 	switch (status)
 	{
 	case Connection::STATUS_DONE:
@@ -205,24 +215,23 @@ ConnectionWorker::State ConnectionWorker::Write(Connection* con)
 
 void ConnectionWorker::UpdateConnectionIo()
 {
-	const int MAX_EVENTS=100;
+
 	const int EPOLL_WAIT=0; /* NO one there, well thread got more things to do*/
-	const int EPOLL_WAIT_EMPTY=500; /* We have no other to worry about. Wait a while*/
-	struct epoll_event events[MAX_EVENTS];
+	const int EPOLL_WAIT_EMPTY=100; /* We have no other to worry about. Wait a while*/
 
-	int nfds=epoll_wait(mEpollSocket,events,MAX_EVENTS,mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
 
+	int nfds=epoll_wait(mEpollSocket,mEvents,MAX_EVENTS,mList.empty() ? EPOLL_WAIT_EMPTY : EPOLL_WAIT);
+
+
+#if IO_DEBUG
 	if (IsAppLog(Logger::DEBUG))
 		AppLog(Logger::DEBUG,"ConnectionWorker::UpdateConnectionIo");
+#endif
 	for (int n=0;n<nfds;n++)
 	{
-		Connection* con=static_cast<Connection*> (events[n].data.ptr);
+		Connection* con=static_cast<Connection*> (mEvents[n].data.ptr);
 		// Tell Connection Manager to handle IO for this connection
-		if ((events[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
-		{
-			RemoveConnection(con);
-		}
-		else if ((events[n].events&EPOLLIN)==events[n].events)
+		if ((mEvents[n].events&EPOLLIN)==mEvents[n].events)
 		{
 #if 0
 			if (find(mList.begin(),mList.end(),con)!=mList.end())
@@ -235,6 +244,11 @@ void ConnectionWorker::UpdateConnectionIo()
 			mQueSize++;
 			mList.push_back(con);
 		}
+		else if ((mEvents[n].events&(EPOLLERR|EPOLLHUP|EPOLLRDHUP)))
+		{
+			RemoveConnection(con);
+		}
+
 	}
 }
 
@@ -256,8 +270,10 @@ void ConnectionWorker::AddConnection(Connection* con)
 
 void ConnectionWorker::WaitIo(Connection* con)
 {
+
 	if (IsAppLog(Logger::DEBUG))
 		AppLog(Logger::DEBUG,"ConnectionWorker::WaitIo");
+
 	struct epoll_event ev;
 	ev.events=EPOLLIN|EPOLLONESHOT|EPOLLET;
 	ev.data.ptr=(void*) con;

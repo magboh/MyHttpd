@@ -26,8 +26,9 @@
 #include <vector>
 #include "site.h"
 
-#define VersionString "0.1"
-
+const std::string ServerName("MyHttpd");
+const std::string ServerVersion("0.1");
+const std::string ServerHeader(ServerName+" "+ServerVersion);
 class ConfigReader;
 class AcceptWorker;
 class ConnectionWorker;
@@ -59,7 +60,7 @@ private:
 
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
-	std::vector <ConnectionWorker*> mWorkerVector;
+	std::vector<ConnectionWorker*> mWorkerVector;
 	std::vector<Site*> mSites;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
@@ -77,7 +78,7 @@ private:
 
 	bool LoadConfig(ConfigReader* cr, const std::string& fileName);
 
-	void AddConnectionWorker(int nr = 1);
+	void AddConnectionWorker(int nr=1);
 
 	/**
 	 * Tell all added Workers to stop.

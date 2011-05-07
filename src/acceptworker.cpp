@@ -39,7 +39,8 @@ AcceptWorker::AcceptWorker(std::vector <ConnectionWorker*>& conWorkerVector) :
 {
 	if ((mEpollSocket=epoll_create(100))==-1)
 	{
-		AppLog(Logger::CRIT,"Unable to create epoll socket");
+		AppLog(Logger::ERROR,"AcceptWorker leaving on epoll_create() error");
+		return;
 	}
 }
 

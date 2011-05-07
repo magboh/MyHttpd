@@ -36,7 +36,6 @@ ByteBuffer::~ByteBuffer()
 	delete [] mBuffer;
 	mBuffer=0;
 	mSize=0;
-
 }
 
 size_t ByteBuffer::GetSpaceLeft() const
@@ -119,5 +118,4 @@ void ByteBuffer::Remove(unsigned int size)
 		memcpy(mBuffer,mBuffer+size,mPosition-size);
 		mPosition-=size;
 	}
-
 }
