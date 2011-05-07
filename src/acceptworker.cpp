@@ -37,6 +37,11 @@
 AcceptWorker::AcceptWorker(std::vector <ConnectionWorker*>& conWorkerVector) :
 	mConWorkerVector(conWorkerVector)
 {
+	if ((mEpollSocket=epoll_create(100))==-1)
+	{
+		AppLog(Logger::ERROR,"AcceptWorker leaving on epoll_create() error");
+		return;
+	}
 }
 
 AcceptWorker::~AcceptWorker()
@@ -53,12 +58,6 @@ void AcceptWorker::DoWork()
 
 	struct sockaddr_in addr;
 	socklen_t len=sizeof(addr);
-
-	if ((mEpollSocket=epoll_create(100))==-1)
-	{
-		AppLog(Logger::ERROR,"AcceptWorker leaving on epoll_create() error");
-		return;
-	}
 
 	while(isRunning())
 	{
