@@ -31,6 +31,9 @@
 
 #define EOL "\r\n"
 
+std::string ToGMTStr(time_t t);
+
+
 Response::Response(Http::Version version, bool keepAlive) :
 	mContentLength(0), mContentType("text/html"), mFile(-1)
 {
@@ -66,6 +69,14 @@ void Response::SetContentLength(unsigned int length)
 {
 	mContentLength=length;
 }
+std::string ToGMTStr(time_t t)
+{
+	char buff[30];
+	tm tmm;
+	gmtime_r(&t,&tmm);
+	strftime(buff,30,"%a, %d %b %Y %T GMT",&tmm);
+	return std::string(buff);
+}
 
 int Response::ToBuffer(ByteBuffer* buffer) const
 {
@@ -77,6 +88,10 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
 	ss<<"Server: " << ServerHeader <<EOL;
 	ss<<"Connection: " << ((GetKeepAlive()) ? "keep-alive\r\n" : "close\r\n");
+
+	time_t t;
+	time(&t);
+	ss<<"Date: "<< ToGMTStr(t) << EOL;
 
 	if (status==Http::HTTP_OK)
 	{
