@@ -53,7 +53,7 @@ public:
 	{
 	}
 
-	Uri(int fd, size_t size,std::string& ct,FileStatus status):
+	Uri(int fd, size_t size,const std::string& ct,FileStatus status):
 		mFd(fd),mSize(size),mContentType(ct),mStatus(status)
 	{
 	}
@@ -83,7 +83,12 @@ public:
 	 * @return
 	 */
 	const Uri* GetFile(const std::string& file);
-
+	const Uri& GetNullFile()
+	{
+		static std::string s("");
+		static Uri sUri(-1,0,s,Uri::FILESTATUS_NO_FILE);
+		return sUri;
+	}
 private:
 	Uri* CreateFile(const std::string& file);
 	std::map<std::string, Uri *> mFileMap;

@@ -78,6 +78,8 @@ private:
 	 * Nr of connections in mList.
 	 */
 	size_t mQueSize;
+
+	struct epoll_event* mEvents;
 };
 
 #endif /* CONNECTIONWORKER_H_ */

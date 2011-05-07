@@ -102,7 +102,7 @@ const Request* RequestQueue::GetNextRequest()
 void RequestQueue::AddRequest(const Request* request)
 {
 	pthread_mutex_lock(mMutex);
-	pthread_cond_broadcast(mCondThread);
+	pthread_cond_signal(mCondThread);
 	mReqQueue.push(request);
 	mStats.mTotalNrInQueue++;
 	if (++mNrInQueue>mStats.mHighestInQueue)

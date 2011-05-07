@@ -49,108 +49,75 @@ void RequestWorker::DoWork()
 	RequestQueue& requestQueue=RequestQueue::GetInstance();
 	while ((request=requestQueue.GetNextRequest()))
 	{
-		switch (request->GetHttpType())
+		if (request->GetStatus()==Http::HTTP_OK)
 		{
-		case Request::HTTP_HEAD:
-			HandleHead(request);
-			break;
-		case Request::HTTP_GET:
-			HandleGet(request);
-			break;
-		default:
-			HandleUnsupported(request);
-			break;
+			HandleRequest(request);
 		}
+		else
+		{
+			HandleFailedRequest(request);
+		}
+
 		delete request;
 		request=NULL;
 	}
 }
 
-void RequestWorker::HandleGet(const Request* request)
+Http::Status MapFileStatusToHttpStatus(Uri::FileStatus fileStatus);
+
+Http::Status MapFileStatusToHttpStatus(Uri::FileStatus fileStatus)
 {
+	Http::Status httpStatus=Http::HTTP_OK;
+	switch (fileStatus)
+	{
+	case Uri::FILESTATUS_OK:
+		break;
+	case Uri::FILESTATUS_NOT_AUTHORIZED:
+		httpStatus=Http::HTTP_NO_ACCESS;
+		break;
+	case Uri::FILESTATUS_NO_FILE:
+		httpStatus=Http::HTTP_NOT_FOUND;
+		break;
+	case Uri::FILESTATUS_INTERNAL_ERROR:
+	default:
+		httpStatus=Http::HTTP_INTERNAL_SERVER_ERROR;
+		break;
+	}
+	return httpStatus;
+}
+
+void RequestWorker::HandleRequest(const Request* request)
+{
+	const std::string & root=request->GetSite()->GetDocumentRoot();
+	const std::string & filename=root+request->GetUri();
+	const Uri* uri=mUrihandler->GetFile(filename);
+	//TODO: Make SURE no URI-path exploits can happen
+
+	const std::string & contentType =uri->GetContentType();
+
+	Uri::FileStatus status=uri->GetStatus();
+	Http::Status httpStatus = MapFileStatusToHttpStatus(status);
+	int fd = uri->GetFd();
+	size_t contentLength= uri->GetSize();
+
 	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
+	response->SetStatus(httpStatus);
+	response->SetFile(fd);
+	response->SetContentLength(contentLength);
+	response->SetContentType(contentType);
 
-	if (request->GetStatus()==Http::HTTP_OK)
-	{
-		const std::string & root=request->GetSite()->GetDocumentRoot();
-		const std::string & filename=root+request->GetUri();
-		const Uri* uri=mUrihandler->GetFile(filename);
-
-		Uri::FileStatus status=uri->GetStatus();
-
-		if (status==Uri::FILESTATUS_OK)
-		{
-			response->SetContentLength(uri->GetSize());
-			response->SetFile(uri->GetFd());
-			response->SetStatus(Http::HTTP_OK);
-			response->SetContentType(uri->GetContentType());
-		}
-		else
-		{
-			switch (status)
-			{
-			case Uri::FILESTATUS_NOT_AUTHORIZED:
-				response->SetStatus(Http::HTTP_NO_ACCESS);
-				break;
-			case Uri::FILESTATUS_NO_FILE:
-				response->SetStatus(Http::HTTP_NOT_FOUND);
-				break;
-			case Uri::FILESTATUS_INTERNAL_ERROR:
-			default:
-				response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
-				break;
-			}
-
-		}
-	}
-	else
-	{
-		response->SetStatus(request->GetStatus());
-	}
+	// Transfer ovnership of response to Connection
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
 }
 
-void RequestWorker::HandleHead(const Request* request)
-{
-	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 
-	if (request->GetStatus()==Http::HTTP_OK)
-	{
-		const std::string & root=request->GetSite()->GetDocumentRoot();
-		const std::string & filename=root+request->GetUri();
 
-		//TODO: Make SURE no URI-path exploits can happen
-		const Uri* uri=mUrihandler->GetFile(filename);
-
-		Uri::FileStatus status=uri->GetStatus();
-		switch (status)
-		{
-		case Uri::FILESTATUS_OK:
-			response->SetStatus(Http::HTTP_OK);
-			break;
-		case Uri::FILESTATUS_NOT_AUTHORIZED:
-			response->SetStatus(Http::HTTP_NO_ACCESS);
-			break;
-		case Uri::FILESTATUS_NO_FILE:
-			response->SetStatus(Http::HTTP_NOT_FOUND);
-			break;
-
-		case Uri::FILESTATUS_INTERNAL_ERROR:
-		default:
-			response->SetStatus(Http::HTTP_INTERNAL_SERVER_ERROR);
-			break;
-		}
-
-	}
-	request->GetConnection()->SetResponse(response);
-	request->GetConnection()->SetHasData(true);
-}
-
-void RequestWorker::HandleUnsupported(const Request* request)
+void RequestWorker::HandleFailedRequest(const Request* request)
 {
 	Response* response=new Response(request->GetHttpVersion(),request->GetKeepAlive());
 	response->SetStatus(Http::HTTP_NOT_IMPLEMENTED);
 	request->GetConnection()->SetResponse(response);
 	request->GetConnection()->SetHasData(true);
+
 }

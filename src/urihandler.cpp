@@ -41,7 +41,7 @@ UriHandler::~UriHandler()
 {
 	std::map<std::string, Uri *>::iterator it;
 	// file already in UriHandler?
-	for (it=mFileMap.begin(); it!=mFileMap.end();it++)
+	for (it=mFileMap.begin();it!=mFileMap.end();it++)
 	{
 		delete it->second;
 	}
@@ -68,28 +68,28 @@ const Uri* UriHandler::GetFile(const std::string& uri)
 
 Uri* UriHandler::CreateFile(const std::string& file)
 {
-	int fd=open(file.c_str(), O_RDONLY);
+	int fd=open(file.c_str(),O_RDONLY);
 	int error=errno;
 	Uri* f=NULL;
 
 	if (fd!=-1)
 	{
 		struct stat fileStat;
-		fstat(fd, &fileStat);
+		fstat(fd,&fileStat);
 
-		MimeDb& mimeDb = MimeDb::GetInstance();
+		const MimeDb& mimeDb=MimeDb::GetInstance();
 		size_t pos=0;
-		std::string s= ("");
-		std::string& ct =s;
-		AppLog(Logger::INFO,"file:=" + file);
-		if((pos=file.find_last_of("."))!=std::string::npos)
+
+		if ((pos=file.find_last_of("."))!=std::string::npos)
 		{
-			ct = mimeDb.LookUp(file.substr(pos+1));
-
+			const std::string& ct=mimeDb.LookUp(file.substr(pos+1));
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK);
 		}
-
-		AppLog(Logger::INFO,"Ct:=" + ct);
-		f=new Uri(fd, fileStat.st_size,ct,Uri::FILESTATUS_OK);
+		if (f==NULL)
+		{
+			const std::string& ct=mimeDb.GetDefault();
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK);
+		}
 	}
 	else
 	{
@@ -106,7 +106,7 @@ Uri* UriHandler::CreateFile(const std::string& file)
 			status=Uri::FILESTATUS_INTERNAL_ERROR;
 		}
 
-		f = new Uri(status);
+		f=new Uri(status);
 
 	}
 

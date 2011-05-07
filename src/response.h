@@ -40,7 +40,7 @@ public:
 	void SetFile(int fd);
 
 	void SetContentType(const std::string& type);
-
+	const std::string& GetContentType();
 	int ToBuffer(ByteBuffer* buffer) const;
 private:
 	unsigned int mContentLength;
