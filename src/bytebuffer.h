@@ -33,12 +33,14 @@ public:
 	void Clear();
 	bool Add(char* data, size_t size);
 	bool Add(const char *data, size_t size);
-
+	bool Add(size_t size);
 	size_t GetSpaceLeft() const;
 	size_t GetSize() const;
 	const char* GetBuffer()  const;
+	char* GetCurrentBufferPtr();
 	size_t GetUsage() const;
 	void Remove(unsigned int size);
+
 private:
 	char* mBuffer;
 	size_t mSize;

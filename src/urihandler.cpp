@@ -29,68 +29,85 @@
 
 #include <iostream>
 
-#include "filehandler.h"
+#include "urihandler.h"
+#include "mimedb.h"
+#include "logger.h"
 
-FileHandler::FileHandler()
+UriHandler::UriHandler()
 {
-	// TODO Auto-generated constructor stub
-
 }
 
-FileHandler::~FileHandler()
+UriHandler::~UriHandler()
 {
-	// TODO Auto-generated destructor stub
-}
-
-const File* FileHandler::GetFile(const std::string& file, FileStatus &status)
-{
-	std::map<std::string, File *>::iterator it;
-	File* f=NULL;
-
-	// file already in FileHandler?
-	if ((it=mFileMap.find(file))!=mFileMap.end())
+	std::map<std::string, Uri *>::iterator it;
+	// file already in UriHandler?
+	for (it=mFileMap.begin();it!=mFileMap.end();it++)
 	{
-		f=it->second;
-		status=FILESTATUS_OK;
+		delete it->second;
+	}
+}
+
+const Uri* UriHandler::GetFile(const std::string& uri)
+{
+	std::map<std::string, Uri *>::iterator it;
+	Uri* u=NULL;
+
+	// file already in UriHandler?
+	if ((it=mFileMap.find(uri))!=mFileMap.end())
+	{
+		u=it->second;
 	}
 	else
 	{
-		f=CreateFile(file, status);
-		if (f)
-		{
-			status=FILESTATUS_OK;
-			mFileMap[file]=f;
-		}
+		u=CreateFile(uri);
+		mFileMap[uri]=u;
 	}
 
-	return f;
+	return u;
 }
 
-File* FileHandler::CreateFile(const std::string& file, FileStatus &status)
+Uri* UriHandler::CreateFile(const std::string& file)
 {
-	int fd=open(file.c_str(), O_RDONLY);
+	int fd=open(file.c_str(),O_RDONLY);
 	int error=errno;
-	File* f=NULL;
+	Uri* f=NULL;
 
 	if (fd!=-1)
 	{
 		struct stat fileStat;
-		fstat(fd, &fileStat);
-		f=new File(fd, fileStat.st_size);
+		fstat(fd,&fileStat);
+
+		const MimeDb& mimeDb=MimeDb::GetInstance();
+		size_t pos=0;
+
+		if ((pos=file.find_last_of("."))!=std::string::npos)
+		{
+			const std::string& ct=mimeDb.LookUp(file.substr(pos+1));
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK,fileStat.st_mtim.tv_sec);
+		}
+		if (f==NULL)
+		{
+			const std::string& ct=mimeDb.GetDefault();
+			f=new Uri(fd,fileStat.st_size,ct,Uri::FILESTATUS_OK,fileStat.st_mtim.tv_sec);
+		}
 	}
 	else
 	{
+		Uri::FileStatus status;
 		switch (error)
 		{
 		case EACCES:
-			status=FileHandler::FILESTATUS_NOT_AUTHORIZED;
+			status=Uri::FILESTATUS_NOT_AUTHORIZED;
 			break;
 		case ENOENT:
-			status=FileHandler::FILESTATUS_NO_FILE;
+			status=Uri::FILESTATUS_NO_FILE;
 			break;
 		default:
-			status=FileHandler::FILESTATUS_INTERNAL_ERROR;
+			status=Uri::FILESTATUS_INTERNAL_ERROR;
 		}
+
+		f=new Uri(status);
+
 	}
 
 	return f;

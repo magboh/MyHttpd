@@ -21,12 +21,104 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
+#include <iostream>
+#include <string>
+
 #include "myhttpd.h"
+enum Action
+{
+	RUN, USAGE, VER
+};
+void Usage();
+void Ver();
+Action ParseArgs(int argc, char** argv, RunOptions& options);
+
+void Usage()
+{
+	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"\n"<<"Usage: myhttpd [-f file] [-l DEBUG] [--version]\n";
+}
+
+void Ver()
+{
+	std::cout<<"MyHtppd version 0.1"<<"\n"<<"Author Magnus Bohman (magnus.bohman@gmail.com)\n"<<"Uses TinyXml\n";
+}
+
+Action ParseArgs(int argc, char** argv, RunOptions& options)
+{
+	enum State_t
+	{
+		NONE, LOG_LEVEL, CONF_FILE
+	};
+	Action action=RUN;
+	State_t state=NONE;
+
+	std::string logLevel="";
+
+	for (int i=1;i<argc;i++)
+	{
+		std::string strArg(argv[i]);
+
+		switch (state)
+		{
+		case LOG_LEVEL:
+		{
+			logLevel=strArg;
+			state=NONE;
+			continue;
+		}
+		case CONF_FILE:
+		{
+			options.configFile=strArg;
+			state=NONE;
+			continue;
+		}
+		default:
+			break;
+		}
+
+		if (strArg.compare("-l")==0)
+		{
+			state=LOG_LEVEL;
+		}
+		else if (strArg.compare("-f")==0)
+		{
+			state=CONF_FILE;
+		}
+		else if (strArg.compare("--version")==0)
+			action=VER;
+		else
+			action=USAGE;
+	}
+
+	if (logLevel.length()>0)
+	{
+		if (logLevel.compare("DEBUG")==0)
+			options.debugLog=true;
+	}
+	return action;
+}
 
 int main(int argc, char** argv)
 {
-	MyHttpd myHttpd;
-	myHttpd.Start();
+	RunOptions options;
+	options.debugLog=false;
+	options.configFile="/etc/myhttpd.conf";
 
+	Action action=ParseArgs(argc,argv,options);
+	switch (action)
+	{
+	case RUN:
+	{
+		MyHttpd myHttpd;
+		myHttpd.Start(options);
+		break;
+	}
+	case USAGE:
+		Usage();
+		break;
+	case VER:
+		Ver();
+		break;
+	}
 	return 0;
 }

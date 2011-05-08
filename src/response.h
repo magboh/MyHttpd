@@ -26,13 +26,11 @@
 
 #include "http.h"
 
-class Request;
-class Connection;
 class ByteBuffer;
 class Response:public Http
 {
 public:
-	static Response* CreateResponse(const Request* request);
+	Response(Http::Version version, bool keepAlive);
 	virtual ~Response();
 
 	void SetContentLength(unsigned int length);
@@ -41,16 +39,15 @@ public:
 	int GetFile() const;
 	void SetFile(int fd);
 
-	bool GetKeepAlive() const;
-
+	void SetContentType(const std::string& type);
+	const std::string& GetContentType();
 	int ToBuffer(ByteBuffer* buffer) const;
+	void SetLastModTime(time_t t);
 private:
-	Response();
 	unsigned int mContentLength;
+	std::string mContentType;
 	int mFile;
-	Connection* mConnection;
-	bool mKeepAlive;
-
+	time_t mTime;
 };
 
 #endif /* RESPONSE_H_ */

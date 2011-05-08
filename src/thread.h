@@ -32,12 +32,21 @@ public:
 
 	bool Start();
 	bool Join();
-	bool Stop();
+	void Stop();
 protected:
 	virtual void DoWork()=0;
+	inline bool isRunning() const
+	{
+		return mKeepRunning;
+	}
 private:
 	static void* ThreadCallBack(void* arg);
+
+	Thread(const Thread &);
+	Thread& operator=(const Thread &);
 	pthread_t* mThread;
+	bool mKeepRunning;
 };
+
 
 #endif /* THREAD_H_ */

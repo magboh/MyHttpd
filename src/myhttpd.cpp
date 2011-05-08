@@ -27,12 +27,10 @@
 
 #include "myhttpd.h"
 #include "requestqueue.h"
-#include "requestqueueworker.h"
-#include "connectionmanager.h"
-#include "connectionqueueworker.h"
 #include "acceptworker.h"
-#include "config/configreader.h"
+#include "connectionworker.h"
 
+#include "config/configreader.h"
 #include "logger.h"
 
 MyHttpd* MyHttpd::myhttpd=NULL;
@@ -46,47 +44,41 @@ void handlerInt(int s)
 
 MyHttpd::MyHttpd()
 {
-	// TODO Auto-generated constructor stub
-	sAppLog.SetLogLevel(Logger::DEBUG);
 	myhttpd=this;
 }
 
 MyHttpd::~MyHttpd()
 {
-	delete mConnectionManager;
-	delete mRequestQueue;
+
 }
 
-int MyHttpd::Start()
+int MyHttpd::Start(const RunOptions& options)
 {
 	ConfigReader cr;
 
-	if (!LoadConfig(&cr))
+	if (!LoadConfig(cr,options.configFile))
 	{
 		AppLog(Logger::ERROR,"MyHttpd exiting due to problem loading configuration");
 		return 0;
 	}
 
+	sAppLog.SetLogLevel((options.debugLog) ? Logger::DEBUG : Logger::INFO);
 	BlockSignals();
 
-	StartRequestQueue();
-	mConnectionManager=new ConnectionManager(400,*mRequestQueue);
-	StartRequestWorkers();
-	StartConnectionWorkers();
+	RequestQueue &requestQueue=RequestQueue::GetInstance();
+	requestQueue.AddWorker(mNrRequestWorkers);
+
+	AddConnectionWorker(mNrConnectionWorkers);
 
 	AllowSignals();
 	signal(SIGINT,handlerInt);
-	StartSites(&cr);
+	StartSites(cr);
 
 	mKeepRunning=true;
+
 	while (mKeepRunning)
 	{
-		/*		for (size_t i=0; i<mSites.size() ; i++)
-		 {
-		 mSites[i].HandleIncomming();
-		 }
-		 */
-		usleep(10);
+		usleep(1000);
 	}
 
 	AppLog(Logger::INFO,"MyHttpd shutting down");
@@ -116,30 +108,30 @@ void MyHttpd::SigINTHandler(int signal)
 
 void MyHttpd::Stop()
 {
-
 	// All sites should be stopped (ie. their Socket closed).
 	StopSites();
 	// Stop request queue
-	StopRequestQueue();
+	AppLog(Logger::DEBUG,"Shutting down Request Queue");
+	RequestQueue::GetInstance().Shutdown();
 	// Wait for request worker threads to die
-	WaitForRequestWorkers();
+	RequestQueue::GetInstance().WaitForWorkers();
 
 	// Stop Connections. Should have no more requests to handle
-	StopConnectionWorkers();
 	// Wait for Connection Threads to die
-	WaitForConnectionWorkers();
+	ShutdownWorkers();
+	WaitForWorkers();
 
 }
 
-bool MyHttpd::LoadConfig(ConfigReader* cr)
+bool MyHttpd::LoadConfig(ConfigReader& cr, const std::string& fileName)
 {
-	ConfigReader::LoadStatus ls=cr->Load("/home/magnus/Devel/myhttpd/myhttpd_conf.xml");
+	ConfigReader::LoadStatus ls=cr.Load(fileName);
 	bool ok=true;
 	if (ls==ConfigReader::LOAD_OK)
 	{
-		const ServerOptions& so=cr->GetServerOptions();
+		const ServerOptions& so=cr.GetServerOptions();
 
-		mNrConnectionWorkers=so.GetNoIOWorkers();
+		mNrConnectionWorkers=so.GetNoConnectionWorkers();
 		mNrRequestWorkers=so.GetNoRequstWorkers();
 	}
 	else if (ls==ConfigReader::BAD_FILE)
@@ -155,73 +147,87 @@ bool MyHttpd::LoadConfig(ConfigReader* cr)
 	return ok;
 }
 
-void MyHttpd::StartRequestQueue()
+void MyHttpd::StartSites(const ConfigReader& cr)
 {
-	mRequestQueue=new RequestQueue();
-}
+	const std::vector<SiteOptions> siteOpts=cr.GetSiteOptions();
 
-void MyHttpd::StopRequestQueue()
-{
-	AppLog(Logger::DEBUG,"Shutting down Request Queue");
-	mRequestQueue->Shutdown();
-}
-
-void MyHttpd::StartRequestWorkers()
-{
-	mRequestQueue->AddWorker(mNrRequestWorkers);
-}
-
-void MyHttpd::WaitForRequestWorkers()
-{
-	mRequestQueue->WaitForWorkers();
-}
-
-void MyHttpd::StartConnectionWorkers()
-{
-	mConnectionManager->AddConnectionWorker(mNrConnectionWorkers);
-	mConnectionManager->AddIoWorker(1);
-}
-
-void MyHttpd::StopConnectionWorkers()
-{
-	mConnectionManager->ShutdownWorkers();
-}
-
-void MyHttpd::WaitForConnectionWorkers()
-{
-	mConnectionManager->WaitForWorkers();
-}
-
-void MyHttpd::StartSites(const ConfigReader* cr)
-{
-	const std::vector<SiteOptions> siteOpts=cr->GetSiteOptions();
-
-	mAcceptWorker=new AcceptWorker(*mConnectionManager);
+	mAcceptWorker=new AcceptWorker(mWorkerVector);
 	for (size_t i=0;i<siteOpts.size();i++)
 	{
 		const SiteOptions& so=siteOpts[i];
-		Site *s=new Site(&so,mConnectionManager);
+		Site *s=new Site(&so);
 		if (s->Setup())
 		{
 			AppLog(Logger::DEBUG,"Site set up and added:" + s->GetDocumentRoot());
 			mSites.push_back(s);
 			mAcceptWorker->AddSite(s);
 		}
-
+	}
+	if (!mAcceptWorker->Start())
+	{
+		delete mAcceptWorker;
+		mAcceptWorker=0;
+		AppLog(Logger::CRIT,"Failed to start Accept worker");
 	}
 
-	mAcceptWorker->Start();
 }
 
 void MyHttpd::StopSites()
 {
-	for (unsigned int i=0;i<mSites.size();i++)
+
+	for (size_t i=0;i<mSites.size();i++)
 	{
 		mSites[i]->Stop();
-		delete mSites[i];
 	}
 
 	mAcceptWorker->Stop();
+	mAcceptWorker->Join();
 	delete mAcceptWorker;
-	mAcceptWorker = 0;
+	mAcceptWorker=0;
+
+	for (size_t i=0;i<mSites.size();i++)
+	{
+		delete mSites[i];
+	}
+
+	mSites.clear();
+}
+
+void MyHttpd::AddConnectionWorker(int nr)
+{
+	for (int i=0;i<nr;i++)
+	{
+		ConnectionWorker* cqw=new ConnectionWorker();
+		if (cqw->Start())
+		{
+			mWorkerVector.push_back(cqw);
+			AppLog(Logger::DEBUG,"Connection worker added");
+		}
+		else
+		{
+			delete cqw;
+			AppLog(Logger::CRIT,"Failed to create Connection worker");
+		}
+	}
+}
+
+void MyHttpd::ShutdownWorkers()
+{
+	AppLog(Logger::DEBUG,"MyHttpd Shutdown workers");
+
+	for (size_t i=0;i<mWorkerVector.size();i++)
+	{
+		mWorkerVector[i]->Stop();
+	}
+}
+
+void MyHttpd::WaitForWorkers()
+{
+	AppLog(Logger::DEBUG,"MyHttpd Waiting for workers");
+	for (size_t i=0;i<mWorkerVector.size();i++)
+	{
+		mWorkerVector[i]->Join();
+		delete mWorkerVector[i];
+		AppLog(Logger::DEBUG,"Connection worker shut down");
+	}
 }

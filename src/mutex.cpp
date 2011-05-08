@@ -21,59 +21,28 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef CONNECTIONQUEUEWORKER_H_
-#define CONNECTIONQUEUEWORKER_H_
+#include <pthread.h>
+#include <cassert>
+#include "mutex.h"
 
-#include <list>
-#include <map>
-#include <sys/epoll.h>
-
-#include "thread.h"
-
-class RequestQueue;
-class Connection;
-class ConnectionManager;
-
-class ConnectionQueueWorker:public Thread
+Mutex::Mutex()
 {
-public:
-	ConnectionQueueWorker(RequestQueue& requestQueue, ConnectionManager& connectionManager);
+	mMutex=new pthread_mutex_t;
+	pthread_mutex_init(mMutex,NULL);
+}
 
-	void HandleConnection(Connection* con);
-	virtual ~ConnectionQueueWorker();
-	void Stop();
-private:
+Mutex::~Mutex()
+{
+	pthread_mutex_destroy(mMutex);
+	delete mMutex;
+}
 
-	virtual void DoWork();
+void Mutex::Lock()
+{
+	pthread_mutex_lock(mMutex);
+}
 
-	void RemoveConnection(Connection* con);
-
-	pthread_mutex_t* mMutex;
-
-	/**
-	 * thread runs while true
-	 */
-	bool mKeepRunning;
-
-	/**
-	 *
-	 */
-	RequestQueue& mRequestQueue;
-	ConnectionManager& mConnectionManager;
-	/**
-	 * used as the epoll() socket
-	 */
-	int mEpollSocket;
-
-	/**
-	 * List of Connections this worker handles
-	 */
-	std::list<Connection*> mList;
-
-	/**
-	 * List of Connections newly added. Not just added to mList
-	 */
-	std::list<Connection*> mAddList;
-};
-
-#endif /* CONNECTIONQUEUEWORKER_H_ */
+void Mutex::UnLock()
+{
+	pthread_mutex_unlock(mMutex);
+}

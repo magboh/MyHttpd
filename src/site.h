@@ -28,12 +28,11 @@
 #include <netinet/in.h>
 
 class SiteOptions;
-class ConnectionManager;
 
 class Site
 {
 public:
-	Site(const SiteOptions* siteOptions, ConnectionManager* connectionManager);
+	Site(const SiteOptions* siteOptions);
 	virtual ~Site();
 
 	bool Setup();
@@ -54,7 +53,6 @@ private:
 	in_addr_t mAddress;
 	in_port_t mPort;
 	size_t mListenQueue;
-	ConnectionManager* mConnectionManager;
 };
 
 #endif /* SITE_H_ */

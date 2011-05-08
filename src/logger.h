@@ -55,5 +55,5 @@ private:
 extern Logger sAppLog;
 
 #define AppLog(t,m) sAppLog.Log(t,m)
-
+#define IsAppLog(t) (sAppLog.GetLogLevel(t)>=t)
 #endif /* LOGGER_H_ */

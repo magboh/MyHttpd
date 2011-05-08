@@ -21,28 +21,28 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, US.
  */
 
-#ifndef IOWORKER_H_
-#define IOWORKER_H_
+#ifndef MUTEX_H_
+#define MUTEX_H_
 
-#include "thread.h"
-class Connection;
-class ConnectionManager;
-
-/*!
- * The IoWorker class builds up Fd sets for epoll()
- *
- */
-class IoWorker : public Thread
+class Mutex
 {
 public:
-	IoWorker(ConnectionManager& mConnectionManager);
-	virtual ~IoWorker();
-	virtual void DoWork();
-	void AddConnection(Connection* con);
-	void ModConnection(Connection* con);
+	Mutex();
+	virtual ~Mutex();
+
+	/***
+	 * Current thread is stopped until it gets a lock
+	 */
+	void Lock();
+	/***
+	 * Release lock
+	 */
+	void UnLock();
 private:
-	int mPollSocket;
-	ConnectionManager& mConnectionManager;
+	Mutex(const Mutex &);  // No implementation
+	Mutex& operator=(const Mutex &);  // No implementation
+
+	pthread_mutex_t *mMutex;
 };
 
-#endif /* IOWORKER_H_ */
+#endif /* MUTEX_H_ */

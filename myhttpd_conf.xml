@@ -7,8 +7,8 @@
 	</log>
 
 	<ServerOptions>
-	  	<RequestWorkers>3</RequestWorkers>
-		<IOWorkers>2</IOWorkers>
+	  	<RequestWorkers>2</RequestWorkers>
+		<ConnectionWorkers>2</ConnectionWorkers>
 		<RequestBuffer>4096</RequestBuffer>
 		<ResponseBuffer>4096</ResponseBuffer>
     	<ConnectionQueue>400</ConnectionQueue>

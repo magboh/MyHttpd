@@ -24,7 +24,7 @@
 #include <pthread.h>
 #include "thread.h"
 
-Thread::Thread()
+Thread::Thread() : mKeepRunning(false)
 {
 	mThread=new pthread_t;
 }
@@ -43,18 +43,18 @@ bool Thread::Join()
 
 void *Thread::ThreadCallBack(void *arg)
 {
+	((Thread*) arg)->mKeepRunning = true ;
 	((Thread*) arg)->DoWork();
 	return NULL;
 }
 
-bool Thread::Stop()
+void Thread::Stop()
 {
-	return true;
+	mKeepRunning = false;
 }
 
 bool Thread::Start()
 {
-	pthread_create(mThread, NULL, Thread::ThreadCallBack, (void*) this);
-	return true;
+	return (pthread_create(mThread, NULL, Thread::ThreadCallBack, (void*) this)==0);
 }
 

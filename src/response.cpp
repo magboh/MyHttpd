@@ -24,17 +24,20 @@
 #include <sstream>
 #include <string.h>
 
-#include "request.h"
 #include "response.h"
 #include "bytebuffer.h"
+#include "myhttpd.h"
+#include "logger.h"
 
-Response *Response::CreateResponse(const Request *request)
+#define EOL "\r\n"
+
+std::string ToGMTStr(time_t t);
+
+Response::Response(Http::Version version, bool keepAlive) :
+	mContentLength(0), mContentType("text/html"), mFile(-1)
 {
-	Response* response=new Response();
-	response->SetHttpVersion(request->GetHttpVersion());
-	response->mKeepAlive=request->GetKeepAlive();
-
-	return response;
+	SetHttpVersion(version);
+	SetKeepAlive(keepAlive);
 }
 
 Response::~Response()
@@ -44,12 +47,6 @@ Response::~Response()
 		//		close(mFile);
 		mFile=-1;
 	}
-}
-
-Response::Response()
-{
-	mFile=-1;
-	mContentLength=0;
 }
 
 int Response::GetFile() const
@@ -71,10 +68,13 @@ void Response::SetContentLength(unsigned int length)
 {
 	mContentLength=length;
 }
-
-bool Response::GetKeepAlive() const
+std::string ToGMTStr(time_t t)
 {
-	return mKeepAlive;
+	char buff[30];
+	tm tmm;
+	gmtime_r(&t,&tmm);
+	strftime(buff,30,"%a, %d %b %Y %T GMT",&tmm);
+	return std::string(buff);
 }
 
 int Response::ToBuffer(ByteBuffer* buffer) const
@@ -84,38 +84,58 @@ int Response::ToBuffer(ByteBuffer* buffer) const
 	size_t len=0;
 
 	Http::Status status=GetStatus();
-	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<"\r\n";
+	ss<<Http::GetVersionString(GetHttpVersion())<<" "<<status<<" "<<Http::GetStatusString(status)<<EOL;
+	ss<<"Server: " << ServerHeader <<EOL;
 
-	ss<<"Connection: ";
-	if (mKeepAlive)
+	// Do some HTTP 1.1 specifics
+	if (GetHttpVersion()==HTTP_VERSION_1_1)
 	{
-		ss<<"keep-alive\r\n";
+		ss<<"Connection: " << ((GetKeepAlive()) ? "keep-alive\r\n" : "close\r\n");
 	}
-	else
-	{
-		ss<<"close\r\n";
-	}
+
+	time_t t;
+	time(&t);
+	ss<<"Date: "<< ToGMTStr(t) << EOL;
 
 	if (status==Http::HTTP_OK)
 	{
-		ss<<"Content-Length:"<<mContentLength<<"\r\n";
-		ss<<"Content-Type: text/html\r\n";
-		ss<<"\r\n";
+			ss<<"Last-Modified: " << ToGMTStr(mTime)<<EOL;
+			ss<<"Content-Length: "<<mContentLength<<EOL;
+			ss<<"Content-Type: " << mContentType << "\r\n\r\n";
 	}
 	else
 	{
+		ss<<"Content-Type: text/html\r\n\r\n";
 		str="<html><body><h1>"+Http::GetStatusString(status)+"</h1></body></html>";
-		ss<<"Content-Type: text/html\r\n";
-		ss<<"\r\n";
 		ss<<str;
 	}
 
-	len=ss.str().size();
+	str = ss.str();
+	len=str.size();
 
 	if (len>buffer->GetSpaceLeft())
 		len=buffer->GetSpaceLeft();
-	//	std::cout << "ToBuffer= size=" << len <<"\n";
-	buffer->Add(ss.str().c_str(), len);
+
+	buffer->Add(str.c_str(),len);
+
+	if (IsAppLog(Logger::DEBUG))
+		AppLog(Logger::DEBUG,ss);
+
 	return len;
 }
 
+
+void Response::SetContentType(const std::string& type)
+{
+	mContentType = type;
+}
+
+const std::string& Response::GetContentType()
+{
+	return mContentType;
+}
+
+void Response::SetLastModTime(time_t t)
+{
+	mTime=t;
+}

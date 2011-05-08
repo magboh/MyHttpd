@@ -10,36 +10,46 @@
 
 class Response;
 class Request;
-class ConnectionManager;
 class ByteBuffer;
 class Site;
 
 class Connection
 {
 public:
-	enum ReadStatus_t {READ_STATUS_OK,READ_STATUS_ERROR,READ_STATUS_AGAIN,READ_STATUS_DONE};
-	Connection(int socket, ConnectionManager* conectionMgr, const Site& site, unsigned char threadNr);
+	enum Status_t {STATUS_OK,STATUS_ERROR,STATUS_AGAIN,STATUS_INTERUPT,STATUS_DONE,STATUS_CLOSE};
+	Connection(int socket, const Site* site);
 	virtual ~Connection();
 
 	/**
-	 *
-	 * @param size amount of data to read from socket
+	 * Read at most 'size' bytes from Connections's socket
+	 * @param size amount of data to read
 	 * @return
 	 */
-	ReadStatus_t Read(size_t size);
+	Status_t Read(size_t size);
+
 	/**
-	 *
+	 * Try to write at most 'size' bytes to socket.
 	 * @param size
 	 * @return 1 if all written 0 on more to write -1 if failure
 	 */
-	int Write(size_t size);
+	Status_t Write(size_t size);
 
 	/**
-	 * Parses data stored in mReadBuffer. Creates mRequests is needed
-	 * @return true if request ready to be processed
+	 * Parses data read from socket.
+	 * @return true if Request ready to be processed. GetRequest() return != NULL
 	 */
 	bool Parse();
+
+	/**
+	 * Gets the socket for this connection
+	 * @return valid socked, or -1 if closed
+	 */
 	int GetSocket() const;
+
+	/**
+	 *
+	 * @return
+	 */
 	bool WantToRead() const;
 	bool HasData();
 	void SetHasData(bool b);
@@ -54,6 +64,10 @@ public:
 	bool IsCloseable() const;
 	void SetCloseable(bool closeable);
 
+	/**
+	 * Connection has sent a Request. Waiting for answer
+	 * @return
+	 */
 	bool HasDataPending() {
 		return mPendingData;
 	}
@@ -63,29 +77,39 @@ public:
 		mPendingData=pending;
 	}
 
-	unsigned char GetThreadNr() const
-	{
-		return mTreadNr;
-	}
 private:
+	Status_t ErrnoToStatus(int error);
+
 	int mSocket;
 
 	ByteBuffer* mReadBuffer;
 	ByteBuffer* mWriteBuffer;
 
-	ConnectionManager* mConnectionManager;
+	/**
+	 * Needed while parsing Request
+	 */
 	Request* mRequest;
-	bool mWantToRead;
 	const Response* mResponse;
 	bool mHasData;
 	char mWriteStatus;
+
+	/**
+	 * Nr bytes written to socket, for the current Response.
+	 */
 	size_t mWritten;
+
+	/**
+	 * time of connection create
+	 */
 	time_t mCreated;
+
+	/**
+	* time when a request was last recieved
+	*/
 	time_t mLastRequest;
 	bool mCloseable;
 	bool mPendingData;
-	const Site& mSite;
-	unsigned char mTreadNr;
+	const Site* mSite;
 };
 
 #endif /* CONNECTION_H_ */

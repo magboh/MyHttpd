@@ -26,35 +26,43 @@
 #include <vector>
 #include "site.h"
 
-class RequestQueue;
+const std::string ServerName("MyHttpd");
+const std::string ServerVersion("0.06");
+const std::string ServerHeader(ServerName+"/"+ServerVersion);
+
 class ConfigReader;
 class AcceptWorker;
+class ConnectionWorker;
+
+struct RunOptions
+{
+	std::string configFile;
+	bool debugLog;
+};
+
 class MyHttpd
 {
 public:
 	MyHttpd();
 	virtual ~MyHttpd();
-	int Start();
+
+	bool ParseArgs(int argc, char** argv);
+	int Start(const RunOptions& options);
 	void Stop();
 	void SigINTHandler(int signal);
 
-	void AllowSignals();
-	void BlockSignals();
-
-	bool LoadConfig(ConfigReader* cr);
-
+	bool LoadConfig(ConfigReader& cr, const std::string& fileName);
 	static MyHttpd* myhttpd;
 private:
-	RequestQueue* mRequestQueue;
+	AcceptWorker* mAcceptWorker;
 	bool mKeepRunning;
 	int mNumConnections;
 	int mMaxConnections;
 
 	int mNrConnectionWorkers;
 	int mNrRequestWorkers;
-
-	AcceptWorker* mAcceptWorker;
-	ConnectionManager* mConnectionManager;
+	std::vector<ConnectionWorker*> mWorkerVector;
+	std::vector<Site*> mSites;
 	void StartRequestQueue();
 	void StartConnectionWorkers();
 	void StartRequestWorkers();
@@ -63,9 +71,26 @@ private:
 	void WaitForConnectionWorkers();
 	void WaitForRequestWorkers();
 
-	void StartSites(const ConfigReader* cr);
+	void StartSites(const ConfigReader& cr);
 	void StopSites();
-	std::vector<Site*> mSites;
+
+	void AllowSignals();
+	void BlockSignals();
+
+	bool LoadConfig(ConfigReader* cr, const std::string& fileName);
+
+	void AddConnectionWorker(int nr=1);
+
+	/**
+	 * Tell all added Workers to stop.
+	 */
+	void ShutdownWorkers();
+	/**
+	 * Wait for all Workers to stop.
+	 * Caller thread blocked until all workers done.
+	 */
+	void WaitForWorkers();
+
 };
 
 #endif /* MYHTTPD_H_ */

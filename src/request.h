@@ -36,43 +36,42 @@ class Site;
 class Request:public Http
 {
 public:
-	Request(Connection* connection, const Site& site);
+	Request(Connection* connection, const Site* site);
 	virtual ~Request();
-	enum ParseReturn
-	{
-		REQUEST_OK, REQUEST_BAD, REQUEST_UNFINISHED, REQUEST_HTPP_VERSION_NOT_SUPPORTED, REQUEST_TO_LARGE, REQUEST_URI_TO_LONG,
-	};
 	static bool ParseRequest(Request* request, ByteBuffer* buffer);
 	enum RequestType
 	{
-		HTTP_GET, HTTP_POST
+		HTTP_UNDEF=0,HTTP_GET, HTTP_POST, HTTP_HEAD
 	};
 
 	const std::string ToString() const;
 	const std::string & GetUri() const;
 	RequestType GetHttpType() const;
 
-	const Site& GetSite() const;
+	const Site* GetSite() const;
 
 	Connection *GetConnection() const;
 	void SetConnection(Connection *mConnection);
-	bool GetKeepAlive() const;
-
 private:
+	Request(const Request &); // No implementation
+	Request& operator=(const Request& rhs);  // No implementation
+
 	enum
 	{
 		MAX_URI_LENGTH=2048
 	};
+	const Site* mSite;
+
 	std::string mHost;
 	std::string mUri;
 
-	bool mKeepAlive;
 	RequestType mType;
 	Connection* mConnection;
 	int mParseState;
-	size_t mParsePos;
 	std::map<std::string, std::string> mHeader;
-	const Site& mSite;
+
+	static size_t ParseRequestLine(Request* request, const char* data, size_t size);
+	static bool ParseRequestHeaders(Request* request, const char* data, size_t size,size_t& position);
 };
 
 #endif /* REQUEST_H_ */

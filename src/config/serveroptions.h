@@ -30,12 +30,12 @@ public:
 	ServerOptions();
 	virtual ~ServerOptions();
 	int GetConnectionQueueSize() const;
-	int GetNoIOWorkers() const;
+	int GetNoConnectionWorkers() const;
 	int GetNoRequstWorkers() const;
 	int GetRequestBufferSize() const;
 	int GetResponseBufferSize() const;
 	void SetConnectionQueueSize(int connectionQueueSize);
-	void SetNoIOWorkers(int noIOWorkers);
+	void SetNoConnectionWorkers(int noIOWorkers);
 	void SetNoRequstWorkers(int noRequstWorkers);
 	void SetRequestBufferSize(int requestBufferSize);
 	void SetResponseBufferSize(int responseBufferSize);
